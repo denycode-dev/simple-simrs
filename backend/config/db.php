@@ -2,13 +2,13 @@
 
 return [
     'class' => \yii\db\Connection::class,
-    'dsn' => 'mysql:host=localhost;dbname=yii2basic',
-    'username' => 'root',
-    'password' => '',
+    'dsn' => sprintf(
+        'pgsql:host=%s;port=%s;dbname=%s',
+        getenv('DB_HOST') ?: 'postgres',
+        getenv('DB_PORT') ?: '5432',
+        getenv('DB_NAME') ?: 'simrs_db'
+    ),
+    'username' => getenv('DB_USER') ?: 'postgres',
+    'password' => getenv('DB_PASSWORD') ?: '',
     'charset' => 'utf8',
-
-    // Schema cache options (for production environment)
-    //'enableSchemaCache' => true,
-    //'schemaCacheDuration' => 60,
-    //'schemaCache' => 'cache',
 ];
