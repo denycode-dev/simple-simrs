@@ -13,10 +13,14 @@ $config = [
     'basePath' => dirname(__DIR__),
     'on beforeRequest' => function (): void {
         $request = Yii::$app->request;
-        $url = $request->getUrl();
-        $acceptHeader = $request->headers->get('Accept', '');
-        if (str_starts_with($url, '/api') || str_contains($acceptHeader, 'application/json')) {
-            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        try { $url = $request->getUrl(); } catch (\Throwable) { $url = ''; }
+        try { $acceptHeader = $request->headers->get('Accept', ''); } catch (\Throwable) { $acceptHeader = ''; }
+
+        // Determine if this is an API request (disable CSRF & default to JSON response)
+        $isApi = str_starts_with($url, '/api') || (str_contains($acceptHeader, 'application/json') && !str_starts_with($url, '/debug') && !str_starts_with($url, '/gii'));
+        if ($isApi) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            $request->enableCsrfValidation = false;
         }
     },
     'bootstrap' => ['log'],
@@ -46,20 +50,33 @@ $config = [
                 /** @var Response $response */
                 $response = $event->sender;
                 $request = Yii::$app->request;
-                $url = $request->getUrl();
-                $acceptHeader = $request->headers->get('Accept', '');
+                try { $url = $request->getUrl(); } catch (\Throwable) { $url = ''; }
+                try { $acceptHeader = $request->headers->get('Accept', ''); } catch (\Throwable) { $acceptHeader = ''; }
 
-                $isApi = str_starts_with($url, '/api') || str_contains($acceptHeader, 'application/json');
-                if ($isApi && $response->format !== Response::FORMAT_RAW) {
+                $isApi = str_starts_with($url, '/api') || (str_contains($acceptHeader, 'application/json') && !str_starts_with($url, '/debug') && !str_starts_with($url, '/gii'));
+                if (!$isApi) {
+                    return;
+                }
+
+                if ($response->format !== Response::FORMAT_RAW) {
                     $response->format = Response::FORMAT_JSON;
                 }
 
-                if ($response->format === Response::FORMAT_JSON && is_array($response->data)) {
-                    if (isset($response->data['success'])) {
+                if ($response->format === Response::FORMAT_JSON) {
+                    $data = $response->data;
+
+                    // If already formatted with standard envelope, do not double-wrap
+                    if (is_array($data) && isset($data['success'])) {
                         return;
                     }
 
-                    if (!$response->isSuccessful) {
+                    if ($response->isSuccessful) {
+                        $response->data = [
+                            'success' => true,
+                            'message' => 'Operasi berhasil.',
+                            'data' => $data,
+                        ];
+                    } else {
                         $status = $response->statusCode;
                         $defaultMessages = [
                             400 => 'Permintaan tidak valid.',
@@ -72,10 +89,19 @@ $config = [
                             500 => 'Terjadi kesalahan internal pada server.',
                         ];
 
-                        $message = $defaultMessages[$status] ?? ($response->data['message'] ?? 'Terjadi kesalahan pada sistem.');
+                        $message = $defaultMessages[$status] ?? (is_array($data) && !empty($data['message']) ? $data['message'] : 'Terjadi kesalahan pada sistem.');
+
+                        $errors = null;
+                        if ($status === 422) {
+                            $errors = is_array($data) ? ($data['errors'] ?? $data) : ['error' => (string) $data];
+                        } elseif (is_array($data) && isset($data['errors'])) {
+                            $errors = $data['errors'];
+                        }
+
                         $response->data = [
                             'success' => false,
                             'message' => $message,
+                            'errors' => $errors,
                             'data' => null,
                         ];
                     }
@@ -108,8 +134,22 @@ $config = [
             'showScriptName' => false,
             'enableStrictParsing' => false,
             'rules' => [
+                // Ping & Healthcheck
                 'GET api/v1/ping' => 'api/base-api/index',
-                'OPTIONS api/v1/ping' => 'api/base-api/index',
+                'POST api/v1/ping' => 'api/base-api/index',
+                'OPTIONS api/v1/ping' => 'api/base-api/options',
+
+                // Auth REST endpoints (Milestone 4 / Task 7)
+                'POST api/v1/auth/login' => 'api/auth/login',
+                'GET api/v1/auth/me' => 'api/auth/me',
+                'POST api/v1/auth/logout' => 'api/auth/logout',
+                'OPTIONS api/v1/auth/<action:(login|me|logout)>' => 'api/auth/options',
+
+                // CORS Preflight routing for REST API
+                'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>/<action:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
+                'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
+
+                // Standard API routing
                 'api/v1/<controller:[a-zA-Z0-9-]+>/<action:[a-zA-Z0-9-]+>' => 'api/<controller>/<action>',
                 'api/v1/<controller:[a-zA-Z0-9-]+>' => 'api/<controller>/index',
             ],

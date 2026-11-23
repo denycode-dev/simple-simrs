@@ -17,10 +17,10 @@
   - [x] Task 2: Migrasi Tabel Master Data & Indeks Teroptimasi (`patients`, `polyclinics`, `doctor_schedules`, `medical_actions`, `medicines`, `medicine_stock_logs`)
   - [x] Task 3: Migrasi Tabel Transaksi Pelayanan Rawat Jalan (`registrations`, `nurse_assessments`, `medical_examinations`, `examination_actions`, `prescriptions`, `prescription_items`, `lab_orders`, `lab_order_items`, `billings`, `billing_payments`)
   - [x] Task 4: Database Seeder Lengkap Data Master & 7 Akun Peran Pengguna
-- [ ] **Phase 2: Backend Yii 2 Core REST API & Security Foundation**
+- [x] **Phase 2: Backend Yii 2 Core REST API & Security Foundation**
   - [x] Task 5: Konfigurasi UrlManager REST, Response Formatter JSON Berbahasa Indonesia, dan CORS
-  - [ ] Task 6: Model User Database ActiveRecord dengan Hashing Bcrypt & Bearer Token Authentication
-  - [ ] Task 7: Controller Autentikasi (`AuthController`: Login, Me, Logout) & AccessControl Behavior
+  - [x] Task 6: Model User Database ActiveRecord dengan Hashing Bcrypt & Bearer Token Authentication
+  - [x] Task 7: Controller Autentikasi (`AuthController`: Login, Me, Logout) & AccessControl Behavior
 - [ ] **Phase 3: Modul 1 - Pengelolaan Master Data**
   - [ ] Task 8: API Master Pasien dengan Validasi Unik NIK 16 Digit & No RM Otomatis
   - [ ] Task 9: API Master Dokter, Poli, & Jadwal dengan Pencegahan Bentrok Waktu Dokter
