@@ -21,6 +21,32 @@ services:
     networks:
       - app-network
 
+  services:
+    build:
+      context: ./services/ancillary-service
+      dockerfile: Dockerfile
+    container_name: nodejs-ancillary-service
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./services/ancillary-service:/app
+      - services-node-modules:/app/node_modules
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      HOST: 0.0.0.0
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+
   frontend:
     build:
       context: ./frontend
@@ -34,6 +60,7 @@ services:
       - frontend-node-modules:/app/node_modules
     depends_on:
       - backend
+      - services
     networks:
       - app-network
 
@@ -66,6 +93,7 @@ volumes:
   backend-runtime:
   backend-assets:
   frontend-node-modules:
+  services-node-modules:
 
 networks:
   app-network:
