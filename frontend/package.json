@@ -1,8 +1,12 @@
 {
-  "name": "frontend",
+  "name": "frontend-simple-simrs",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "author": {
+    "name": "Deni Irawan Nugraha",
+    "email": "deni.irawan40563@gmail.com"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

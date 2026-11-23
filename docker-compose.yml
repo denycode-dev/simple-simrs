@@ -25,7 +25,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: yii2-frontend
+    container_name: react19-frontend
     restart: unless-stopped
     ports:
       - "5173:5173"
@@ -39,7 +39,7 @@ services:
 
   postgres:
     image: postgres:17
-    container_name: yii2-postgres
+    container_name: postgres17-database
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
