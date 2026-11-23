@@ -76,7 +76,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                     letterSpacing: '-0.01em',
                   }}
                 >
-                  SIMRS Inova Medika
+                  Simple SIMRS
                 </h1>
                 <Badge variant="primary" label="v1.0" />
               </div>
@@ -172,7 +172,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             gap: 'var(--space-2)',
           }}
         >
-          <span>&copy; {new Date().getFullYear()} Inova Medika Solusindo - Arsitektur Feature-Based</span>
+          <span>&copy; {new Date().getFullYear()} Simple SIMRS - Feature-Based Architecture</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             <span
               style={{

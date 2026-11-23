@@ -96,7 +96,7 @@ export function App() {
               +
             </div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text-main)', letterSpacing: '-0.02em' }}>
-              SIMRS Inova Medika
+              Simple SIMRS
             </h1>
             <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: 'var(--space-1)' }}>
               Sistem Informasi Manajemen Rumah Sakit Modern

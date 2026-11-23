@@ -96,7 +96,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <div>
               <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
-                SIMRS Inova
+                Simple SIMRS
               </div>
               <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)' }}>
                 Hospital Management
@@ -293,7 +293,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             textAlign: 'center',
           }}
         >
-          <span>SIMRS Inova Medika v1.0</span>
+          <span>Simple SIMRS v1.0</span>
         </div>
       </aside>
     </>

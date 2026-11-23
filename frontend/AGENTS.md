@@ -1,8 +1,6 @@
-# AGENTS.md
+# Agent Instructions for Simple SIMRS Frontend
 
-Panduan terpadu untuk AI Coding Agents dan Pengembang antarmuka pada proyek **SIMRS Inova Medika**.
-
----
+This guide outlines design system rules, component conventions, and operational workflows for AI coding assistants and frontend developers on the Simple SIMRS project. Follow these patterns to keep UI components accessible, predictable, and aligned with the Astryx Design System.
 
 <!-- ASTRYX:START -->
 Astryx v0.7.17 · 174 components
@@ -37,20 +35,21 @@ RULES:
 To remove this block, run `astryx init --remove-agents`, which removes it from the agent files at the project root and in the folder you run it in; from any other file it leaves, delete everything from ASTRYX:START to ASTRYX:END.
 <!-- ASTRYX:END -->
 
----
+## Astryx Design System Overview for Simple SIMRS
 
-## 📌 Ringkasan Astryx Design System v0.7.17 (SIMRS Inova Medika)
+Astryx delivers an agent-ready component ecosystem based on React 19 and StyleX. The system manages spacing, typography, and accessibility within component primitives so you avoid arbitrary wrapper elements and non-standard utility classes.
 
-Astryx adalah design system *agent-ready* berbasis React 19+ dan StyleX. Mengusung filosofi bahwa komponen menangani layout, spacing, dan aksesibilitas secara terpadu tanpa perlu membuat wrapper `<div>` acak atau utility classes yang tidak terstandar.
+### Base Setup
 
-### Setup Dasar
-Diimpor satu kali di stylesheet global tunggal (`src/index.css`):
+The application loads stylesheets once in the single global entry file (`src/index.css`):
+
 ```css
 @import '@astryxdesign/core/astryx.css';
 @import '@astryxdesign/theme-neutral/theme.css';
 ```
 
-Tema neutral diaktifkan dan dikunci ke **Light Mode** melalui:
+The root provider locks the interface to light mode:
+
 ```tsx
 import { Theme } from '@astryxdesign/core';
 import { themes, defaultThemeSlug } from './astryx-themes';
@@ -60,99 +59,113 @@ import { themes, defaultThemeSlug } from './astryx-themes';
 </Theme>
 ```
 
----
+## Core Component Conventions
 
-## 🧩 Konvensi Komponen Utama (Re-exported via `@/components/ui`)
+Import shared UI components from `@/components/ui` to maintain consistent styling across feature modules.
 
-### 1. Button (`@astryxdesign/core/Button` atau `@/components/ui/Button`)
-- **Prop `label` Wajib**: Astryx mewajibkan prop `label` sebagai string yang mendeskripsikan aksi secara aksesibel.
-- **Boolean Props diawali `is` / `has`**: Gunakan `isLoading` dan `isDisabled` (bukan `loading` atau `disabled`).
-- **Varian**: `'primary' | 'secondary' | 'ghost' | 'destructive'`.
+### Button (`@astryxdesign/core/Button` or `@/components/ui/Button`)
+
+Follow these prop requirements when placing buttons:
+
+- **Required `label` prop**: Astryx requires a descriptive string label for accessible screen reader output.
+- **Prefix boolean props with `is` or `has`**: Use `isLoading` and `isDisabled` instead of `loading` or `disabled`.
+- **Supported variants**: Use `'primary' | 'secondary' | 'ghost' | 'destructive'`.
 
 ```tsx
 import { Button } from '@/components/ui';
 
 <Button
-  label="Simpan Data Pasien"
+  label="Save Patient Record"
   variant="primary"
   isLoading={isSaving}
   onClick={handleSave}
 />
 ```
 
-### 2. TextInput (`@astryxdesign/core/TextInput` atau `@/components/ui/Input`)
-- **Prop `label` Wajib**: Selalu sediakan teks label yang eksplisit.
-- **Signature `onChange`**: Menerima `(value: string, event) => void`.
-- **Status Validasi**: Gunakan objek `status={{ type: 'error', message: 'Pesan error' }}`.
+### TextInput (`@astryxdesign/core/TextInput` or `@/components/ui/Input`)
+
+Configure inputs with explicit labels and handlers:
+
+- **Required `label` prop**: Always supply an explicit label string.
+- **Change handler**: Accepts `(value: string, event) => void` or standard event delegates.
+- **Validation feedback**: Supply an error message string to highlight invalid input.
 
 ```tsx
 import { Input } from '@/components/ui';
 
 <Input
-  label="Nomor Rekam Medis"
+  label="Medical Record Number"
   value={rmNumber}
   onChange={(e) => setRmNumber(e.target.value)}
   error={formErrors.rmNumber}
-  placeholder="misal: RM-2026-0001"
+  placeholder="e.g. RM-2026-0001"
   required
 />
 ```
 
-### 3. Badge (`@astryxdesign/core/Badge` atau `@/components/ui/Badge`)
-- Menampilkan status ringkas (Rawat Jalan, Rawat Inap, IGD, Selesai).
-- Prop `label` menerima teks atau ReactNode.
-- Varian: `'neutral' | 'info' | 'success' | 'warning' | 'error' | 'teal'`.
+### Badge (`@astryxdesign/core/Badge` or `@/components/ui/Badge`)
+
+Display patient triage status, queue counts, or state indicators with badges:
+
+- **Label content**: The `label` prop accepts text strings or React nodes.
+- **Supported variants**: Use `'neutral' | 'info' | 'success' | 'warning' | 'error' | 'teal'`.
 
 ```tsx
 import { Badge } from '@/components/ui';
 
-<Badge label="Rawat Inap" variant="warning" />
+<Badge label="Inpatient" variant="warning" />
 ```
 
-### 4. Card (`@astryxdesign/core/Card` atau `@/components/ui/Card`)
-- Wadah kontainer berbatas jelas dengan opsi `elevation` (`'none' | 'low' | 'med' | 'high'`) dan `padding` (skala 1-10).
+### Card (`@astryxdesign/core/Card` or `@/components/ui/Card`)
+
+Wrap structured sections with card containers:
+
+- **Elevation levels**: Choose from `'none' | 'low' | 'med' | 'high'`.
+- **Padding scale**: Specify integer padding from `1` to `10`.
 
 ```tsx
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 
 <Card elevation="low" padding={4}>
   <CardHeader>
-    <CardTitle>Data Pasien Terpilih</CardTitle>
+    <CardTitle>Selected Patient Details</CardTitle>
   </CardHeader>
   <CardContent>
-    <p>Informasi rekam medis...</p>
+    <p>Clinical data summary content goes here.</p>
   </CardContent>
 </Card>
 ```
 
-### 5. Banner / Alert (`@astryxdesign/core/Banner` atau `@/components/ui/Alert`)
-- Menampilkan pesan notifikasi atau status kesalahan formulir yang persisten.
-- Prop `status`: `'info' | 'warning' | 'error' | 'success'`.
+### Alert and Banner (`@astryxdesign/core/Banner` or `@/components/ui/Alert`)
+
+Surface system alerts and validation messages:
+
+- **Supported status types**: Use `'info' | 'warning' | 'error' | 'success'`.
 
 ```tsx
 import { Alert } from '@/components/ui';
 
-<Alert variant="danger" title="Gagal Menyimpan">
-  Terjadi kendala saat menghubungi server backend SIMRS.
+<Alert variant="danger" title="Save Failed">
+  The system encountered an error connecting to the backend service.
 </Alert>
 ```
 
-### 6. Reusable DataTable (`@/components/ui/DataTable`)
-- Komponen tabel generik `<T>` dengan:
-  - Sticky header (`top: 0`, `z-index: 10`).
-  - Sticky right action column (`right: 0`, `z-index: 5`).
-  - Sticky intersection corner (`top: 0`, `right: 0`, `z-index: 20`).
-  - Built-in debounced search, sorting, dan paginasi.
+### Reusable Data Table (`@/components/ui/DataTable`)
 
----
+Render dense hospital records using the generic `DataTable<T>` component:
 
-## ⚠️ Aturan Operasional Penting untuk Agen AI (Rules of Engagement)
+- **Sticky header**: Stays visible at `top: 0` with `z-index: 10`.
+- **Sticky right action column**: Stays pinned at `right: 0` with `z-index: 5`.
+- **Sticky intersection cell**: Anchors at `top: 0` and `right: 0` with `z-index: 20` to prevent visual collision during diagonal scrolling.
+- **Embedded features**: Supports debounced query search, multi-column sorting, and pagination.
 
-1. **Gunakan Astryx Primitives Terlebih Dahulu**: Jangan membuat elemen kustom baru jika Astryx telah menyediakannya.
-2. **Hanya Satu File CSS Global (`src/index.css`)**: Dilarang membuat file CSS terpisah baru (`variables.css`, `App.css`, dll.) agar tidak terjadi bentrokan styling.
-3. **Murni Light Mode**: Aplikasi hanya mendukung tema terang. Jangan menambahkan tema gelap atau toggle tema. Gunakan selalu token `mode="light"`.
-4. **Gunakan Token Warna & Spasi Tema**: Hindari menulis nilai hex atau pixel sembarangan; gunakan CSS variables bawaan (`var(--color-border)`, `var(--color-primary)`, dsb.).
-5. **Cek Kesehatan Desain**: Jalankan `npx astryx doctor` sebelum menyelesaikan tugas UI untuk memastikan tidak ada pelanggaran aturan tema dan stylesheet.
-6. **Cari Komponen via CLI**:
-   - Cari komponen: `npx astryx search "<nama>"`
-   - Cek detail props: `npx astryx component <NamaKomponen>`
+## Rules of Engagement for AI Agents
+
+Follow these mandatory rules when editing or creating frontend code:
+
+- **Use Astryx Primitives First**: Do not construct bespoke HTML wrappers when an Astryx component covers the use case.
+- **Maintain a Single Global Stylesheet**: Store all global styling in `src/index.css`. Never create isolated CSS files like `App.css` or `styles.css`.
+- **Enforce Light Mode Only**: The application supports light mode exclusively. Never add dark mode media queries or theme toggle controls.
+- **Use Theme Tokens**: Reference semantic CSS variables such as `var(--color-primary)` and `var(--space-4)` instead of hardcoded hex colors or pixel measurements.
+- **Audit Interface Health**: Run `npx astryx doctor` before submitting UI modifications to catch stylesheet and token violations.
+- **Explore Components via CLI**: Run `npx astryx search "<term>"` to find existing components, and run `npx astryx component <Name>` to check component prop definitions.

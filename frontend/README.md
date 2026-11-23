@@ -1,125 +1,130 @@
-# Frontend SIMRS (Sistem Informasi Manajemen Rumah Sakit)
+# Simple SIMRS Frontend
 
-Aplikasi antarmuka web modern untuk Sistem Informasi Manajemen Rumah Sakit (SIMRS) yang dibangun menggunakan **React 19**, **Vite 8**, dan **TypeScript 6**, dengan arsitektur **Feature-Based Development** serta sistem desain **Astryx (Meta)** yang berfokus pada **Pure Light Mode** & **WCAG AAA Accessibility**.
+This document explains the architecture, design system, component patterns, and setup commands for the Simple SIMRS web client. You can run the application with Vite, inspect UI primitives using the Astryx CLI, and build domain modules using feature isolation.
 
----
+## Design System: Astryx and Neutral Theme
 
-## 🎨 Design System: Astryx (Meta) & Theme Neutral
+Simple SIMRS uses the Astryx Design System v0.7.17 from Meta for its user interface. The system focuses on light mode rendering and Web Content Accessibility Guidelines (WCAG) AAA contrast compliance:
 
-Antarmuka aplikasi ditenagai oleh **Astryx Design System v0.7.17** dari Meta yang dirancang secara *agent-ready* dan dioptimalkan untuk React 19:
-- **Core Library**: `@astryxdesign/core`
-- **Styling Engine**: StyleX (`@stylexjs/stylex`) & Pre-built CSS Layer
-- **Theme Package**: `@astryxdesign/theme-neutral` (Typography Figtree & Netral Healthcare Palette)
-- **CLI Tooling**: `@astryxdesign/cli` untuk inspeksi komponen dan verifikasi via `npx astryx doctor`
-- **Komponen Primitif**: Komponen di `src/components/ui/` mengadaptasi primitif resmi Astryx (`Button`, `TextInput`, `Badge`, `Card`, `Banner`).
+- **Core Library**: `@astryxdesign/core` provides accessible UI primitives
+- **Styling Engine**: StyleX (`@stylexjs/stylex`) with pre-compiled CSS variables
+- **Theme Package**: `@astryxdesign/theme-neutral` provides Figtree typography and neutral healthcare palettes
+- **CLI Tooling**: `@astryxdesign/cli` audits component health via `npx astryx doctor`
+- **Component Primitives**: Shared components in `src/components/ui/` adapt official Astryx primitives including Button, TextInput, Badge, Card, and Banner
 
----
+## Architecture: Feature-Based Development
 
-## 🏛️ Arsitektur: Feature-Based Development
+The frontend organizes code around hospital business domains instead of technical types.
 
-Aplikasi mengorganisir kode berdasarkan **domain bisnis fitur**:
+### Architectural Principles
 
-### Prinsip Utama:
-1. **Feature Encapsulation**: Seluruh kode yang berkaitan erat dengan satu domain bisnis (`api`, `components`, `hooks`, `types`) diisolasi dalam satu folder fitur di dalam `src/features/<feature-name>/`.
-2. **Public API Boundary**: Setiap fitur memiliki file `index.ts` sebagai gerbang publik (*barrel export*).
-3. **Shared Foundation**: Komponen dan fungsi yang bersifat generik disimpan di `src/components/ui/`, `src/lib/`, `src/hooks/`, atau `src/utils/`.
-4. **Theme Provider Integration**: Aplikasi dibungkus oleh provider `<Theme theme={themes[defaultThemeSlug]}>` dari `src/astryx-themes.ts`.
+The codebase enforces four core structural rules:
 
----
+- **Feature Encapsulation**: Place code belonging to a single domain (`api`, `components`, `hooks`, `types`) inside `src/features/<feature-name>/`.
+- **Public API Boundary**: Expose public feature members through `index.ts` barrel files. Internal implementation details remain private to the feature directory.
+- **Shared Foundation**: Store domain-agnostic components and utilities in `src/components/ui/`, `src/lib/`, `src/hooks/`, or `src/utils/`.
+- **Theme Provider Integration**: The root component wraps the application tree with `<Theme theme={themes[defaultThemeSlug]} mode="light">` from `src/astryx-themes.ts`.
 
-## 📁 Struktur Direktori
+## Directory Structure
+
+The project organizes source files into feature modules and shared infrastructure:
 
 ```text
 frontend/
 ├── src/
-│   ├── assets/                 # Aset statis global (gambar, ikon SVG)
-│   ├── components/             # Komponen bersama (Domain-Agnostic)
-│   │   ├── layout/             # Layout aplikasi (DashboardLayout, Sidebar, Header, Breadcrumb)
-│   │   └── ui/                 # Primitives UI & DataTable (Button, Input, Card, Badge, Alert, DataTable)
-│   ├── config/                 # Konfigurasi aplikasi (env.ts, dashboard-menu.ts)
-│   ├── features/               # Modul Domain Bisnis (Feature Modules)
-│   │   ├── auth/               # Fitur Autentikasi & Pengguna Medis
-│   │   │   ├── api/            # Panggilan API autentikasi (loginApi, logoutApi)
-│   │   │   ├── components/     # Komponen UI fitur (LoginForm, UserProfile)
-│   │   │   ├── hooks/          # Custom hooks fitur (useAuth)
-│   │   │   ├── types/          # Definisi tipe & antarmuka fitur (AuthUser, LoginCredentials)
-│   │   │   └── index.ts        # Public API export fitur auth
-│   │   └── patients/           # Fitur Manajemen Pasien SIMRS
-│   │       ├── api/            # Panggilan API data pasien (getPatientsApi)
+│   ├── assets/                 # Global static assets including SVG icons and images
+│   ├── components/             # Domain-agnostic components
+│   │   ├── layout/             # Layout components (AppLayout, Sidebar, Header, Breadcrumb)
+│   │   └── ui/                 # UI primitives (Button, Input, Card, Badge, Alert, DataTable)
+│   ├── config/                 # Application configuration (env.ts, dashboard-menu.ts)
+│   ├── features/               # Business domain modules
+│   │   ├── auth/               # Medical user authentication feature
+│   │   │   ├── api/            # Authentication API endpoints (loginApi, logoutApi)
+│   │   │   ├── components/     # Authentication forms and user profile widgets
+│   │   │   ├── hooks/          # Custom auth hooks (useAuth)
+│   │   │   ├── types/          # Auth interfaces (AuthUser, LoginCredentials)
+│   │   │   └── index.ts        # Public API export for auth
+│   │   └── patients/           # Patient management feature
+│   │       ├── api/            # Patient API endpoints (getPatientsApi)
 │   │       ├── components/     # PatientTable, PatientCard, PatientList, PatientFilterBar
-│   │       ├── hooks/          # usePatients (fetch, search, filter)
-│   │       ├── types/          # Patient, PatientFilter, PatientStatus
-│   │       └── index.ts        # Public API export fitur patients
-│   ├── hooks/                  # Custom hooks bersama tingkat global (useDebounce)
-│   ├── lib/                    # Abstraksi klien HTTP (api-client native fetch)
-│   ├── types/                  # Kontrak tipe TypeScript global (api.ts)
-│   ├── utils/                  # Fungsi utilitas pembantu (formatters.ts)
-│   ├── astryx-themes.ts        # Konfigurasi tema Astryx ter-generate (Theme Neutral)
-│   ├── App.tsx                 # Root component dengan Astryx Theme Provider
-│   ├── index.css               # Satu-satunya stylesheet global (Astryx Core + Design Tokens Light Mode)
-│   └── main.tsx                # Entry point aplikasi React
-├── agent.md                    # Panduan konvensi Astryx untuk AI Agent & Pengembang
-├── AGENTS.md                   # Instruksi agent bawaan Astryx CLI
-├── tsconfig.app.json           # Konfigurasi TypeScript & path alias (@/*)
-├── vite.config.ts              # Konfigurasi Vite & path alias
-└── package.json
+│   │       ├── hooks/          # Patient query and filter hooks (usePatients)
+│   │       ├── types/          # Patient models (Patient, PatientFilter, PatientStatus)
+│   │       └── index.ts        # Public API export for patients
+│   ├── hooks/                  # Global React hooks (useDebounce)
+│   ├── lib/                    # HTTP client abstraction (api-client native fetch)
+│   ├── types/                  # Global TypeScript contracts (api.ts)
+│   ├── utils/                  # Utility helper functions (formatters.ts)
+│   ├── astryx-themes.ts        # Generated Astryx theme definitions (Theme Neutral)
+│   ├── App.tsx                 # Root application component with Astryx Theme Provider
+│   ├── index.css               # Single global stylesheet (Astryx Core and Light Mode tokens)
+│   └── main.tsx                # React application entry point
+├── AGENTS.md                   # Agent guidelines and Astryx component conventions
+├── DESIGN.md                   # Design specifications, color tokens, and layout guidelines
+├── Dockerfile                  # Production container definition with Node.js 22 Alpine
+├── package.json                # Project dependencies and development scripts
+├── tsconfig.app.json           # TypeScript configuration and path aliases (@/*)
+└── vite.config.ts              # Vite configuration and development server options
 ```
 
----
+## Data Table and Dashboard Navigation
 
+The client provides dedicated modules for high-density hospital records and menu navigation.
 
----
+### Centralized Navigation Configuration
 
-## 📊 Komponen DataTable & Dashboard Menu
+The dashboard navigation menu lives in `src/config/dashboard-menu.ts`. You define navigation groups, routes, active indicators, and badge counts in one location:
 
-### 1. Konfigurasi Menu Terpusat (`src/config/dashboard-menu.ts`)
-Seluruh item menu dashboard (termasuk grup, nested submenu, active state, dan badge) didefinisikan secara terpusat:
 ```ts
 import { DASHBOARD_MENU } from '@/config/dashboard-menu';
 ```
-Penambahan menu baru dapat dilakukan hanya dengan memperbarui array `DASHBOARD_MENU` tanpa perlu mengubah komponen `Sidebar`.
 
-### 2. Dual Sticky DataTable (`src/components/ui/DataTable.tsx`)
-Komponen tabel data generik (`DataTable<T>`) yang dirancang untuk dataset enterprise:
-- **Sticky Header**: Header tetap berada di bagian atas saat scrolling vertikal (`position: sticky; top: 0; z-index: 10`).
-- **Sticky Action Column**: Kolom aksi tetap berada di sebelah kanan saat scrolling horizontal (`position: sticky; right: 0; z-index: 5`).
-- **Intersection Anchor**: Header kolom aksi di sudut kanan atas memiliki `z-index: 20` dengan background solid untuk mencegah overlap / tabrakan visual saat kedua scrollbar digerakkan bersamaan.
-- **Built-in Features**: Pencarian ter-debounce, sorting multi-kolom interaktif, pagination, baris per halaman, skeleton loading, dan empty state.
+Add or modify menu items in the `DASHBOARD_MENU` array without altering the `Sidebar` presentation component.
 
-## 🤖 Panduan Agent & Astryx CLI
+### Dual Sticky Data Table
 
-Proyek dilengkapi dokumentasi agen di berkas `agent.md` dan `AGENTS.md`.
+The `DataTable<T>` generic component in `src/components/ui/DataTable.tsx` handles large hospital records with fluid scrolling:
 
-### Perintah Berguna Astryx CLI:
-- **Pemeriksaan Kesehatan Design System**:
+- **Sticky Header**: Headers remain locked to the top during vertical scrolling (`position: sticky; top: 0; z-index: 10`).
+- **Sticky Action Column**: Action buttons remain anchored to the right side during horizontal scrolling (`position: sticky; right: 0; z-index: 5`).
+- **Intersection Anchor**: The top-right corner header uses `z-index: 20` with an opaque background to prevent visual overlap during diagonal scrolling.
+- **Embedded Capabilities**: The table includes debounced search, multi-column sorting, pagination controls, skeleton loading, and empty states.
+
+## Astryx CLI and Agent Guidance
+
+The project includes agent instructions in `AGENTS.md` and design token documentation in `DESIGN.md`.
+
+Use the following Astryx CLI commands during interface development:
+
+- **Run Design System Diagnostics**:
   ```bash
   npx astryx doctor
   ```
-- **Pencarian Komponen / Template**:
+
+- **Search Available Components and Templates**:
   ```bash
-  npx astryx search "<kata-kunci>"
-  ```
-- **Inspeksi Props Komponen**:
-  ```bash
-  npx astryx component <NamaKomponen>
+  npx astryx search "<keyword>"
   ```
 
----
+- **Inspect Component Property Signatures**:
+  ```bash
+  npx astryx component <ComponentName>
+  ```
 
-## 🛠️ Perintah Pengembangan
+## Development Commands
 
-| Perintah | Deskripsi |
+Run these npm scripts inside the `frontend/` directory:
+
+| Command | Action |
 |---|---|
-| `npm run dev` | Menjalankan server pengembangan Vite lokal (port 5173) |
-| `npm run build` | Melakukan pemeriksaan tipe TypeScript (`tsc -b`) dan build produksi Vite |
-| `npm run lint` | Menjalankan linter ESLint untuk validasi kualitas kode |
-| `npm run preview` | Meninjau hasil build produksi secara lokal |
+| `npm run dev` | Starts the Vite local development server on port 5173 |
+| `npm run build` | Runs TypeScript compilation (`tsc -b`) and generates production assets |
+| `npm run lint` | Executes ESLint to check code quality and adherence to conventions |
+| `npm run preview` | Serves the production build locally for verification |
 
----
+## Demo Credentials
 
-## 🧪 Kredensial Demo Awal
+Use these credentials to test the authentication flow and patient management interface:
 
-Untuk menguji fitur autentikasi pada antarmuka:
 - **Username**: `admin`
-- **Kata Sandi**: `admin123`
-- **Role**: Dokter Spesialis Penyakit Dalam (`dr. Hendra Pratama, Sp.PD`)
+- **Password**: `admin123`
+- **Assigned Persona**: Dr. Hendra Pratama, Sp.PD (Specialist in Internal Medicine)

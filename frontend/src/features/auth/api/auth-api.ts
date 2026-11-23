@@ -20,7 +20,7 @@ export async function loginApi(credentials: LoginCredentials): Promise<AuthRespo
       id: 'USR-001',
       name: 'dr. Hendra Pratama, Sp.PD',
       username: 'admin',
-      email: 'hendra.pratama@inovamedika.com',
+      email: 'hendra.pratama@simplesimrs.org',
       role: 'doctor',
       unit: 'Poli Penyakit Dalam',
     };

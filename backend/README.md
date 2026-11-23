@@ -1,234 +1,158 @@
-<p align="center">
-    <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://www.yiiframework.com/image/design/logo/yii3_full_for_dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="https://www.yiiframework.com/image/design/logo/yii3_full_for_light.svg">
-        <img src="https://www.yiiframework.com/image/design/logo/yii3_full_for_light.svg" alt="Yii Framework" height="100">
-    </picture>
-    <h1 align="center">Yii 2 Basic Project Template</h1>
-    <br>
-</p>
+# Simple SIMRS Backend
 
-Yii 2 Basic Project Template is a skeleton [Yii 2](https://www.yiiframework.com/) application best for
-rapidly creating small projects.
+This document details the backend architecture, directory layout, environment configuration, and execution workflows for Simple SIMRS. You can run the service within Docker containers, connect to PostgreSQL 17, execute Codeception test suites, and audit static types with PHPStan.
 
-The template contains the basic features including user login/logout and a contact page.
-It includes all commonly used configurations that would allow you to focus on adding new
-features to your application.
+## System Architecture
 
-[![Latest Stable Version](https://img.shields.io/packagist/v/yiisoft/yii2-app-basic.svg?style=for-the-badge&label=Stable&logo=packagist)](https://packagist.org/packages/yiisoft/yii2-app-basic)
-[![Total Downloads](https://img.shields.io/packagist/dt/yiisoft/yii2-app-basic.svg?style=for-the-badge&label=Downloads)](https://packagist.org/packages/yiisoft/yii2-app-basic)
-[![build](https://img.shields.io/github/actions/workflow/status/yiisoft/yii2-app-basic/build.yml?style=for-the-badge&logo=github&label=Build)](https://github.com/yiisoft/yii2-app-basic/actions?query=workflow%3Abuild)
-[![codecov](https://img.shields.io/codecov/c/github/yiisoft/yii2-app-basic.svg?style=for-the-badge&logo=codecov&logoColor=white&label=Codecov)](https://codecov.io/gh/yiisoft/yii2-app-basic)
-[![Static Analysis](https://img.shields.io/github/actions/workflow/status/yiisoft/yii2-app-basic/static.yml?style=for-the-badge&label=Static)](https://github.com/yiisoft/yii2-app-basic/actions/workflows/static.yml)
+Simple SIMRS backend operates as a web and API application service built on the Yii 2 framework:
 
-<picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/home-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="docs/images/home-light.png">
-    <img src="docs/images/home-light.png" alt="Web Application Basic">
-</picture>
+- **Framework Core**: Yii 2.0.54 running on PHP 8.4
+- **Database Engine**: PostgreSQL 17 via PDO PostgreSQL driver (`pdo_pgsql`)
+- **Web Server**: Apache HTTP Server with mod_rewrite enabled and `/var/www/html/web` document root
+- **Mail Delivery**: Symfony Mailer integration (`yiisoft/yii2-symfonymailer`)
+- **Testing and Quality**: Codeception 5, PHPStan static analyzer, and PHP_CodeSniffer
 
-## Docker
+## Directory Structure
 
-[![Apache](https://img.shields.io/github/actions/workflow/status/yiisoft/yii2-app-basic/docker.yml?style=for-the-badge&logo=apache&label=Apache)](https://github.com/yiisoft/yii2-app-basic/actions/workflows/docker.yml)
+The backend organizes application files into standard Yii 2 basic structure:
 
-DIRECTORY STRUCTURE
--------------------
-
-      assets/             contains assets definition
-      commands/           contains console commands (controllers)
-      config/             contains application configurations
-      controllers/        contains Web controller classes
-      mail/               contains view files for e-mails
-      models/             contains model classes
-      runtime/            contains files generated during runtime
-      tests/              contains various tests for the basic application
-      vendor/             contains dependent 3rd-party packages
-      views/              contains view files for the Web application
-      web/                contains the entry script and Web resources
-
-REQUIREMENTS
-------------
-
-The minimum requirement by this project template that your Web server supports PHP 8.2.
-
-INSTALLATION
-------------
-
-> [!IMPORTANT]
-> - The minimum required [PHP](https://www.php.net/) version of Yii is PHP `8.2`.
-
-## Install via Composer
-
-If you do not have [Composer](https://getcomposer.org/), you may install it by following the instructions
-at [getcomposer.org](https://getcomposer.org/doc/00-intro.md#installation-nix).
-
-You can then install this project template using the following command:
-
-~~~
-composer create-project --prefer-dist yiisoft/yii2-app-basic basic
-~~~
-
-Now you should be able to access the application through the following URL, assuming `basic` is the directory
-directly under the Web root.
-
-~~~
-http://localhost/basic/web/
-~~~
-
-## Install from an Archive File
-
-Extract the archive file downloaded from [yiiframework.com](https://www.yiiframework.com/download/) to
-a directory named `basic` that is directly under the Web root.
-
-Set cookie validation key in `config/web.php` file to some random secret string:
-
-```php
-'request' => [
-    // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
-    'cookieValidationKey' => '<secret random string goes here>',
-],
+```text
+backend/
+├── commands/           # Console commands and CLI controllers (HelloController)
+├── config/             # Application configuration files
+│   ├── console.php     # Console application configuration
+│   ├── db.php          # PostgreSQL connection definition
+│   ├── params.php      # Global configuration parameters
+│   ├── test_db.php     # Test database connection configuration
+│   ├── test.php        # Test application configuration
+│   └── web.php         # Web application components, routes, and modules
+├── controllers/        # Web and API controllers (SiteController)
+├── mail/               # Email view templates and layout files
+├── models/             # Domain models and forms (User, LoginForm, ContactForm)
+├── runtime/            # Runtime-generated caches, logs, and debug profiles
+├── tests/              # Codeception test suites
+│   ├── Acceptance/     # End-to-end acceptance tests (PhpBrowser and WebDriver)
+│   ├── Functional/     # Functional application tests
+│   ├── Support/        # Helper traits and test actors
+│   └── Unit/           # Unit tests
+├── views/              # Server-rendered layouts and error view templates
+├── web/                # Public entry point and public web assets
+│   ├── assets/         # Published asset bundles
+│   ├── index.php       # Production entry script
+│   └── index-test.php  # Test entry script
+├── Dockerfile          # PHP 8.4 Apache container definition
+├── codeception.yml     # Codeception test framework configuration
+├── composer.json       # PHP dependencies and composer scripts
+├── phpcs.xml.dist      # PHP_CodeSniffer code style rules
+├── phpstan.neon        # PHPStan static analysis configuration
+└── yii                 # Yii CLI executable script
 ```
 
-You can then access the application through the following URL:
+## Environment Configuration
 
-~~~
-http://localhost/basic/web/
-~~~
+The backend reads runtime parameters from environment variables defined in the root `.env` file:
 
-## Install with Docker
+| Variable | Description | Default Value |
+|---|---|---|
+| `APP_ENV` | Application environment mode | `development` |
+| `COOKIE_VALIDATION_KEY` | Secret key for HTTP request cookie validation | Set a unique random 32-byte string |
+| `DB_HOST` | PostgreSQL host address | `postgres` |
+| `DB_PORT` | PostgreSQL port number | `5432` |
+| `DB_NAME` | PostgreSQL database name | `simrs_db` |
+| `DB_USER` | PostgreSQL database username | `postgres` |
+| `DB_PASSWORD` | PostgreSQL database user password | Empty or password string |
 
-Update your vendor packages
+Configure these values in the root `.env` file before booting the service.
 
-    docker-compose run --rm php composer update --prefer-dist
-    
-Run the installation triggers (creating cookie validation code)
+## Running with Docker
 
-    docker-compose run --rm php composer install    
-    
-Start the container
+Run the backend container using the root `docker-compose.yml` file:
 
-    docker-compose up -d
-    
-You can then access the application through the following URL:
+1. **Start the backend and database containers**:
+   ```bash
+   docker compose up -d backend
+   ```
 
-    http://127.0.0.1:8000
+2. **Check container status**:
+   ```bash
+   docker compose ps backend
+   ```
 
-Run tests inside the container
+3. **View live container logs**:
+   ```bash
+   docker compose logs -f backend
+   ```
 
-    docker compose exec -T php vendor/bin/codecept build
-    docker compose exec -T php vendor/bin/codecept run
+The container exposes port `8080` mapped to internal Apache port `80`. Open `http://localhost:8080` to verify that the service responds.
 
-**NOTES:** 
-- Minimum required Docker engine version `17.04` for development (see [Performance tuning for volume mounts](https://docs.docker.com/docker-for-mac/osxfs-caching/))
-- The default configuration uses a host-volume in your home directory `~/.composer-docker/cache` for Composer caches
+## Running Locally Without Docker
 
+Run the application locally when you have PHP 8.4, Composer, and PostgreSQL installed on your host machine:
 
-CONFIGURATION
--------------
+1. **Install PHP dependencies**:
+   ```bash
+   composer install
+   ```
 
-## Database
+2. **Generate cookie validation key**:
+   ```bash
+   composer run-script post-install-cmd
+   ```
 
-Edit the file `config/db.php` with real data, for example:
+3. **Verify directory permissions**:
+   Ensure that the `runtime/` and `web/assets/` directories are writable by your web server process:
+   ```bash
+   chmod 777 runtime web/assets
+   ```
 
-```php
-return [
-    'class' => 'yii\db\Connection',
-    'dsn' => 'mysql:host=localhost;dbname=yii2basic',
-    'username' => 'root',
-    'password' => '1234',
-    'charset' => 'utf8',
-];
-```
+4. **Start the built-in development server**:
+   ```bash
+   php yii serve --port=8080
+   ```
 
-**NOTES:**
-- Yii won't create the database for you, this has to be done manually before you can access it.
-- Check and edit the other files in the `config/` directory to customize your application as required.
-- Refer to the README in the `tests` directory for information specific to basic application tests.
+## Testing and Quality Verification
 
-TESTING
--------
+The backend repository includes automated tests and static code quality tools.
 
-Tests are located in `tests` directory. They are developed with [Codeception PHP Testing Framework](https://codeception.com/).
-By default, there are 3 test suites:
+### Running Codeception Tests
 
-- `unit`
-- `functional`
-- `acceptance`
+Execute automated test suites using the following commands:
 
-Tests can be executed by running
+- **Run all unit and functional tests**:
+  ```bash
+  composer tests
+  ```
 
-```
-vendor/bin/codecept run --env php-builtin
-```
+- **Run unit tests only**:
+  ```bash
+  vendor/bin/codecept run Unit
+  ```
 
-The command above will execute unit and functional tests. Unit tests are testing the system components, while functional
-tests are for testing user interaction.
+- **Run functional tests only**:
+  ```bash
+  vendor/bin/codecept run Functional
+  ```
 
+- **Run acceptance tests with built-in server**:
+  ```bash
+  vendor/bin/codecept run Acceptance --env php-builtin
+  ```
 
-## Acceptance tests
+### Static Analysis and Code Standards
 
-The `acceptance` suite is configured in `tests/Acceptance.suite.yml`.
+Audit code quality and style compliance using the bundled scripts:
 
-### Acceptance tests (PhpBrowser)
+- **Run PHPStan static analysis**:
+  ```bash
+  composer static
+  ```
 
-By default, acceptance tests use the `PhpBrowser` module and run against the built-in PHP web server started via the
-`php-builtin` environment.
+- **Check PHP_CodeSniffer styling standards**:
+  ```bash
+  composer cs
+  ```
 
-```
-# run all tests with built-in web server
-composer tests
-
-# run acceptance tests only
-vendor/bin/codecept run Acceptance --env php-builtin
-```
-
-### Acceptance tests (WebDriver + Selenium)
-
-To run acceptance tests in a real browser, switch the `acceptance` suite to use the `WebDriver` module.
-`tests/Acceptance.suite.yml` contains an example WebDriver configuration (commented).
-
-1. Download and start [Selenium Server](https://www.selenium.dev/downloads/).
-2. Install the corresponding browser driver (for example. [GeckoDriver](https://github.com/mozilla/geckodriver/releases) or
-   [ChromeDriver](https://googlechromelabs.github.io/chrome-for-testing/)).
-3. Update `tests/Acceptance.suite.yml` to enable `WebDriver` and disable `PhpBrowser`.
-4. Run:
-
-```
-vendor/bin/codecept run Acceptance --env php-builtin
-```
-
-## Code coverage support
-
-Code coverage is configured in `codeception.yml`. You can run your tests and collect coverage with the following command:
-
-```
-#collect coverage for all tests
-vendor/bin/codecept run --coverage --coverage-html --coverage-xml --env php-builtin
-
-#collect coverage only for unit tests
-vendor/bin/codecept run Unit --coverage --coverage-html --coverage-xml --env php-builtin
-
-#collect coverage for unit and functional tests
-vendor/bin/codecept run Functional,Unit --coverage --coverage-html --coverage-xml --env php-builtin
-```
-
-You can see code coverage output under the `tests/Support/output` directory.
-
-## Documentation
-
-- [Internals](docs/internals.md)
-
-## Support the project
-
-[![Open Collective](https://img.shields.io/badge/Open%20Collective-sponsor-7eadf1?style=for-the-badge&logo=open%20collective&logoColor=7eadf1&labelColor=555555)](https://opencollective.com/yiisoft)
-
-## Follow updates
-
-[![Official website](https://img.shields.io/badge/Powered_by-Yii_Framework-green.svg?style=for-the-badge&logo=yii)](https://www.yiiframework.com/)
-[![Follow on X](https://img.shields.io/badge/-Follow%20on%20X-1DA1F2.svg?style=for-the-badge&logo=x&logoColor=white&labelColor=000000)](https://x.com/yiiframework)
-[![Telegram](https://img.shields.io/badge/telegram-join-1DA1F2?style=for-the-badge&logo=telegram)](https://t.me/yii_framework_in_english)
-[![Slack](https://img.shields.io/badge/slack-join-1DA1F2?style=for-the-badge&logo=slack)](https://yiiframework.com/go/slack)
-
-## License
-
-[![License](https://img.shields.io/badge/License-BSD--3--Clause-brightgreen.svg?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=555555)](LICENSE.md)
+- **Fix PHP_CodeSniffer styling violations automatically**:
+  ```bash
+  composer cs-fix
+  ```

@@ -53,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, userSlot }) => 
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             <span style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
-              RS Inova Medika
+              Simple SIMRS
             </span>
             <Badge variant="primary" label="Pusat" />
           </div>

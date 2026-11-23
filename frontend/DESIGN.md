@@ -1,135 +1,152 @@
-# Design System: SIMRS Inova Medika
-**Project ID:** inova-medika-simrs
+# Design System Specification: Simple SIMRS
 
----
+This document specifies the visual theme, semantic color palette, typography hierarchy, component styling rules, and layout constraints for Simple SIMRS. Follow these specifications to maintain visual consistency, light mode integrity, and accessibility across all hospital management surfaces.
 
-## 1. Visual Theme & Atmosphere
+**Project ID:** simple-simrs-frontend
 
-### 1.1 Aesthetic Philosophy: Clinical Precision & Humane Clarity
-SIMRS Inova Medika dirancang sebagai antarmuka sistem informasi manajemen rumah sakit kelas enterprise yang mengedepankan **Clinical Precision, Airy Clarity, Authoritative Calm, dan Humane Accessibility**. 
+## Visual Theme and Atmosphere
 
-Di lingkungan fasilitas kesehatan dan rumah sakit, tenaga medis (dokter, perawat, apoteker, dan staf administrasi) memproses data kritis dalam volume tinggi di bawah tekanan waktu yang ketat. Oleh karena itu, antarmuka ini mengadopsi prinsip:
-- **Light Mode Only (Strict)**: Menolak distraksi mode gelap untuk menjamin keterbacaan data numerik, status triage, dan riwayat pasien yang jernih di bawah pencahayaan ruangan medis.
-- **Zero Visual Clutter**: Mengeliminasi efek visual dekoratif berlebih (seperti gradien neon, skeuomorphism berat, atau border tebal yang tidak fungsional).
-- **High Data Scannability**: Informasi penting (No. RM, DPJP, Status Layanan, Diagnosa Utama) dapat dipindai dalam hitungan detik melalui ritme tipografi dan hierarki warna yang presisi.
+Simple SIMRS delivers an interface for healthcare facilities that emphasizes clinical precision, clarity, and accessibility.
 
----
+Healthcare practitioners, including physicians, nurses, pharmacists, and administrative personnel, process high volumes of clinical records under strict time constraints. The visual design enforces three guiding principles:
 
-## 2. Color Palette & Roles
+- **Light Mode Only**: Disallow dark mode to guarantee legibility for numerical records, triage alerts, and patient histories under clinical facility lighting.
+- **Zero Decorative Clutter**: Remove non-functional gradients, heavy drop shadows, and ornamental borders.
+- **High Data Scannability**: Highlight vital fields including Medical Record Numbers, attending physicians, service status, and diagnoses using consistent typographic rhythm and contrast.
 
-Semua warna dalam sistem didefinisikan secara semantik melalui variabel CSS global pada [src/index.css](file:///c:/new-work-area/personal/inova-medika/frontend/src/index.css) dan tema netral Astryx Design. Seluruh pasangan warna teks dan latar belakang dijamin memenuhi rasio kontras **WCAG 2.2 AA (minimal 4.5:1 untuk teks normal, 3:1 untuk teks besar)**.
+## Color Palette and Semantic Tokens
 
-| Nama Deskriptif | Hex Code & Token CSS | Peran Fungsional |
+The interface defines colors using semantic CSS custom properties in `src/index.css` alongside Astryx theme tokens. All text and background pairings meet Web Content Accessibility Guidelines (WCAG) 2.2 AA contrast standards, providing at least 4.5:1 contrast for normal text and 3:1 for large text.
+
+| Color Name | Token and Value | Functional Role |
 | :--- | :--- | :--- |
-| **Slate Command Dark** | `#0f172a` (`var(--color-text-main)`) | Teks utama, judul halaman, label tombol penting, dan nilai data tabel. Kontras 12.6:1 terhadap putih. |
-| **Subdued Muted Slate** | `#64748b` (`var(--color-text-secondary)`) | Teks sekunder, nama dokter penanggung jawab, timestamp, dan label header tabel. Kontras 4.6:1. |
-| **Whisper Boundary Gray** | `#94a3b8` (`var(--color-text-muted)`) | Helper text, placeholder input, dan ikon status non-aktif. |
-| **Deep Clinical Teal** | `#0d9488` (`var(--color-primary)`) | Warna aksen brand medis utama, tombol aksi primer (*Primary Call-to-Action*), dan indikator aktif. |
-| **Clinical Teal Hover** | `#0f766e` (`var(--color-primary-hover)`) | State hover dan fokus pada tombol aksi primer. |
-| **Soft Medical Cyan Wash** | `#f0fdfa` (`var(--color-primary-light)`) | Latar belakang menu aktif sidebar, tag nomor rekam medis, dan highlight baris terpilih. |
-| **Cyan Accent Border** | `#ccfbf1` (`var(--color-primary-border)`) | Garis tepi halus pada tag rekam medis dan badge aktif. |
-| **Crisp Sterile White** | `#ffffff` (`var(--color-surface)`) | Latar belakang kartu (*Card*), topbar header, modal rekam medis, dan sel data tabel. |
-| **Calm Clinical Canvas** | `#f8fafc` (`var(--color-bg)`) | Latar belakang kanvas aplikasi, sidebar navigasi, dan lajur breadcrumb. |
-| **Clean Boundary Gray** | `#e2e8f0` (`var(--color-border)`) | Garis pembatas kartu, batas sel tabel, divider form, dan separator layout. |
-| **Subdued Header Fill** | `#f1f5f9` (`var(--color-surface-hover)`) | Latar belakang sticky header tabel, baris tabel saat hover, dan header kartu. |
-| **Vitality Emerald** | `#16a34a` (`var(--color-success)`) | Teks status pasien "Selesai" (pulang/sembuh), banner sukses, dan indikator koneksi online. |
-| **Soft Emerald Wash** | `#dcfce7` (`var(--color-success-light)`) | Latar belakang pill badge status "Selesai". |
-| **Urgent Care Amber** | `#d97706` (`var(--color-warning)`) | Teks status "Rawat Inap", badge peringatan klinis, dan stok obat menipis. |
-| **Soft Amber Wash** | `#fef3c7` (`var(--color-warning-light)`) | Latar belakang pill badge status "Rawat Inap". |
-| **Emergency Ruby** | `#dc2626` (`var(--color-error)`) | Teks status pasien "IGD" (gawat darurat), aksi destruktif (hapus/batal), dan pesan validasi gagal. |
-| **Soft Ruby Wash** | `#fee2e2` (`var(--color-error-light)`) | Latar belakang pill badge status "IGD". |
-| **Diagnostic Sapphire** | `#2563eb` (`var(--color-info)`) | Teks status pasien "Rawat Jalan" dan pesan informasi layanan medis. |
-| **Soft Sapphire Wash** | `#dbeafe` (`var(--color-info-light)`) | Latar belakang pill badge status "Rawat Jalan". |
+| **Slate Command Dark** | `var(--color-text-main)` (`#0f172a`) | Primary headings, table text, and form inputs with 12.6:1 contrast on white |
+| **Subdued Muted Slate** | `var(--color-text-secondary)` (`#64748b`) | Secondary descriptions, timestamps, table column headers, and physician titles |
+| **Whisper Boundary Gray** | `var(--color-text-muted)` (`#94a3b8`) | Helper annotations, input placeholder strings, and inactive icons |
+| **Deep Clinical Teal** | `var(--color-primary)` (`#0d9488`) | Brand accent, primary action buttons, active navigation indicators |
+| **Clinical Teal Hover** | `var(--color-primary-hover)` (`#0f766e`) | Hover and active focus states on primary interaction targets |
+| **Soft Medical Cyan Wash** | `var(--color-primary-light)` (`#f0fdfa`) | Active sidebar item backgrounds, medical record code tags, selected rows |
+| **Cyan Accent Border** | `var(--color-primary-border)` (`#ccfbf1`) | Subtle outlines around medical record tags and active indicator pills |
+| **Crisp Sterile White** | `var(--color-surface)` (`#ffffff`) | Card containers, modal sheets, top header bars, and table cell backgrounds |
+| **Calm Clinical Canvas** | `var(--color-bg)` (`#f8fafc`) | Main background surface, sidebar container, and breadcrumb bar |
+| **Clean Boundary Gray** | `var(--color-border)` (`#e2e8f0`) | Card borders, form dividers, table grid lines, and structural separators |
+| **Subdued Header Fill** | `var(--color-surface-hover)` (`#f1f5f9`) | Table sticky headers, card title headers, and row hover highlights |
+| **Vitality Emerald** | `var(--color-success)` (`#16a34a`) | Completed discharge status text, success indicators, and online state dots |
+| **Soft Emerald Wash** | `var(--color-success-light)` (`#dcfce7`) | Background fill for completed status badges |
+| **Urgent Care Amber** | `var(--color-warning)` (`#d97706`) | Inpatient admission status text, triage warning pills, and inventory alerts |
+| **Soft Amber Wash** | `var(--color-warning-light)` (`#fef3c7`) | Background fill for inpatient admission status badges |
+| **Emergency Ruby** | `var(--color-error)` (`#dc2626`) | Emergency Department (Instalasi Gawat Darurat, or IGD) status, destructive actions, validation errors |
+| **Soft Ruby Wash** | `var(--color-error-light)` (`#fee2e2`) | Background fill for emergency status badges and critical alert banners |
+| **Diagnostic Sapphire** | `var(--color-info)` (`#2563eb`) | Outpatient ambulatory status text and informational notices |
+| **Soft Sapphire Wash** | `var(--color-info-light)` (`#dbeafe`) | Background fill for outpatient status badges |
 
----
+## Typography Rules
 
-## 3. Typography Rules
+The typography system pairs geometric sans-serif typefaces for UI text with monospace typefaces for medical data codes.
 
-### 3.1 Tipografi Utama & Monospace Medis
-- **Font Antarmuka Primer**: **Figtree** (`font-family: 'Figtree', sans-serif`), dimuat melalui paket tema resmi `@astryxdesign/theme-neutral`. Figtree memberikan proporsi geometris sans-serif yang modern, bersih, dan sangat mudah dibaca pada layar beresolusi tinggi maupun rendah.
-- **Font Kode Medis**: **Monospace** (`font-family: monospace`), digunakan secara khusus untuk Nomor Rekam Medis (No. RM), kode diagnosa ICD-10, kode tindakan ICD-9-CM, dan format waktu standar rumah sakit agar karakter numerik memiliki lebar seragam (*tabular figures*).
+### Primary and Monospace Fonts
 
-### 3.2 Hierarki & Bobot Teks
-- **Judul Halaman (Page Titles)**: `20px - 24px` | Bold (`700`) | Letter-spacing `-0.02em` | Warna: Slate Command Dark (`#0f172a`).
-- **Judul Bagian & Modal (Section/Modal Titles)**: `16px - 18px` | SemiBold (`600`) | Letter-spacing `-0.01em` | Warna: Slate Command Dark (`#0f172a`).
-- **Header Kolom Tabel (Table Headers)**: `12px - 13px` | SemiBold (`600`) | Text-transform: `none` / sedikit tracking `0.02em` | Warna: Subdued Muted Slate (`#64748b`).
-- **Teks Isi & Sel Tabel (Body / Table Cells)**: `13px - 14px` | Regular (`400`) & Medium (`500`) | Line-height `1.5` | Warna: Slate Command Dark (`#0f172a`).
-- **Metadata, Timestamp & Breadcrumbs**: `12px - 13px` | Regular (`400`) & Medium (`500`) | Warna: Subdued Muted Slate (`#64748b`).
+Simple SIMRS uses two dedicated typeface families:
 
----
+- **Primary Interface Font**: Figtree (`font-family: 'Figtree', sans-serif`), loaded through the `@astryxdesign/theme-neutral` package. Figtree provides geometric clarity across high and low resolution monitors.
+- **Medical Code Font**: Monospace (`font-family: monospace`), reserved for Medical Record Numbers (No. RM), International Classification of Diseases, Tenth Revision (ICD-10) diagnosis codes, International Classification of Diseases, Ninth Revision, Clinical Modification (ICD-9-CM) procedure codes, and standardized hospital timestamps. Monospace figures maintain uniform tabular width across lists.
 
-## 4. Component Stylings
+### Typographic Hierarchy
 
-### 4.1 Buttons (`@astryxdesign/core/Button` / `@/components/ui/Button`)
-- **Geometri & Bentuk**: Sudut melengkung halus (*Gently curved corners*) dengan `border-radius: 8px` (`var(--radius-md)`). Ketinggian minimal 38px untuk menjamin target sentuh (*tap target*) yang nyaman.
-- **Varian**:
-  * **Primary**: Berwarna Deep Clinical Teal (`#0d9488`) dengan teks putih pekat. Digunakan untuk aksi utama ("Lihat RME", "Simpan Data", "Masuk").
-  * **Secondary**: Latar belakang putih dengan border tipis Clean Boundary Gray (`#e2e8f0`) dan teks Slate Command Dark. Digunakan untuk aksi pendukung ("Batal", "Tutup", "Kembali").
-  * **Ghost / Icon**: Latar transparan tanpa border, memunculkan efek wash lembut Subdued Fill saat di-hover. Digunakan untuk toggle sidebar, tombol pagination, dan dismiss modal.
-  * **Destructive**: Berwarna Emergency Ruby (`#dc2626`) dengan teks putih untuk aksi kritis.
-- **Behavior & Interaksi**: Wajib memiliki indikator fokus terlihat (*visible focus ring*) `outline: 2px solid var(--color-primary-focus)` saat navigasi keyboard aktif. Mendukung state loading spinner bawaan tanpa pergeseran layout (*zero layout shift*).
+Apply these sizes and weights to text elements:
 
-### 4.2 Cards / Containers (`@astryxdesign/core/Card` / `@/components/ui/Card`)
-- **Geometri**: Sudut melengkung proporsional (*Generously rounded corners*) dengan `border-radius: 12px` (`var(--radius-lg)`).
-- **Latar Belakang & Border**: Latar putih bersih Crisp Sterile White (`#ffffff`) dengan garis batas halus 1px Clean Boundary Gray (`#e2e8f0`).
-- **Elevasi & Kedalaman Bayangan**: Menggunakan bayangan difus sangat lembut (*Whisper-soft diffused shadow*) `0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)` (`var(--shadow-sm)` hingga `var(--shadow-md)`). Hindari bayangan hitam pekat yang kontras tajam.
+- **Page Titles**: `20px - 24px`, font weight `700`, letter spacing `-0.02em`, color `var(--color-text-main)` (`#0f172a`)
+- **Section and Modal Headings**: `16px - 18px`, font weight `600`, letter spacing `-0.01em`, color `var(--color-text-main)` (`#0f172a`)
+- **Table Column Headers**: `12px - 13px`, font weight `600`, letter spacing `0.02em`, color `var(--color-text-secondary)` (`#64748b`)
+- **Body Text and Data Cells**: `13px - 14px`, font weight `400` or `500`, line height `1.5`, color `var(--color-text-main)` (`#0f172a`)
+- **Metadata, Timestamps, and Breadcrumbs**: `12px - 13px`, font weight `400` or `500`, color `var(--color-text-secondary)` (`#64748b`)
 
-### 4.3 Inputs & Forms (`@astryxdesign/core/TextInput` / `@/components/ui/Input`)
-- **Geometri**: Sudut melengkung halus (`border-radius: 8px`), tinggi field 40px.
-- **Stroke & Border**: Garis 1px Clean Boundary Gray (`#e2e8f0`), bertransisi halus menjadi Deep Clinical Teal (`#0d9488`) dengan soft outer glow saat berstatus `:focus`.
-- **Status Error**: Stroke berganti menjadi Emergency Ruby (`#dc2626`) disertai pesan teks deskriptif di bawah field yang terhubung dengan aksesibilitas screen reader.
+## Component Styling Specifications
 
-### 4.4 Data Tables (`@/components/ui/DataTable`)
-- **Arsitektur Sticky Zero-Collision**:
-  * **Sticky Header**: `position: sticky; top: 0; z-index: 10;` dengan latar belakang buram opak Subdued Header Fill (`#f1f5f9`).
-  * **Sticky Action Column**: `position: sticky; right: 0; z-index: 5;` dengan latar belakang putih solid (`#ffffff`) dan bayangan elevasi di sisi kiri `box-shadow: -4px 0 8px -2px rgba(15, 23, 42, 0.06)`.
-  * **Intersection Cell (Header Kolom Aksi Kanan Atas)**: `position: sticky; top: 0; right: 0; z-index: 20;` dengan latar Subdued Header Fill dan bayangan kiri yang selaras. Menjamin perpotongan sudut kanan atas selalu berada di lapisan teratas tanpa pernah tertutup baris data atau header lain saat scroll diagonal.
-- **Rhythm & Padding Sel**: Padding lega `12px 16px` per sel. Teks sejajar vertikal di tengah (`vertical-align: middle`).
-- **Row Hover State**: Baris berubah menjadi latar belakang Soft Medical Cyan Wash halus (`#f8fafc` atau `#f0fdfa`) saat kursor melintas, memberikan umpan balik visual instan.
+UI components adapt official Astryx primitives and enforce consistent geometry, padding, and interactive states.
 
-### 4.5 Badges & Status Indicators (`@astryxdesign/core/Badge` / `@/components/ui/Badge`)
-- **Bentuk**: Bentuk kapsul melingkar penuh (*Pill-shaped*) dengan `border-radius: 9999px`.
-- **Ukuran**: Padding vertikal `2px` dan horizontal `10px`, font size `12px`, font weight `600`.
-- **Peran Semantik Medis**:
-  * *Rawat Inap*: Urgent Care Amber (`#d97706`) di atas Soft Amber Wash (`#fef3c7`).
-  * *Rawat Jalan*: Diagnostic Sapphire (`#2563eb`) di atas Soft Sapphire Wash (`#dbeafe`).
-  * *IGD (Gawat Darurat)*: Emergency Ruby (`#dc2626`) di atas Soft Ruby Wash (`#fee2e2`).
-  * *Selesai / Pulang*: Vitality Emerald (`#16a34a`) di atas Soft Emerald Wash (`#dcfce7`).
+### Buttons (`@/components/ui/Button`)
 
-### 4.6 Navigation & Layout Components
-- **Sidebar**: Lebar desktop 260px, latar belakang Calm Clinical Canvas (`#f8fafc`), border kanan 1px (`#e2e8f0`). Menu aktif ditandai dengan latar Soft Medical Cyan Wash (`#f0fdfa`), teks Deep Clinical Teal, dan ikon yang selaras.
-- **Top Header**: Ketinggian 64px, posisi `sticky top: 0`, latar Crisp Sterile White (`#ffffff`), border bawah 1px (`#e2e8f0`), elevasi minimal `0 1px 2px 0 rgba(0, 0, 0, 0.03)`.
-- **Breadcrumb**: Terbungkus dalam semantik `<nav aria-label="Breadcrumb">`, menampilkan hierarki navigasi yang jelas dengan delimiter chevron (`/` atau `>`). Elemen daun terakhir berstatus teks statis aktif yang tidak dapat diklik.
+Buttons provide clear visual hierarchy across actions:
 
----
+- **Geometry**: Corners use `border-radius: 8px` (`var(--radius-md)`). The target height measures at least 38px to satisfy touch target guidelines.
+- **Primary Variant**: Uses Deep Clinical Teal (`#0d9488`) with solid white text for primary actions like saving records and submitting login forms.
+- **Secondary Variant**: Uses Crisp Sterile White background with a 1px Clean Boundary Gray (`#e2e8f0`) border and dark slate text for secondary actions like canceling or closing modals.
+- **Ghost Variant**: Uses a transparent background without borders, displaying a subtle hover highlight for sidebar toggles and pagination buttons.
+- **Destructive Variant**: Uses Emergency Ruby (`#dc2626`) with solid white text for irreversible actions.
+- **Focus Rings**: Display a visible focus outline (`outline: 2px solid var(--color-primary-focus)`) during keyboard navigation.
 
-## 5. Layout Principles & Spacing Strategy
+### Cards and Containers (`@/components/ui/Card`)
 
-### 5.1 Skala Spasi (Spacing Scale 4px-Based)
-Seluruh margin, padding, dan celah antar elemen wajib menggunakan skala spasi standar:
-- `var(--space-1)` = `4px` — Jarak micro (ikon ke teks, badge padding).
-- `var(--space-2)` = `8px` — Jarak input label ke field, margin badge.
-- `var(--space-3)` = `12px` — Padding vertikal tabel, gap tombol kecil.
-- `var(--space-4)` = `16px` — Padding horizontal tabel, gap form standar.
-- `var(--space-5)` = `20px` — Jarak antar section dalam kartu.
-- `var(--space-6)` = `24px` — Padding utama canvas halaman dashboard.
-- `var(--space-8)` = `32px` — Jarak antar blok kartu besar.
+Cards organize related form fields and patient summaries into distinct visual blocks:
 
-### 5.2 Responsive Breakpoints
-1. **Desktop (Lebar Layar >= 1024px)**:
-   - Sidebar navigasi bersifat permanen (*fixed*) dengan lebar 260px.
-   - Tabel data ditampilkan dalam lebar optimal dengan fitur sticky header dan sticky right action column aktif.
-   - Padding area kerja utama: `24px` (`var(--space-6)`).
-2. **Tablet (Lebar Layar 768px - 1023px)**:
-   - Sidebar dapat di-collapse menjadi mode mini atau disembunyikan melalui tombol toggle.
-   - Tabel data dibungkus dalam wadah scroll horizontal yang halus (*smooth horizontal overflow container*).
-   - Padding area kerja: `20px` (`var(--space-5)`).
-3. **Mobile (Lebar Layar < 768px)**:
-   - Sidebar bertransformasi menjadi **Slide-over Drawer** dengan overlay gelap transparan (`rgba(15, 23, 42, 0.4)`) dan mekanisme klik backdrop untuk menutup (*click-to-dismiss*).
-   - Topbar menampilkan tombol menu hamburger yang mudah dijangkau ibu jari.
-   - Kontrol toolbar (search, filter, pagination) disusun secara vertikal (*stacked layout*).
-   - Padding area kerja: `16px` (`var(--space-4)`).
+- **Geometry**: Containers use `border-radius: 12px` (`var(--radius-lg)`).
+- **Surfaces**: Crisp Sterile White (`#ffffff`) background paired with a 1px Clean Boundary Gray (`#e2e8f0`) border.
+- **Shadow Depth**: Diffused elevation shadow (`var(--shadow-sm)`: `0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)`). Avoid heavy drop shadows.
 
-### 5.3 Aturan Integritas Styling Global
-- **Aturan Single Global CSS**: Seluruh gaya visual aplikasi hanya boleh bersumber dari [src/index.css](file:///c:/new-work-area/personal/inova-medika/frontend/src/index.css). Dilarang membuat file stylesheet baru yang terpisah.
-- **Aturan Light Mode Murni**: Dilarang menyisipkan media query `@media (prefers-color-scheme: dark)` atau kelas dark mode yang dapat merusak kontras visual standar fasilitas medis SIMRS Inova Medika.
+### Form Inputs (`@/components/ui/Input`)
+
+Inputs prioritize validation visibility and keyboard navigation:
+
+- **Geometry**: Field height measures 40px with `border-radius: 8px`.
+- **Border States**: Uses a 1px Clean Boundary Gray (`#e2e8f0`) outline that transitions to Deep Clinical Teal (`#0d9488`) with an outer glow on focus.
+- **Error State**: Outline changes to Emergency Ruby (`#dc2626`) with descriptive error text linked via accessibility attributes.
+
+### Data Tables (`@/components/ui/DataTable`)
+
+The data table component provides fluid scrolling across high-density clinical datasets:
+
+- **Sticky Header**: Pins to `top: 0` with `z-index: 10` using Subdued Header Fill (`#f1f5f9`).
+- **Sticky Right Action Column**: Pins to `right: 0` with `z-index: 5` using solid white background and an elevation shadow (`box-shadow: -4px 0 8px -2px rgba(15, 23, 42, 0.06)`).
+- **Intersection Anchor**: Pins the top-right header cell to `top: 0` and `right: 0` with `z-index: 20` to prevent visual collision during diagonal scrolling.
+- **Padding and Rhythm**: Cells use `12px 16px` padding with vertical alignment centered.
+- **Hover Highlights**: Rows switch to Soft Medical Cyan Wash (`#f0fdfa`) on cursor hover for immediate visual feedback.
+
+### Status Badges (`@/components/ui/Badge`)
+
+Badges communicate triage urgency and patient workflow states:
+
+- **Pill Shape**: Uses full circular pill geometry (`border-radius: 9999px`) with `2px 10px` padding and `12px` font size.
+- **Inpatient Status**: Urgent Care Amber (`#d97706`) on Soft Amber Wash (`#fef3c7`).
+- **Outpatient Status**: Diagnostic Sapphire (`#2563eb`) on Soft Sapphire Wash (`#dbeafe`).
+- **Emergency Department (IGD) Status**: Emergency Ruby (`#dc2626`) on Soft Ruby Wash (`#fee2e2`).
+- **Completed Status**: Vitality Emerald (`#16a34a`) on Soft Emerald Wash (`#dcfce7`).
+
+### Navigation and Shell Structure
+
+The layout provides clear structural boundaries between navigation and active work surfaces:
+
+- **Sidebar**: Desktop width measures 260px with a Calm Clinical Canvas (`#f8fafc`) background and a 1px right border (`#e2e8f0`). Active menu items display Soft Medical Cyan Wash (`#f0fdfa`) with Deep Clinical Teal text and matching icons.
+- **Top Header**: Height measures 64px at `sticky top: 0`, using Crisp Sterile White (`#ffffff`) background, 1px bottom border (`#e2e8f0`), and subtle elevation.
+- **Breadcrumb Navigation**: Renders inside `<nav aria-label="Breadcrumb">` using chevron separators. The final item represents the active page as unclickable text.
+
+## Layout Principles and Spacing Strategy
+
+All layout spacing follows a four-pixel base increment to preserve alignment across resolutions.
+
+### Spacing Scale
+
+Apply standardized spacing variables for all margins, paddings, and flex gaps:
+
+- `var(--space-1)` (`4px`): Micro offsets, icon-to-label spacing, and badge inner padding
+- `var(--space-2)` (`8px`): Form label margins and badge separation
+- `var(--space-3)` (`12px`): Table cell vertical padding and button gaps
+- `var(--space-4)` (`16px`): Table cell horizontal padding and standard form gaps
+- `var(--space-5)` (`20px`): Spacing between card sections
+- `var(--space-6)` (`24px`): Main dashboard canvas padding
+- `var(--space-8)` (`32px`): Spacing between large card blocks
+
+### Responsive Breakpoints
+
+The layout responds to three viewport tiers:
+
+- **Desktop (Width >= 1024px)**: Fixed 260px sidebar navigation, full data table width with active dual sticky scroll features, and `24px` canvas padding.
+- **Tablet (Width 768px to 1023px)**: Collapsible sidebar navigation, smooth horizontal scroll container for data tables, and `20px` canvas padding.
+- **Mobile (Width < 768px)**: Slide-over drawer sidebar with dark backdrop dismiss (`rgba(15, 23, 42, 0.4)`), topbar hamburger button, vertically stacked search and filter controls, and `16px` canvas padding.
+
+### Global Styling Integrity Rules
+
+Adhere to these non-negotiable styling boundaries:
+
+- **Single Global Stylesheet**: All application styling originates from `src/index.css`. Never generate supplemental CSS files.
+- **Pure Light Mode**: Never add dark mode media queries (`@media (prefers-color-scheme: dark)`) or dark mode toggles that could disrupt clinical contrast standards.
