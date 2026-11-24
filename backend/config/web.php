@@ -244,6 +244,16 @@ $config = [
                 'OPTIONS api/v1/pharmacy/prescriptions/<id:\d+>' => 'api/pharmacy/options',
                 'OPTIONS api/v1/pharmacy/prescriptions' => 'api/pharmacy/options',
 
+                // Billing REST endpoints (Task 27 & Task 28)
+                'GET api/v1/billings' => 'api/billing/index',
+                'GET api/v1/billings/<id:\d+>' => 'api/billing/view',
+                'GET api/v1/billings/<id:\d+>/summary' => 'api/billing/summary',
+                'POST api/v1/billings/<id:\d+>/pay' => 'api/billing/pay',
+                'OPTIONS api/v1/billings/<id:\d+>/summary' => 'api/billing/options',
+                'OPTIONS api/v1/billings/<id:\d+>/pay' => 'api/billing/options',
+                'OPTIONS api/v1/billings/<id:\d+>' => 'api/billing/options',
+                'OPTIONS api/v1/billings' => 'api/billing/options',
+
                 // CORS Preflight routing for REST API
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>/<action:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
