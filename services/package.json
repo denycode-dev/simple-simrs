@@ -1,5 +1,5 @@
 {
-  "name": "ancillary-service",
+  "name": "nodejs-service",
   "version": "1.0.0",
   "description": "SIMRS Ancillary Laboratory & Analytics Fastify Service",
   "main": "dist/index.js",

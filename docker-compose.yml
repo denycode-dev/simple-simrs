@@ -25,12 +25,12 @@ services:
     build:
       context: ./services/ancillary-service
       dockerfile: Dockerfile
-    container_name: nodejs-ancillary-service
+    container_name: nodejs-service
     restart: unless-stopped
     ports:
       - "4000:4000"
     volumes:
-      - ./services/ancillary-service:/app
+      - ./services:/app
       - services-node-modules:/app/node_modules
     environment:
       NODE_ENV: development
