@@ -13,7 +13,7 @@ import {
   MasterMedicinesPage,
   MasterDoctorsPage,
 } from '@/features/master';
-import { RegistrationForm } from '@/features/registration';
+import { RegistrationForm, QueueStatusBoard } from '@/features/registration';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components/ui';
 import type { MenuItem } from '@/config/dashboard-menu';
 
@@ -131,6 +131,8 @@ export function App() {
       >
         {activeMenuId === 'reg-new' ? (
           <RegistrationForm />
+        ) : activeMenuId === 'reg-live-board' ? (
+          <QueueStatusBoard />
         ) : activeMenuId === 'master-patients' ? (
           <MasterPatientsPage />
         ) : activeMenuId === 'master-medicines' || activeMenuId === 'master-medicines-alt' ? (
