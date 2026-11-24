@@ -131,6 +131,7 @@ function AppContent() {
   return (
     <Theme theme={themes[defaultThemeSlug]} mode="light">
       <DashboardLayout
+        userRole={user?.role}
         activeMenuId={activeMenuId}
         onSelectMenu={handleSelectMenu}
         breadcrumbItems={breadcrumbTrail}

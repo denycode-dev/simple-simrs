@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DASHBOARD_MENU, type MenuItem } from '@/config/dashboard-menu';
+import { DASHBOARD_MENU, filterMenuByRole, type MenuItem } from '@/config/dashboard-menu';
 import { Badge } from '@/components/ui';
 
 export interface SidebarProps {
@@ -7,6 +7,7 @@ export interface SidebarProps {
   onClose: () => void;
   activeMenuId: string;
   onSelectMenu: (item: MenuItem, parentGroupTitle?: string) => void;
+  userRole?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -14,7 +15,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onClose,
   activeMenuId,
   onSelectMenu,
+  userRole,
 }) => {
+  const visibleMenuGroups = React.useMemo(() => filterMenuByRole(DASHBOARD_MENU, userRole), [userRole]);
   // Simpan state open/close submenu
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
     patients: true, // default expand menu patients
@@ -137,7 +140,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             gap: 'var(--space-5)',
           }}
         >
-          {DASHBOARD_MENU.map((group, groupIdx) => (
+          {visibleMenuGroups.map((group, groupIdx) => (
             <div key={groupIdx}>
               {group.groupTitle && (
                 <div

@@ -10,6 +10,7 @@ export interface DashboardLayoutProps {
   activeMenuId: string;
   onSelectMenu: (item: MenuItem, parentGroupTitle?: string) => void;
   breadcrumbItems: BreadcrumbItem[];
+  userRole?: string;
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
@@ -18,6 +19,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   activeMenuId,
   onSelectMenu,
   breadcrumbItems,
+  userRole,
 }) => {
   // Mobile / desktop sidebar toggle state
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -33,6 +35,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     >
       {/* Dynamic Collapsible Sidebar */}
       <Sidebar
+        userRole={userRole}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         activeMenuId={activeMenuId}
