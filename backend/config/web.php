@@ -145,6 +145,16 @@ $config = [
                 'POST api/v1/auth/logout' => 'api/auth/logout',
                 'OPTIONS api/v1/auth/<action:(login|me|logout)>' => 'api/auth/options',
 
+                // Patients Master REST endpoints (Task 8)
+                'GET api/v1/patients' => 'api/patient/index',
+                'POST api/v1/patients' => 'api/patient/create',
+                'GET api/v1/patients/<id:\d+>' => 'api/patient/view',
+                'PUT api/v1/patients/<id:\d+>' => 'api/patient/update',
+                'PATCH api/v1/patients/<id:\d+>' => 'api/patient/update',
+                'DELETE api/v1/patients/<id:\d+>' => 'api/patient/delete',
+                'OPTIONS api/v1/patients/<id:\d+>' => 'api/patient/options',
+                'OPTIONS api/v1/patients' => 'api/patient/options',
+
                 // CORS Preflight routing for REST API
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>/<action:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
