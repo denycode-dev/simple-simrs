@@ -5,3 +5,4 @@ export * from './components/PatientFilterBar';
 export * from './components/PatientList';
 export * from './api/patients-api';
 export * from './components/PatientTable';
+export * from './pages/PatientsPage';

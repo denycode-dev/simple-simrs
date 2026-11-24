@@ -8,7 +8,7 @@ vi.mock('@/lib/api-client', () => ({
     if (endpoint.includes('/patients')) {
       return Promise.resolve({
         success: true,
-        data: [{ id: 1, name: 'Budi Santoso', medical_record_number: 'RM-202611-00001', nik: '320199**********', bpjs_number: '0001234567890' }],
+        data: [{ id: 1, name: 'Budi Santoso', medical_record_number: 'RM-202611-00001', nik: '3201990000000001', bpjs_number: '0001234567890' }],
       });
     }
     if (endpoint.includes('/polyclinics')) {
@@ -34,13 +34,20 @@ vi.mock('@/lib/api-client', () => ({
 }));
 
 describe('RegistrationForm', () => {
-  it('renders patient registration form with patient search and insurance selector', async () => {
+  it('renders patient registration form with breadcrumbs, steps, and insurance selectable cards', async () => {
     render(<RegistrationForm />);
     expect(await screen.findByText('Formulir Pendaftaran Rawat Jalan')).toBeDefined();
+    expect(await screen.findByText('Layanan Pasien')).toBeDefined();
+    expect(await screen.findByText('Pendaftaran Kunjungan')).toBeDefined();
     expect(await screen.findByText(/Pilih Jenis Penjamin/i)).toBeDefined();
+    expect(await screen.findByText('Ringkasan Kunjungan')).toBeDefined();
+
     const generalOptions = await screen.findAllByText(/Umum/i);
     expect(generalOptions.length).toBeGreaterThan(0);
     const bpjsOptions = await screen.findAllByText(/BPJS Kesehatan/i);
     expect(bpjsOptions.length).toBeGreaterThan(0);
+
+    // Verify submit button is rendered
+    expect(await screen.findByText(/Daftarkan & Terbitkan Karcis Antrean/i)).toBeDefined();
   });
 });

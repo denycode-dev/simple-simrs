@@ -1,28 +1,55 @@
 import React, { useState } from 'react';
+import { useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { Breadcrumb, type BreadcrumbItem } from './Breadcrumb';
+import { useAuth, UserProfile } from '@/features/auth';
+import { getMenuInfoFromPath } from '@/routes/routes.config';
 import type { MenuItem } from '@/config/dashboard-menu';
 
 export interface DashboardLayoutProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   userSlot?: React.ReactNode;
-  activeMenuId: string;
-  onSelectMenu: (item: MenuItem, parentGroupTitle?: string) => void;
-  breadcrumbItems: BreadcrumbItem[];
+  activeMenuId?: string;
+  onSelectMenu?: (item: MenuItem, parentGroupTitle?: string) => void;
+  breadcrumbItems?: BreadcrumbItem[];
   userRole?: string;
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   children,
   userSlot,
-  activeMenuId,
-  onSelectMenu,
-  breadcrumbItems,
-  userRole,
+  activeMenuId: propActiveMenuId,
+  onSelectMenu: propOnSelectMenu,
+  breadcrumbItems: propBreadcrumbItems,
+  userRole: propUserRole,
 }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout, isLoading: isAuthLoading } = useAuth();
+
   // Mobile / desktop sidebar toggle state
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // Derive active menu info from current URL pathname
+  const menuInfo = getMenuInfoFromPath(location.pathname);
+  const activeMenuId = propActiveMenuId || menuInfo.activeMenuId;
+  const breadcrumbItems = propBreadcrumbItems || menuInfo.breadcrumbTrail;
+  const userRole = propUserRole || user?.role;
+
+  const handleSelectMenu = (item: MenuItem, parentGroupTitle?: string) => {
+    if (propOnSelectMenu) {
+      propOnSelectMenu(item, parentGroupTitle);
+    }
+    if (item.path) {
+      navigate(item.path);
+    }
+  };
+
+  const effectiveUserSlot =
+    userSlot !== undefined
+      ? userSlot
+      : user && <UserProfile user={user} onLogout={logout} isLoading={isAuthLoading} />;
 
   return (
     <div
@@ -40,7 +67,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         onClose={() => setIsSidebarOpen(false)}
         activeMenuId={activeMenuId}
         onSelectMenu={(item, parentGroup) => {
-          onSelectMenu(item, parentGroup);
+          handleSelectMenu(item, parentGroup);
           // Di layar ponsel, tutup sidebar setelah memilih menu
           if (window.innerWidth < 1024) {
             setIsSidebarOpen(false);
@@ -62,7 +89,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         {/* Topbar Header */}
         <Header
           onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
-          userSlot={userSlot}
+          userSlot={effectiveUserSlot}
         />
 
         {/* Content Area */}
@@ -78,8 +105,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           {/* Dynamic Breadcrumb Trail */}
           <Breadcrumb items={breadcrumbItems} />
 
-          {/* Main Content Render */}
-          {children}
+          {/* Main Content Render (Children or React Router Outlet) */}
+          {children || <Outlet />}
         </main>
       </div>
     </div>

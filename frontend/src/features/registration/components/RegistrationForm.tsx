@@ -1,36 +1,52 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card } from '@astryxdesign/core/Card';
-import { Button } from '@astryxdesign/core/Button';
-import { TextInput } from '@astryxdesign/core/TextInput';
-import { Selector } from '@astryxdesign/core/Selector';
-import { Banner } from '@astryxdesign/core/Banner';
+import { Section } from '@astryxdesign/core/Section';
+import { Grid } from '@astryxdesign/core/Grid';
 import { HStack } from '@astryxdesign/core/HStack';
 import { VStack } from '@astryxdesign/core/VStack';
+import { Heading } from '@astryxdesign/core/Heading';
+import { Text } from '@astryxdesign/core/Text';
+import { Badge } from '@astryxdesign/core/Badge';
+import { Button } from '@astryxdesign/core/Button';
+import { Divider } from '@astryxdesign/core/Divider';
+import { Banner } from '@astryxdesign/core/Banner';
+import { InfoTip } from '@astryxdesign/core/InfoTip';
+import { Skeleton } from '@astryxdesign/core/Skeleton';
+import { Breadcrumbs, BreadcrumbItem } from '@astryxdesign/core/Breadcrumbs';
+import { Typeahead, TypeaheadItem, createStaticSource, type SearchableItem } from '@astryxdesign/core/Typeahead';
+import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList';
+import { SelectableCard } from '@astryxdesign/core/SelectableCard';
+import { Selector } from '@astryxdesign/core/Selector';
+import { FormLayout } from '@astryxdesign/core/FormLayout';
 import { apiClient } from '@/lib/api-client';
 import { QueueTicketModal, type QueueTicketData } from './QueueTicketModal';
 
-interface PatientOption {
+export interface PatientOption {
   id: number;
   name: string;
   medical_record_number: string;
   nik: string;
   bpjs_number?: string;
+  birth_date?: string;
+  gender?: 'L' | 'P' | string;
+  address?: string;
+  phone?: string;
 }
 
-interface PolyclinicOption {
+export interface PolyclinicOption {
   id: number;
   code: string;
   name: string;
   is_active: boolean;
 }
 
-interface DoctorOption {
+export interface DoctorOption {
   id: number;
   name: string;
   specialization: string;
 }
 
-interface DoctorScheduleOption {
+export interface DoctorScheduleOption {
   id: number;
   doctor_id: number;
   polyclinic_id: number;
@@ -40,7 +56,7 @@ interface DoctorScheduleOption {
   quota: number;
 }
 
-interface RegistrationApiResponse {
+export interface RegistrationApiResponse {
   success: boolean;
   message: string;
   data: {
@@ -57,6 +73,12 @@ interface RegistrationApiResponse {
   };
 }
 
+export interface PatientSearchItem extends SearchableItem<PatientOption> {
+  id: string;
+  label: string;
+  auxiliaryData: PatientOption;
+}
+
 export const RegistrationForm: React.FC = () => {
   const [patients, setPatients] = useState<PatientOption[]>([]);
   const [polyclinics, setPolyclinics] = useState<PolyclinicOption[]>([]);
@@ -65,20 +87,19 @@ export const RegistrationForm: React.FC = () => {
   const [isLoadingMaster, setIsLoadingMaster] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Form Fields
-  const [selectedPatientId, setSelectedPatientId] = useState<string>('');
+  // Form selections
+  const [selectedPatient, setSelectedPatient] = useState<PatientSearchItem | null>(null);
   const [selectedPoliId, setSelectedPoliId] = useState<string>('');
   const [selectedDoctorId, setSelectedDoctorId] = useState<string>('');
   const [selectedScheduleId, setSelectedScheduleId] = useState<string>('');
   const [insuranceType, setInsuranceType] = useState<'GENERAL' | 'BPJS'>('GENERAL');
-  const [patientSearch, setPatientSearch] = useState<string>('');
 
   // Submit & Ticket State
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [createdTicket, setCreatedTicket] = useState<QueueTicketData | null>(null);
 
-  // Zero waterfall parallel fetching
+  // Parallel data fetching: zero waterfall
   const loadMasterData = useCallback(async () => {
     setIsLoadingMaster(true);
     setLoadError(null);
@@ -105,41 +126,101 @@ export const RegistrationForm: React.FC = () => {
     loadMasterData();
   }, [loadMasterData]);
 
-  // Filter schedules based on selected poli and doctor
-  const availableSchedules = schedules.filter((s) => {
-    if (selectedPoliId && s.polyclinic_id !== Number(selectedPoliId)) return false;
-    if (selectedDoctorId && s.doctor_id !== Number(selectedDoctorId)) return false;
-    return true;
-  });
+  // Helper mask NIK
+  const maskNik = (nik?: string): string => {
+    if (!nik || nik.length < 8) return nik || '-';
+    return `${nik.slice(0, 6)}******${nik.slice(-4)}`;
+  };
 
-  // Selected patient details
-  const selectedPatient = patients.find((p) => String(p.id) === selectedPatientId);
+  // Static Search Source for Typeahead
+  const patientSearchItems = useMemo<PatientSearchItem[]>(() => {
+    return patients.map((p) => ({
+      id: String(p.id),
+      label: `${p.name} (${p.medical_record_number})`,
+      auxiliaryData: p,
+    }));
+  }, [patients]);
 
-  // Filtered patients for dropdown/search
-  const filteredPatients = patients.filter((p) => {
-    if (!patientSearch.trim()) return true;
-    const q = patientSearch.toLowerCase();
-    return (
-      p.name.toLowerCase().includes(q) ||
-      p.medical_record_number.toLowerCase().includes(q) ||
-      p.nik.includes(q)
+  const patientSource = useMemo(() => {
+    return createStaticSource<PatientSearchItem>(patientSearchItems, {
+      keywords: (item) => [
+        item.auxiliaryData.medical_record_number,
+        item.auxiliaryData.nik,
+        item.auxiliaryData.name,
+        item.auxiliaryData.bpjs_number || '',
+      ],
+    });
+  }, [patientSearchItems]);
+
+  // Available schedules based on poli and doctor selection
+  const availableSchedules = useMemo(() => {
+    return schedules.filter((s) => {
+      if (selectedPoliId && s.polyclinic_id !== Number(selectedPoliId)) return false;
+      if (selectedDoctorId && s.doctor_id !== Number(selectedDoctorId)) return false;
+      return true;
+    });
+  }, [schedules, selectedPoliId, selectedDoctorId]);
+
+  // Available doctors filtered by selected polyclinic if schedule exists, or all doctors
+  const availableDoctors = useMemo(() => {
+    if (!selectedPoliId) return [];
+    const doctorIdsInPoli = new Set(
+      schedules
+        .filter((s) => s.polyclinic_id === Number(selectedPoliId))
+        .map((s) => s.doctor_id)
     );
-  });
+    if (doctorIdsInPoli.size > 0) {
+      const filtered = doctors.filter((d) => doctorIdsInPoli.has(d.id));
+      if (filtered.length > 0) return filtered;
+    }
+    return doctors;
+  }, [doctors, schedules, selectedPoliId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Entity lookups for summary
+  const selectedPoli = useMemo(
+    () => polyclinics.find((p) => String(p.id) === selectedPoliId),
+    [polyclinics, selectedPoliId]
+  );
+  const selectedDoctor = useMemo(
+    () => doctors.find((d) => String(d.id) === selectedDoctorId),
+    [doctors, selectedDoctorId]
+  );
+  const selectedSchedule = useMemo(
+    () => schedules.find((s) => String(s.id) === selectedScheduleId),
+    [schedules, selectedScheduleId]
+  );
+
+  // Validation
+  const isSubmitDisabled =
+    !selectedPatient ||
+    !selectedPoliId ||
+    !selectedDoctorId ||
+    !selectedScheduleId ||
+    isSubmitting;
+
+  const handleReset = () => {
+    setSelectedPatient(null);
+    setSelectedPoliId('');
+    setSelectedDoctorId('');
+    setSelectedScheduleId('');
+    setInsuranceType('GENERAL');
+    setSubmitError(null);
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setSubmitError(null);
 
-    if (!selectedPatientId) {
-      setSubmitError('Silakan pilih pasien yang akan didaftarkan.');
+    if (!selectedPatient) {
+      setSubmitError('Silakan pilih pasien yang akan didaftarkan terlebih dahulu.');
       return;
     }
     if (!selectedPoliId) {
-      setSubmitError('Silakan pilih poliklinik tujuan.');
+      setSubmitError('Silakan pilih poliklinik tujuan pelayanan.');
       return;
     }
     if (!selectedDoctorId) {
-      setSubmitError('Silakan pilih dokter spesialis DPJP.');
+      setSubmitError('Silakan pilih Dokter Penanggung Jawab (DPJP).');
       return;
     }
     if (!selectedScheduleId) {
@@ -154,7 +235,7 @@ export const RegistrationForm: React.FC = () => {
       const res = await apiClient<RegistrationApiResponse>('/registrations', {
         method: 'POST',
         body: JSON.stringify({
-          patient_id: Number(selectedPatientId),
+          patient_id: Number(selectedPatient.id),
           polyclinic_id: Number(selectedPoliId),
           doctor_id: Number(selectedDoctorId),
           schedule_id: Number(selectedScheduleId),
@@ -163,27 +244,23 @@ export const RegistrationForm: React.FC = () => {
         }),
       });
 
-      const poli = polyclinics.find((p) => p.id === Number(selectedPoliId));
-      const doc = doctors.find((d) => d.id === Number(selectedDoctorId));
-
       setCreatedTicket({
         id: res.data.id,
         queue_number: res.data.queue_number,
         queue_sequence: res.data.queue_sequence,
-        patient_name: selectedPatient?.name || 'Pasien',
-        medical_record_number: selectedPatient?.medical_record_number || '-',
-        nik: selectedPatient?.nik,
-        polyclinic_name: poli?.name || 'Poliklinik Rawat Jalan',
-        doctor_name: doc?.name || 'Dokter DPJP',
+        patient_name: selectedPatient.auxiliaryData.name || 'Pasien',
+        medical_record_number: selectedPatient.auxiliaryData.medical_record_number || '-',
+        nik: selectedPatient.auxiliaryData.nik,
+        polyclinic_name: selectedPoli?.name || 'Poliklinik Rawat Jalan',
+        doctor_name: selectedDoctor?.name || 'Dokter DPJP',
         insurance_type: insuranceType,
         registration_date: res.data.registration_date,
         status: res.data.status,
       });
 
-      // Reset selection
-      setSelectedPatientId('');
+      // Reset selection setelah berhasil
+      setSelectedPatient(null);
       setSelectedScheduleId('');
-      setPatientSearch('');
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Gagal memproses pendaftaran kunjungan.');
     } finally {
@@ -191,232 +268,570 @@ export const RegistrationForm: React.FC = () => {
     }
   };
 
-  return (
-    <section aria-labelledby="registration-form-heading" className="max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h2
-          id="registration-form-heading"
-          className="text-2xl font-bold text-slate-900 tracking-tight"
-        >
-          Formulir Pendaftaran Rawat Jalan
-        </h2>
-        <p className="text-sm text-slate-500 mt-1">
-          Pendaftaran kunjungan pasien umum dan BPJS Kesehatan dengan generator nomor antrean harian otomatis.
-        </p>
-      </div>
+  const todayFormatted = useMemo(() => {
+    return new Intl.DateTimeFormat('id-ID', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(new Date());
+  }, []);
 
+  return (
+    <Section
+      variant="transparent"
+      style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '0 0 var(--space-8) 0',
+      }}
+    >
+      {/* 1. Breadcrumbs Trail */}
+      <VStack gap={3} style={{ marginBottom: 'var(--space-5)' }}>
+        <Breadcrumbs>
+          <BreadcrumbItem>Layanan Pasien</BreadcrumbItem>
+          <BreadcrumbItem>Pendaftaran Kunjungan</BreadcrumbItem>
+          <BreadcrumbItem isCurrent>Rawat Jalan</BreadcrumbItem>
+        </Breadcrumbs>
+
+        {/* 2. Page Header & Live Badges */}
+        <HStack justify="between" align="center" wrap="wrap" gap={3}>
+          <VStack gap={1}>
+            <Heading level={2}>Formulir Pendaftaran Rawat Jalan</Heading>
+            <Text type="body" style={{ color: 'var(--color-text-secondary)' }}>
+              Pendaftaran kunjungan pasien umum dan BPJS Kesehatan dengan generator nomor antrean harian otomatis.
+            </Text>
+          </VStack>
+
+          <HStack gap={2} align="center">
+            <Badge variant="teal" label={todayFormatted} />
+            <Badge variant="neutral" label="Unit: Pusat" />
+          </HStack>
+        </HStack>
+      </VStack>
+
+      {/* Global Alerts */}
       {loadError && (
-        <div className="mb-4">
-          <Banner status="error" title="Gagal Memuat Master Data" description={loadError} container="card" />
-        </div>
+        <VStack gap={2} style={{ marginBottom: 'var(--space-4)' }}>
+          <Banner
+            status="error"
+            title="Gagal Memuat Master Data"
+            description={loadError}
+          />
+        </VStack>
       )}
 
       {submitError && (
-        <div className="mb-4">
-          <Banner status="error" title="Gagal Menyimpan Pendaftaran" description={submitError} container="card" />
-        </div>
+        <VStack gap={2} style={{ marginBottom: 'var(--space-4)' }}>
+          <Banner
+            status="error"
+            title="Gagal Menyimpan Pendaftaran"
+            description={submitError}
+          />
+        </VStack>
       )}
 
-      <Card elevation="low" padding={6}>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Section 1: Pemilihan Pasien */}
-          <div>
-            <h3 className="text-base font-bold text-slate-900 mb-3">
-              1. Identitas Pasien
-            </h3>
+      {/* Two-Column Responsive Layout: 2/3 Form Steps & 1/3 Sticky Summary */}
+      <Grid columns={{ minWidth: 320, max: 3 }} gap={5}>
+        {/* =========================================================================
+            LEFT COLUMN: 3 Steps Form (Occupies 2 spans on desktop)
+            ========================================================================= */}
+        <VStack gap={5} style={{ gridColumn: 'span 2' }}>
+          {/* STEP 1: IDENTITAS PASIEN */}
+          <Card elevation="low" padding={6}>
+            <VStack gap={4}>
+              <HStack justify="between" align="center">
+                <HStack gap={2} align="center">
+                  <Badge variant="teal" label="Langkah 1" />
+                  <Heading level={3}>Identitas Pasien</Heading>
+                </HStack>
 
-            <VStack gap={3}>
-              <TextInput
-                label="Cari Pasien (No. RM, NIK, atau Nama)"
-                placeholder="Ketik untuk memfilter daftar pasien..."
-                value={patientSearch}
-                onChange={(val) => setPatientSearch(val)}
-                width="100%"
-              />
+                {selectedPatient && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    label="Ganti Pasien"
+                    onClick={() => setSelectedPatient(null)}
+                  />
+                )}
+              </HStack>
 
-              <Selector
-                label="Pilih Pasien Terdaftar *"
-                value={selectedPatientId}
-                onChange={(val) => setSelectedPatientId(val)}
-                options={[
-                  { value: '', label: `-- Pilih Pasien Dari Direktori (${filteredPatients.length} ditemukan) --` },
-                  ...filteredPatients.map((p) => ({
-                    value: String(p.id),
-                    label: `[${p.medical_record_number}] ${p.name} - NIK: ${p.nik}`,
-                  })),
-                ]}
-                isDisabled={isLoadingMaster}
-                width="100%"
-              />
+              <Divider orientation="horizontal" />
 
-              {selectedPatient && (
-                <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg text-xs flex justify-between flex-wrap gap-2 text-teal-950">
-                  <div>
-                    <strong>{selectedPatient.name}</strong> • RM:{' '}
-                    <span className="font-mono font-bold text-teal-800">
-                      {selectedPatient.medical_record_number}
-                    </span>
-                  </div>
-                  <div>
-                    NIK: <span className="font-mono">{selectedPatient.nik}</span>
-                    {selectedPatient.bpjs_number && (
-                      <span className="ml-3">
-                        BPJS: <span className="font-mono">{selectedPatient.bpjs_number}</span>
-                      </span>
+              {isLoadingMaster ? (
+                <VStack gap={3}>
+                  <Skeleton height="40px" width="100%" />
+                  <Skeleton height="80px" width="100%" />
+                </VStack>
+              ) : selectedPatient ? (
+                /* Selected Patient Summary Card using MetadataList */
+                <Card
+                  variant="muted"
+                  padding={4}
+                  style={{
+                    backgroundColor: 'var(--color-primary-light)',
+                    borderColor: 'var(--color-primary-border)',
+                  }}
+                >
+                  <VStack gap={3}>
+                    <HStack justify="between" align="center" wrap="wrap" gap={2}>
+                      <HStack gap={2} align="center">
+                        <Heading level={4}>{selectedPatient.auxiliaryData.name}</Heading>
+                        <Badge
+                          variant={selectedPatient.auxiliaryData.bpjs_number ? 'success' : 'teal'}
+                          label={
+                            selectedPatient.auxiliaryData.bpjs_number
+                              ? 'BPJS Aktif'
+                              : 'Pasien Umum / Mandiri'
+                          }
+                        />
+                      </HStack>
+                      <Text
+                        type="code"
+                        style={{
+                          fontWeight: 700,
+                          color: 'var(--color-primary)',
+                          fontSize: '0.9375rem',
+                        }}
+                      >
+                        {selectedPatient.auxiliaryData.medical_record_number}
+                      </Text>
+                    </HStack>
+
+                    <Divider orientation="horizontal" />
+
+                    <MetadataList columns="multi">
+                      <MetadataListItem label="No. Rekam Medis">
+                        <Text type="code" style={{ fontWeight: 600 }}>
+                          {selectedPatient.auxiliaryData.medical_record_number}
+                        </Text>
+                      </MetadataListItem>
+                      <MetadataListItem label="NIK Kependudukan">
+                        <Text type="code">
+                          {maskNik(selectedPatient.auxiliaryData.nik)}
+                        </Text>
+                      </MetadataListItem>
+                      <MetadataListItem label="Jenis Kelamin">
+                        <Text type="body">
+                          {selectedPatient.auxiliaryData.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
+                        </Text>
+                      </MetadataListItem>
+                      <MetadataListItem label="Tanggal Lahir">
+                        <Text type="body">
+                          {selectedPatient.auxiliaryData.birth_date || '-'}
+                        </Text>
+                      </MetadataListItem>
+                      <MetadataListItem label="No. BPJS Kesehatan">
+                        <Text type="code">
+                          {selectedPatient.auxiliaryData.bpjs_number || 'Tidak Terdaftar'}
+                        </Text>
+                      </MetadataListItem>
+                      <MetadataListItem label="Alamat Domisili">
+                        <Text type="body">
+                          {selectedPatient.auxiliaryData.address || '-'}
+                        </Text>
+                      </MetadataListItem>
+                    </MetadataList>
+                  </VStack>
+                </Card>
+              ) : (
+                /* Typeahead Pasien Pintar */
+                <VStack gap={2}>
+                  <Typeahead<PatientSearchItem>
+                    label="Cari Pasien (No. RM, NIK, atau Nama)"
+                    placeholder="Ketik nama pasien, nomor RM, atau NIK kependudukan..."
+                    searchSource={patientSource}
+                    value={selectedPatient}
+                    onChange={(item) => setSelectedPatient(item)}
+                    isRequired
+                    width="100%"
+                    description="Pencarian terpadu data rekam medis pasien secara langsung."
+                    renderItem={(item) => (
+                      <TypeaheadItem
+                        item={item}
+                        description={`No. RM: ${item.auxiliaryData.medical_record_number} • NIK: ${maskNik(item.auxiliaryData.nik)} • ${item.auxiliaryData.gender === 'L' ? 'Laki-laki' : 'Perempuan'}`}
+                      />
                     )}
-                  </div>
-                </div>
+                    emptySearchText={
+                      <VStack gap={2} align="center" style={{ padding: 'var(--space-3) 0' }}>
+                        <Text type="supporting" style={{ color: 'var(--color-text-muted)' }}>
+                          Pasien tidak ditemukan dalam basis data rekam medis.
+                        </Text>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          label="Daftarkan Pasien Baru"
+                          onClick={() => {
+                            window.location.hash = '#/master/patients';
+                          }}
+                        />
+                      </VStack>
+                    }
+                  />
+                  <Text type="supporting" style={{ color: 'var(--color-text-muted)' }}>
+                    Total pasien terindeks: {patients.length} rekam medis aktif.
+                  </Text>
+                </VStack>
               )}
             </VStack>
-          </div>
+          </Card>
 
-          {/* Section 2: Pemilihan Poliklinik & Dokter */}
-          <div className="pt-4 border-t border-slate-200">
-            <h3 className="text-base font-bold text-slate-900 mb-3">
-              2. Tujuan Poliklinik & Dokter DPJP
-            </h3>
+          {/* STEP 2: POLIKLINIK & DOKTER DPJP */}
+          <Card elevation="low" padding={6}>
+            <VStack gap={4}>
+              <HStack gap={2} align="center">
+                <Badge variant="teal" label="Langkah 2" />
+                <Heading level={3}>Tujuan Poliklinik & Dokter DPJP</Heading>
+              </HStack>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Selector
-                label="Poliklinik Tujuan *"
-                value={selectedPoliId}
-                onChange={(val) => {
-                  setSelectedPoliId(val);
-                  setSelectedScheduleId('');
-                }}
-                options={[
-                  { value: '', label: '-- Pilih Poliklinik --' },
-                  ...polyclinics.map((poli) => ({
-                    value: String(poli.id),
-                    label: `${poli.name} (${poli.code})`,
-                  })),
-                ]}
-                width="100%"
-              />
+              <Divider orientation="horizontal" />
 
-              <Selector
-                label="Dokter Spesialis DPJP *"
-                value={selectedDoctorId}
-                onChange={(val) => {
-                  setSelectedDoctorId(val);
-                  setSelectedScheduleId('');
-                }}
-                options={[
-                  { value: '', label: '-- Pilih Dokter DPJP --' },
-                  ...doctors.map((doc) => ({
-                    value: String(doc.id),
-                    label: `${doc.name} (${doc.specialization})`,
-                  })),
-                ]}
-                width="100%"
-              />
-            </div>
+              <FormLayout direction="vertical">
+                {/* Grid 2 Kolom untuk Poliklinik dan Dokter */}
+                <Grid columns={{ minWidth: 260, max: 2 }} gap={4}>
+                  <Selector
+                    label="Poliklinik Tujuan"
+                    value={selectedPoliId}
+                    onChange={(val) => {
+                      setSelectedPoliId(val);
+                      setSelectedDoctorId('');
+                      setSelectedScheduleId('');
+                    }}
+                    isRequired
+                    options={[
+                      { value: '', label: '-- Pilih Poliklinik --' },
+                      ...polyclinics.map((poli) => ({
+                        value: String(poli.id),
+                        label: `${poli.name} (${poli.code})`,
+                      })),
+                    ]}
+                    width="100%"
+                  />
 
-            <div className="mt-4">
-              <Selector
-                label="Jadwal Praktik Dokter Tersedia *"
-                value={selectedScheduleId}
-                onChange={(val) => setSelectedScheduleId(val)}
-                options={[
-                  {
-                    value: '',
-                    label:
-                      availableSchedules.length === 0
-                        ? '-- Tidak ada jadwal sesuai pilihan Poli / Dokter --'
-                        : '-- Pilih Jadwal Praktik Hari Ini --',
-                  },
-                  ...availableSchedules.map((s) => ({
-                    value: String(s.id),
-                    label: `Hari ${s.day_of_week} (${s.start_time} - ${s.end_time} WIB) • Kuota: ${s.quota} pasien`,
-                  })),
-                ]}
-                width="100%"
-              />
-            </div>
-          </div>
+                  <VStack gap={1}>
+                    <HStack justify="between" align="center">
+                      <Text type="label" style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>
+                        Dokter Penanggung Jawab (DPJP) *
+                      </Text>
+                      <InfoTip content="Dokter Penanggung Jawab Pelayanan (DPJP) yang memimpin dan bertanggung jawab penuh atas rangkaian asuhan medis pasien." />
+                    </HStack>
+                    <Selector
+                      label="Dokter Penanggung Jawab (DPJP)"
+                      isLabelHidden
+                      value={selectedDoctorId}
+                      onChange={(val) => {
+                        setSelectedDoctorId(val);
+                        setSelectedScheduleId('');
+                      }}
+                      isRequired
+                      isDisabled={!selectedPoliId}
+                      description={
+                        !selectedPoliId
+                          ? 'Pilih poliklinik terlebih dahulu'
+                          : 'Pilih dokter spesialis penanggung jawab'
+                      }
+                      options={[
+                        {
+                          value: '',
+                          label: !selectedPoliId
+                            ? '-- Pilih Poliklinik Terlebih Dahulu --'
+                            : '-- Pilih Dokter DPJP --',
+                        },
+                        ...availableDoctors.map((doc) => ({
+                          value: String(doc.id),
+                          label: `${doc.name} (${doc.specialization})`,
+                        })),
+                      ]}
+                      width="100%"
+                    />
+                  </VStack>
+                </Grid>
 
-          {/* Section 3: Jenis Penjamin (Umum vs BPJS) */}
-          <div className="pt-4 border-t border-slate-200">
-            <h3 className="text-base font-bold text-slate-900 mb-1">
-              3. Pilih Jenis Penjamin
-            </h3>
-            <p className="text-xs text-slate-500 mb-3">
-              Pasien BPJS berhak atas pembebasan biaya pendaftaran dan layanan rawat jalan terpadu.
-            </p>
+                {/* Jadwal Praktik Dokter */}
+                <VStack gap={2} style={{ marginTop: 'var(--space-3)' }}>
+                  <Selector
+                    label="Jadwal Praktik Dokter Hari Ini"
+                    value={selectedScheduleId}
+                    onChange={(val) => setSelectedScheduleId(val)}
+                    isRequired
+                    isDisabled={!selectedDoctorId}
+                    description={
+                      !selectedDoctorId
+                        ? 'Pilih dokter terlebih dahulu untuk melihat jadwal'
+                        : 'Pilih sesi praktik aktif dokter'
+                    }
+                    options={[
+                      {
+                        value: '',
+                        label: !selectedDoctorId
+                          ? '-- Pilih Dokter Terlebih Dahulu --'
+                          : availableSchedules.length === 0
+                          ? '-- Tidak Ada Jadwal Praktik Hari Ini --'
+                          : '-- Pilih Jadwal Praktik Hari Ini --',
+                      },
+                      ...availableSchedules.map((s) => ({
+                        value: String(s.id),
+                        label: `Hari ${s.day_of_week} (${s.start_time} - ${s.end_time} WIB) • ${
+                          s.quota <= 0 ? '[Penuh / Kuota 0]' : `Sisa Kuota: ${s.quota} pasien`
+                        }`,
+                        disabled: s.quota <= 0,
+                      })),
+                    ]}
+                    width="100%"
+                  />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <label
-                className={`flex items-center gap-3 p-3.5 rounded-lg border-2 cursor-pointer transition-all ${
-                  insuranceType === 'GENERAL'
-                    ? 'border-teal-500 bg-teal-50/70 shadow-xs'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="insurance_type"
-                  value="GENERAL"
-                  checked={insuranceType === 'GENERAL'}
+                  {selectedDoctorId && availableSchedules.length === 0 && (
+                    <Banner
+                      status="info"
+                      title="Tidak Ada Jadwal Praktik Hari Ini"
+                      description="Dokter spesialis yang dipilih belum memiliki sesi praktik pada poliklinik ini untuk hari ini. Silakan pilih dokter atau hari praktik lain."
+                    />
+                  )}
+                </VStack>
+              </FormLayout>
+            </VStack>
+          </Card>
+
+          {/* STEP 3: JENIS PENJAMIN */}
+          <Card elevation="low" padding={6}>
+            <VStack gap={4}>
+              <HStack gap={2} align="center">
+                <Badge variant="teal" label="Langkah 3" />
+                <Heading level={3}>Pilih Jenis Penjamin</Heading>
+              </HStack>
+              <Text type="body" style={{ color: 'var(--color-text-secondary)' }}>
+                Tentukan skema pembiayaan kunjungan pasien untuk penerbitan tagihan kasir atau klaim BPJS.
+              </Text>
+
+              <Divider orientation="horizontal" />
+
+              <Grid columns={{ minWidth: 260, max: 2 }} gap={4}>
+                {/* Kartu 1: Umum / Mandiri */}
+                <SelectableCard
+                  label="Pilih Penjamin Umum / Mandiri (Cash)"
+                  isSelected={insuranceType === 'GENERAL'}
                   onChange={() => setInsuranceType('GENERAL')}
-                  className="text-teal-600 focus:ring-teal-500 h-4 w-4"
-                />
-                <div>
-                  <div className="font-bold text-slate-900 text-sm">
-                    Umum / Mandiri (Cash)
-                  </div>
-                  <div className="text-xs text-slate-500 mt-0.5">
-                    Biaya registrasi: Rp 25.000 (Draf Tagihan Kasir)
-                  </div>
-                </div>
-              </label>
+                  padding={5}
+                >
+                  <VStack gap={2}>
+                    <HStack justify="between" align="center">
+                      <Heading level={4}>Umum / Mandiri (Cash)</Heading>
+                      <Badge
+                        variant={insuranceType === 'GENERAL' ? 'teal' : 'neutral'}
+                        label="Rp 25.000"
+                      />
+                    </HStack>
+                    <Text type="body" style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>
+                      Biaya registrasi: Rp 25.000
+                    </Text>
+                    <Text type="supporting" style={{ color: 'var(--color-text-muted)' }}>
+                      Draf tagihan administrasi rawat jalan otomatis diteruskan ke loket Kasir & Pembayaran.
+                    </Text>
+                  </VStack>
+                </SelectableCard>
 
-              <label
-                className={`flex items-center gap-3 p-3.5 rounded-lg border-2 cursor-pointer transition-all ${
-                  insuranceType === 'BPJS'
-                    ? 'border-emerald-500 bg-emerald-50/70 shadow-xs'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="insurance_type"
-                  value="BPJS"
-                  checked={insuranceType === 'BPJS'}
+                {/* Kartu 2: BPJS Kesehatan */}
+                <SelectableCard
+                  label="Pilih Penjamin BPJS Kesehatan"
+                  isSelected={insuranceType === 'BPJS'}
                   onChange={() => setInsuranceType('BPJS')}
-                  className="text-emerald-600 focus:ring-emerald-500 h-4 w-4"
+                  padding={5}
+                >
+                  <VStack gap={2}>
+                    <HStack justify="between" align="center">
+                      <Heading level={4}>BPJS Kesehatan</Heading>
+                      <Badge
+                        variant={insuranceType === 'BPJS' ? 'success' : 'neutral'}
+                        label="Bebas Biaya"
+                      />
+                    </HStack>
+                    <Text type="body" style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>
+                      Dicover 100% BPJS (Bebas Biaya Pendaftaran)
+                    </Text>
+                    <Text type="supporting" style={{ color: 'var(--color-text-muted)' }}>
+                      Verifikasi nomor rujukan faskes dan penerbitan Surat Eligibilitas Peserta (SEP) terpadu.
+                    </Text>
+                  </VStack>
+                </SelectableCard>
+              </Grid>
+            </VStack>
+          </Card>
+        </VStack>
+
+        {/* =========================================================================
+            RIGHT COLUMN: STICKY SUMMARY PANEL (Occupies 1 span on desktop)
+            ========================================================================= */}
+        <VStack gap={4} style={{ gridColumn: 'span 1' }}>
+          <Card
+            elevation="low"
+            padding={5}
+            style={{
+              position: 'sticky',
+              top: '80px',
+              borderTop: '4px solid var(--color-primary)',
+            }}
+          >
+            <VStack gap={4}>
+              <HStack justify="between" align="center">
+                <Heading level={4}>Ringkasan Kunjungan</Heading>
+                <Badge variant="teal" label="Loket Pendaftaran" />
+              </HStack>
+
+              <Divider orientation="horizontal" />
+
+              {/* Data Pasien */}
+              <VStack gap={1}>
+                <Text
+                  type="label"
+                  style={{
+                    color: 'var(--color-text-muted)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  Identitas Pasien:
+                </Text>
+                {selectedPatient ? (
+                  <VStack gap={0}>
+                    <Text type="body" style={{ fontWeight: 700, color: 'var(--color-text-main)' }}>
+                      {selectedPatient.auxiliaryData.name}
+                    </Text>
+                    <Text
+                      type="code"
+                      style={{ color: 'var(--color-primary)', fontSize: '0.8125rem' }}
+                    >
+                      RM: {selectedPatient.auxiliaryData.medical_record_number}
+                    </Text>
+                  </VStack>
+                ) : (
+                  <Text type="body" style={{ color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                    Belum dipilih
+                  </Text>
+                )}
+              </VStack>
+
+              <Divider orientation="horizontal" />
+
+              {/* Data Layanan & Dokter */}
+              <VStack gap={2}>
+                <VStack gap={0}>
+                  <Text
+                    type="label"
+                    style={{
+                      color: 'var(--color-text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    Poliklinik Tujuan:
+                  </Text>
+                  <Text type="body" style={{ fontWeight: 600 }}>
+                    {selectedPoli ? selectedPoli.name : 'Belum dipilih'}
+                  </Text>
+                </VStack>
+
+                <VStack gap={0}>
+                  <Text
+                    type="label"
+                    style={{
+                      color: 'var(--color-text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    Dokter DPJP:
+                  </Text>
+                  <Text type="body" style={{ fontWeight: 600 }}>
+                    {selectedDoctor ? selectedDoctor.name : 'Belum dipilih'}
+                  </Text>
+                </VStack>
+
+                <VStack gap={0}>
+                  <Text
+                    type="label"
+                    style={{
+                      color: 'var(--color-text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    Jadwal Praktik:
+                  </Text>
+                  <Text type="supporting" style={{ color: 'var(--color-text-secondary)' }}>
+                    {selectedSchedule
+                      ? `Hari ${selectedSchedule.day_of_week} (${selectedSchedule.start_time} - ${selectedSchedule.end_time} WIB)`
+                      : 'Belum dipilih'}
+                  </Text>
+                </VStack>
+              </VStack>
+
+              <Divider orientation="horizontal" />
+
+              {/* Biaya & Penjamin */}
+              <VStack gap={2}>
+                <HStack justify="between" align="center">
+                  <Text type="body" style={{ color: 'var(--color-text-secondary)' }}>
+                    Jenis Penjamin:
+                  </Text>
+                  <Badge
+                    variant={insuranceType === 'BPJS' ? 'success' : 'teal'}
+                    label={insuranceType === 'BPJS' ? 'BPJS Kesehatan' : 'Umum / Mandiri'}
+                  />
+                </HStack>
+
+                <HStack justify="between" align="center">
+                  <Text type="body" style={{ fontWeight: 700, color: 'var(--color-text-main)' }}>
+                    Biaya Registrasi:
+                  </Text>
+                  <Heading
+                    level={4}
+                    style={{
+                      color:
+                        insuranceType === 'BPJS'
+                          ? 'var(--color-success)'
+                          : 'var(--color-primary)',
+                    }}
+                  >
+                    {insuranceType === 'BPJS' ? 'Rp 0' : 'Rp 25.000'}
+                  </Heading>
+                </HStack>
+              </VStack>
+
+              <Divider orientation="horizontal" />
+
+              {/* Aksi Pendaftaran */}
+              <VStack gap={2}>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  label={isSubmitting ? 'Memproses Pendaftaran...' : 'Daftarkan & Terbitkan Karcis Antrean'}
+                  isLoading={isSubmitting}
+                  isDisabled={isSubmitDisabled}
+                  onClick={handleSubmit}
+                  width="100%"
                 />
-                <div>
-                  <div className="font-bold text-slate-900 text-sm">
-                    BPJS Kesehatan
-                  </div>
-                  <div className="text-xs text-slate-500 mt-0.5">
-                    Dicover 100% BPJS (Bebas Biaya Pendaftaran)
-                  </div>
-                </div>
-              </label>
-            </div>
-          </div>
 
-          {/* Tombol Submit */}
-          <HStack justify="end" gap={3} className="pt-4 border-t border-slate-200">
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              label="Daftarkan & Terbitkan Karcis Antrean"
-              isLoading={isSubmitting}
-            />
-          </HStack>
-        </form>
-      </Card>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  label="Reset Formulir"
+                  onClick={handleReset}
+                  isDisabled={isSubmitting}
+                  width="100%"
+                />
+              </VStack>
+            </VStack>
+          </Card>
+        </VStack>
+      </Grid>
 
-      {/* Modal Karcis Antrean */}
+      {/* Modal Cetak Karcis Antrean Setelah Pendaftaran Sukses */}
       {createdTicket && (
         <QueueTicketModal
           ticket={createdTicket}
           onClose={() => setCreatedTicket(null)}
         />
       )}
-    </section>
+    </Section>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DASHBOARD_MENU, filterMenuByRole, type MenuItem } from '@/config/dashboard-menu';
 import { Badge } from '@/components/ui';
 
@@ -20,8 +20,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const visibleMenuGroups = React.useMemo(() => filterMenuByRole(DASHBOARD_MENU, userRole), [userRole]);
   // Simpan state open/close submenu
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
-    patients: true, // default expand menu patients
+    registration: true,
   });
+
+  // Auto-expand parent menu when child menu item is active
+  useEffect(() => {
+    visibleMenuGroups.forEach((group) => {
+      group.items.forEach((item) => {
+        if (item.children && item.children.some((child) => child.id === activeMenuId)) {
+          setExpandedMenus((prev) => ({
+            ...prev,
+            [item.id]: true,
+          }));
+        }
+      });
+    });
+  }, [activeMenuId, visibleMenuGroups]);
 
   const toggleSubmenu = (menuId: string) => {
     setExpandedMenus((prev) => ({
