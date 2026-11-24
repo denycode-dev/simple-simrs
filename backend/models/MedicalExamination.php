@@ -59,6 +59,16 @@ class MedicalExamination extends ActiveRecord
         return $this->hasOne(Doctor::class, ['id' => 'doctor_id']);
     }
 
+    public function getActions(): ActiveQuery
+    {
+        return $this->hasMany(ExaminationAction::class, ['examination_id' => 'id'])->with('action');
+    }
+
+    public function extraFields(): array
+    {
+        return ['registration', 'doctor', 'actions'];
+    }
+
     public function beforeSave($insert): bool
     {
         if (!parent::beforeSave($insert)) {

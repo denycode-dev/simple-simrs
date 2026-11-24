@@ -218,6 +218,13 @@ return [
                 'OPTIONS api/v1/examinations/<id:\d+>' => 'api/examination/options',
                 'OPTIONS api/v1/examinations' => 'api/examination/options',
 
+                // Examination Actions REST endpoints (Task 19)
+                'POST api/v1/examinations/<id:\d+>/actions' => 'api/examination/add-action',
+                'GET api/v1/examinations/<id:\d+>/actions' => 'api/examination/get-actions',
+                'DELETE api/v1/examinations/<id:\d+>/actions/<actionId:\d+>' => 'api/examination/remove-action',
+                'OPTIONS api/v1/examinations/<id:\d+>/actions' => 'api/examination/options',
+                'OPTIONS api/v1/examinations/<id:\d+>/actions/<actionId:\d+>' => 'api/examination/options',
+
                 // CORS Preflight routing for REST API
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>/<action:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>' => 'api/<controller>/options',

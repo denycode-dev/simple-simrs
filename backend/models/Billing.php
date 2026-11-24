@@ -102,22 +102,25 @@ class Billing extends ActiveRecord
         }
 
         // Actions fee
-        $actionsFee = (float) ExaminationAction::find()
-            ->innerJoin('medical_examinations me', 'me.id = examination_actions.examination_id')
+        $actionsFee = (float) (new \yii\db\Query())
+            ->from('{{%examination_actions}} ea')
+            ->innerJoin('{{%medical_examinations}} me', 'me.id = ea.examination_id')
             ->where(['me.registration_id' => $registrationId])
-            ->sum('tariff') ?? 0.00;
+            ->sum('ea.tariff') ?: 0.00;
 
         // Medicines fee
-        $medicinesFee = (float) PrescriptionItem::find()
-            ->innerJoin('prescriptions p', 'p.id = prescription_items.prescription_id')
+        $medicinesFee = (float) (new \yii\db\Query())
+            ->from('{{%prescription_items}} pi')
+            ->innerJoin('{{%prescriptions}} p', 'p.id = pi.prescription_id')
             ->where(['p.registration_id' => $registrationId])
-            ->sum('subtotal') ?? 0.00;
+            ->sum('pi.subtotal') ?: 0.00;
 
         // Lab fee
-        $labFee = (float) LabOrderItem::find()
-            ->innerJoin('lab_orders lo', 'lo.id = lab_order_items.lab_order_id')
+        $labFee = (float) (new \yii\db\Query())
+            ->from('{{%lab_order_items}} loi')
+            ->innerJoin('{{%lab_orders}} lo', 'lo.id = loi.lab_order_id')
             ->where(['lo.registration_id' => $registrationId])
-            ->sum('tariff') ?? 0.00;
+            ->sum('loi.tariff') ?: 0.00;
 
         $billing->total_actions_fee = $actionsFee;
         $billing->total_medicines_fee = $medicinesFee;
