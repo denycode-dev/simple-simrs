@@ -1,0 +1,2228 @@
+{
+  "info": {
+    "_postman_id": "6a9ce664-4f6b-4171-a1a5-b4b740152e8b",
+    "name": "Simple SIMRS",
+    "description": "Dokumentasi REST API SIMRS Pelayanan Rawat Jalan Terintegrasi (PostgreSQL 17, Yii2 Core, RBAC 7 Peran, Auth Bearer Token, Response Formatter Bahasa Indonesia).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "createdAt": "2026-11-23T14:03:57.000Z",
+    "updatedAt": "2026-11-24T02:10:43.000Z",
+    "lastUpdatedBy": "12255985",
+    "uid": "12255985-6a9ce664-4f6b-4171-a1a5-b4b740152e8b"
+  },
+  "item": [
+    {
+      "name": "01. Gateway & Health Check",
+      "item": [
+        {
+          "name": "",
+          "id": "21bd1ecc-ab94-4a6b-b0f5-a27cb8145fec",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ping",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ping"
+              ]
+            }
+          },
+          "response": [],
+          "createdAt": "2026-11-24T00:49:59.000Z",
+          "updatedAt": "2026-11-24T00:49:59.000Z",
+          "uid": "12255985-21bd1ecc-ab94-4a6b-b0f5-a27cb8145fec"
+        },
+        {
+          "name": "",
+          "id": "db9729ff-4fe2-4be7-a7eb-66db132fe949",
+          "request": {
+            "method": "OPTIONS",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "http://localhost:5173"
+              },
+              {
+                "key": "Access-Control-Request-Method",
+                "value": "GET"
+              },
+              {
+                "key": "Access-Control-Request-Headers",
+                "value": "Authorization, Content-Type"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ping",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ping"
+              ]
+            }
+          },
+          "response": [],
+          "createdAt": "2026-11-24T00:49:59.000Z",
+          "updatedAt": "2026-11-24T00:49:59.000Z",
+          "uid": "12255985-db9729ff-4fe2-4be7-a7eb-66db132fe949"
+        }
+      ],
+      "id": "c31fc4da-8872-4135-813a-e8f681fece92",
+      "description": "Endpoint diagnostik status operasional API gateway dan validasi CORS.",
+      "createdAt": "2026-11-24T00:49:59.000Z",
+      "updatedAt": "2026-11-24T00:49:59.000Z",
+      "uid": "12255985-c31fc4da-8872-4135-813a-e8f681fece92"
+    },
+    {
+      "name": "02. Autentikasi & Manajemen Sesi (Auth)",
+      "item": [
+        {
+          "name": "Login Dokter (dr. Budi Santoso, Sp.PD)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set('token', jsonData.data.token);",
+                  "    console.log('Token Bearer dokter berhasil disimpan ke variabel koleksi.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "id": "226ffc70-62eb-4581-91a9-397a6e115fa0",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"dokter\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [],
+          "createdAt": "2026-11-24T00:49:59.000Z",
+          "updatedAt": "2026-11-24T00:49:59.000Z",
+          "uid": "12255985-226ffc70-62eb-4581-91a9-397a6e115fa0"
+        },
+        {
+          "name": "Login Administrator Sistem",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set('token', jsonData.data.token);",
+                  "    console.log('Token Bearer admin berhasil disimpan.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "id": "fe778736-a193-4e4b-974d-b65f02bc76db",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [],
+          "createdAt": "2026-11-24T00:49:59.000Z",
+          "updatedAt": "2026-11-24T00:49:59.000Z",
+          "uid": "12255985-fe778736-a193-4e4b-974d-b65f02bc76db"
+        },
+        {
+          "name": "Login Perawat Rawat Jalan",
+          "id": "fe1dc713-3929-4d64-9b8b-e8d1ff69e71e",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"perawat\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [],
+          "createdAt": "2026-11-24T00:49:59.000Z",
+          "updatedAt": "2026-11-24T00:49:59.000Z",
+          "uid": "12255985-fe1dc713-3929-4d64-9b8b-e8d1ff69e71e"
+        },
+        {
+          "name": "Login Kasir Pembayaran",
+          "id": "2ca54ff4-bf9f-4318-868c-1e247413b0c9",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"kasir\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [],
+          "createdAt": "2026-11-24T00:49:59.000Z",
+          "updatedAt": "2026-11-24T00:49:59.000Z",
+          "uid": "12255985-2ca54ff4-bf9f-4318-868c-1e247413b0c9"
+        },
+        {
+          "name": "Login Petugas Farmasi",
+          "id": "12258925-1e3c-4467-881c-0b89a3ca4ba8",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"apotek\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [],
+          "createdAt": "2026-11-24T00:49:59.000Z",
+          "updatedAt": "2026-11-24T00:49:59.000Z",
+          "uid": "12255985-12258925-1e3c-4467-881c-0b89a3ca4ba8"
+        },
+        {
+          "name": "Login Analis Laboratorium",
+          "id": "eeef45a2-0691-4e78-83b6-7913346d0426",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"lab\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [],
+          "createdAt": "2026-11-24T00:49:59.000Z",
+          "updatedAt": "2026-11-24T00:49:59.000Z",
+          "uid": "12255985-eeef45a2-0691-4e78-83b6-7913346d0426"
+        },
+        {
+          "name": "Login Petugas Pendaftaran",
+          "id": "0556f8f0-1c60-4ae1-948f-3da4468f766e",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"pendaftaran\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [],
+          "createdAt": "2026-11-24T00:49:59.000Z",
+          "updatedAt": "2026-11-24T00:49:59.000Z",
+          "uid": "12255985-0556f8f0-1c60-4ae1-948f-3da4468f766e"
+        },
+        {
+          "name": "Login Validasi Gagal (422 Unprocessable Entity)",
+          "id": "265005e0-5cf0-424a-ae78-958b4dfae2fb",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [],
+          "createdAt": "2026-11-24T00:49:59.000Z",
+          "updatedAt": "2026-11-24T00:49:59.000Z",
+          "uid": "12255985-265005e0-5cf0-424a-ae78-958b4dfae2fb"
+        },
+        {
+          "name": "Login Kredensial Salah (401 Unauthorized)",
+          "id": "a03f8373-c8e4-4eb9-bf6b-5d67688c2b7f",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"dokter\",\n  \"password\": \"password_salah_123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [],
+          "createdAt": "2026-11-24T00:49:59.000Z",
+          "updatedAt": "2026-11-24T00:49:59.000Z",
+          "uid": "12255985-a03f8373-c8e4-4eb9-bf6b-5d67688c2b7f"
+        },
+        {
+          "name": "Profil Pengguna Aktif (GET /api/v1/auth/me)",
+          "id": "e527d704-583d-4971-8bc6-9285fb70c1fc",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": [],
+          "createdAt": "2026-11-24T00:49:59.000Z",
+          "updatedAt": "2026-11-24T00:49:59.000Z",
+          "uid": "12255985-e527d704-583d-4971-8bc6-9285fb70c1fc"
+        },
+        {
+          "name": "Profil Pengguna Tanpa Token (401 Unauthorized)",
+          "id": "440368c2-3e2d-45f8-80f2-e25fa1082c5f",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": [],
+          "createdAt": "2026-11-24T00:49:59.000Z",
+          "updatedAt": "2026-11-24T00:49:59.000Z",
+          "uid": "12255985-440368c2-3e2d-45f8-80f2-e25fa1082c5f"
+        },
+        {
+          "name": "Logout Sesi (POST /api/v1/auth/logout)",
+          "id": "4426543b-73b3-4fec-be10-0932c5898d97",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": [],
+          "createdAt": "2026-11-24T00:49:59.000Z",
+          "updatedAt": "2026-11-24T00:49:59.000Z",
+          "uid": "12255985-4426543b-73b3-4fec-be10-0932c5898d97"
+        }
+      ],
+      "id": "e5060933-2ec5-40a6-a179-fa1bf19c7740",
+      "description": "Endpoint autentikasi RBAC 7 peran, penerbitan Bearer Token, dan pengelolaan sesi profil.",
+      "createdAt": "2026-11-24T00:49:59.000Z",
+      "updatedAt": "2026-11-24T00:49:59.000Z",
+      "uid": "12255985-e5060933-2ec5-40a6-a179-fa1bf19c7740"
+    },
+    {
+      "name": "03. Master Data - Pasien",
+      "item": [
+        {
+          "name": "Daftar Master Pasien (GET /api/v1/patients)",
+          "id": "98411254-ad0a-439c-b744-cccdaa23f5fb",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients?q=&page=1&per-page=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "description": "Pencarian nama, NIK, atau No RM"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Nomor halaman"
+                },
+                {
+                  "key": "per-page",
+                  "value": "20",
+                  "description": "Jumlah data per halaman"
+                }
+              ]
+            },
+            "description": "Mendapatkan daftar seluruh pasien dengan paginasi dan filter pencarian."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:31:05.000Z",
+          "updatedAt": "2026-11-24T01:31:05.000Z",
+          "uid": "12255985-98411254-ad0a-439c-b744-cccdaa23f5fb"
+        },
+        {
+          "name": "Pendaftaran Pasien Baru (POST /api/v1/patients)",
+          "id": "e18139f7-64fc-47c3-b121-574815279abb",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nik\": \"3201999901010001\",\n  \"name\": \"Pasien Uji Coba\",\n  \"birth_date\": \"1998-07-21\",\n  \"gender\": \"L\",\n  \"address\": \"Jl. Pengujian No. 99, Bandung\",\n  \"phone\": \"081298765432\",\n  \"bpjs_number\": \"0009876543210\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients"
+              ]
+            },
+            "description": "Mendaftarkan pasien baru dengan validasi NIK 16 digit dan auto-generated No RM."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:31:05.000Z",
+          "updatedAt": "2026-11-24T01:31:05.000Z",
+          "uid": "12255985-e18139f7-64fc-47c3-b121-574815279abb"
+        },
+        {
+          "name": "Detail Pasien (GET /api/v1/patients/:id)",
+          "id": "7b9ad4e1-5a7d-4629-bfb9-5d1af9a592c2",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "1"
+              ]
+            },
+            "description": "Melihat detail lengkap satu pasien berdasarkan ID."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:31:05.000Z",
+          "updatedAt": "2026-11-24T01:31:05.000Z",
+          "uid": "12255985-7b9ad4e1-5a7d-4629-bfb9-5d1af9a592c2"
+        },
+        {
+          "name": "Perbarui Data Pasien (PUT /api/v1/patients/:id)",
+          "id": "aa62f203-a8b0-4846-ae4b-94b57cfb4060",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"Jl. Asia Afrika No. 12B, Bandung\",\n  \"phone\": \"081234567899\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "1"
+              ]
+            },
+            "description": "Memperbarui data identitas pasien."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:31:05.000Z",
+          "updatedAt": "2026-11-24T01:31:05.000Z",
+          "uid": "12255985-aa62f203-a8b0-4846-ae4b-94b57cfb4060"
+        },
+        {
+          "name": "Hapus Data Pasien (DELETE /api/v1/patients/:id)",
+          "id": "4d33fe52-ce5d-4987-bb35-c90f4f3bd2b7",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "1"
+              ]
+            },
+            "description": "Menghapus data pasien (jika belum memiliki relasi transaksi)."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:31:05.000Z",
+          "updatedAt": "2026-11-24T01:31:05.000Z",
+          "uid": "12255985-4d33fe52-ce5d-4987-bb35-c90f4f3bd2b7"
+        },
+        {
+          "name": "Buka Masking NIK & Kontak Pasien (UU PDP Logged)",
+          "id": "290cd9ca-7564-49fe-961b-ffd673dd162a",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Verifikasi identitas pasien untuk tindakan klinis\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/1/unmask",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "1",
+                "unmask"
+              ]
+            },
+            "description": "Membuka sensor masking data pribadi pasien (NIK dan nomor telepon) sesuai ketentuan UU PDP, secara otomatis mencatat alasan akses ke tabel audit_logs."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T02:06:51.000Z",
+          "updatedAt": "2026-11-24T02:06:51.000Z",
+          "uid": "12255985-290cd9ca-7564-49fe-961b-ffd673dd162a"
+        }
+      ],
+      "id": "379959b6-e4de-4ec5-919c-4ad75f1c9406",
+      "description": "Endpoint pengelolaan data master pasien rawat jalan (NIK 16 digit, No RM unik, CRUD).",
+      "createdAt": "2026-11-24T01:31:05.000Z",
+      "updatedAt": "2026-11-24T01:31:05.000Z",
+      "uid": "12255985-379959b6-e4de-4ec5-919c-4ad75f1c9406"
+    },
+    {
+      "name": "04. Master Data - Dokter, Poli & Jadwal",
+      "item": [
+        {
+          "name": "Daftar Master Dokter (GET /api/v1/doctors)",
+          "id": "d7015f06-24da-4985-8032-af7e61c3592a",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors?q=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "doctors"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "description": "Pencarian nama, NIP, atau spesialisasi dokter"
+                }
+              ]
+            },
+            "description": "Mendapatkan daftar seluruh dokter poliklinik beserta relasi user."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:34:23.000Z",
+          "updatedAt": "2026-11-24T01:34:23.000Z",
+          "uid": "12255985-d7015f06-24da-4985-8032-af7e61c3592a"
+        },
+        {
+          "name": "Detail Dokter (GET /api/v1/doctors/:id)",
+          "id": "940000b8-53cf-4ad3-8fe4-28a4aa1ddc85",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "doctors",
+                "1"
+              ]
+            },
+            "description": "Melihat profil lengkap dokter dan jadwal praktiknya."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:34:23.000Z",
+          "updatedAt": "2026-11-24T01:34:23.000Z",
+          "uid": "12255985-940000b8-53cf-4ad3-8fe4-28a4aa1ddc85"
+        },
+        {
+          "name": "Daftar Poliklinik (GET /api/v1/polyclinics)",
+          "id": "ea0e1b84-e433-4932-9817-6def51e2f22c",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/polyclinics?active_only=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "polyclinics"
+              ],
+              "query": [
+                {
+                  "key": "active_only",
+                  "value": "true",
+                  "description": "Filter poliklinik aktif saja"
+                }
+              ]
+            },
+            "description": "Mendapatkan daftar unit poliklinik aktif rawat jalan."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:34:23.000Z",
+          "updatedAt": "2026-11-24T01:34:23.000Z",
+          "uid": "12255985-ea0e1b84-e433-4932-9817-6def51e2f22c"
+        },
+        {
+          "name": "Daftar Jadwal Dokter (GET /api/v1/doctor-schedules)",
+          "id": "f163a58e-1f72-418a-a087-a7abc9e85f8a",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctor-schedules?doctor_id=&polyclinic_id=&day_of_week=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "doctor-schedules"
+              ],
+              "query": [
+                {
+                  "key": "doctor_id",
+                  "value": "",
+                  "description": "Filter berdasarkan ID dokter"
+                },
+                {
+                  "key": "polyclinic_id",
+                  "value": "",
+                  "description": "Filter berdasarkan ID poliklinik"
+                },
+                {
+                  "key": "day_of_week",
+                  "value": "",
+                  "description": "Filter berdasarkan hari (Senin - Minggu)"
+                }
+              ]
+            },
+            "description": "Mendapatkan daftar jadwal praktik dokter poliklinik."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:34:23.000Z",
+          "updatedAt": "2026-11-24T01:34:23.000Z",
+          "uid": "12255985-f163a58e-1f72-418a-a087-a7abc9e85f8a"
+        },
+        {
+          "name": "Tambah Jadwal Dokter (POST /api/v1/doctor-schedules)",
+          "id": "ae867d03-3929-477c-86d3-1cc1c3f0f604",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctor_id\": 1,\n  \"polyclinic_id\": 1,\n  \"day_of_week\": \"Kamis\",\n  \"start_time\": \"13:00\",\n  \"end_time\": \"16:00\",\n  \"quota\": 20\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctor-schedules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "doctor-schedules"
+              ]
+            },
+            "description": "Menambahkan jadwal praktik dokter baru dengan validasi pencegahan jadwal bentrok."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:34:23.000Z",
+          "updatedAt": "2026-11-24T01:34:23.000Z",
+          "uid": "12255985-ae867d03-3929-477c-86d3-1cc1c3f0f604"
+        }
+      ],
+      "id": "2d18893e-b78a-4c5d-9ffd-b407a8ad4e2c",
+      "description": "Endpoint pengelolaan data master dokter, unit poliklinik, dan jadwal praktik dokter dengan validasi pencegahan jadwal bentrok.",
+      "createdAt": "2026-11-24T01:34:23.000Z",
+      "updatedAt": "2026-11-24T01:34:23.000Z",
+      "uid": "12255985-2d18893e-b78a-4c5d-9ffd-b407a8ad4e2c"
+    },
+    {
+      "name": "05. Master Data - Tindakan Medis & Obat",
+      "item": [
+        {
+          "name": "Daftar Tindakan Medis (GET /api/v1/medical-actions)",
+          "id": "5df5655e-0bd2-428a-92ee-b44679f4447c",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medical-actions?q=&active_only=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medical-actions"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "description": "Pencarian nama atau kode tindakan"
+                },
+                {
+                  "key": "active_only",
+                  "value": "true",
+                  "description": "Filter tindakan aktif saja"
+                }
+              ]
+            },
+            "description": "Mendapatkan daftar tindakan medis dan tarif pelayanan rawat jalan."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:37:31.000Z",
+          "updatedAt": "2026-11-24T01:37:31.000Z",
+          "uid": "12255985-5df5655e-0bd2-428a-92ee-b44679f4447c"
+        },
+        {
+          "name": "Daftar Master Obat (GET /api/v1/medicines)",
+          "id": "eaad9883-0d4c-47a9-9948-4653bb1d64db",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicines?q=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicines"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "description": "Pencarian nama, kode, atau golongan obat"
+                }
+              ]
+            },
+            "description": "Mendapatkan daftar obat, satuan, saldo stok, dan harga satuan."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:37:31.000Z",
+          "updatedAt": "2026-11-24T01:37:31.000Z",
+          "uid": "12255985-eaad9883-0d4c-47a9-9948-4653bb1d64db"
+        },
+        {
+          "name": "Detail Obat & Mutasi Stok (GET /api/v1/medicines/:id)",
+          "id": "b24da2f8-12d9-4228-8e40-ec7199437edb",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicines/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicines",
+                "1"
+              ]
+            },
+            "description": "Melihat detail obat beserta riwayat kartu stok mutasi audit."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:37:31.000Z",
+          "updatedAt": "2026-11-24T01:37:31.000Z",
+          "uid": "12255985-b24da2f8-12d9-4228-8e40-ec7199437edb"
+        },
+        {
+          "name": "Penyesuaian Stok Obat (POST /api/v1/medicines/:id/adjust-stock)",
+          "id": "bc943555-20fd-42eb-8ed2-af7ce4805787",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transaction_type\": \"IN\",\n  \"quantity\": 50,\n  \"notes\": \"Penerimaan stok tambahan dari gudang farmasi\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicines/1/adjust-stock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicines",
+                "1",
+                "adjust-stock"
+              ]
+            },
+            "description": "Menyesuaikan stok obat secara atomik (IN/OUT/ADJUSTMENT) dengan pencatatan log mutasi audit."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:37:31.000Z",
+          "updatedAt": "2026-11-24T01:37:31.000Z",
+          "uid": "12255985-bc943555-20fd-42eb-8ed2-af7ce4805787"
+        }
+      ],
+      "id": "8b7672e1-c7ac-40e4-b154-63426c5b658c",
+      "description": "Endpoint master tindakan medis, tarif, dan master obat beserta mutasi penyesuaian stok audit log.",
+      "createdAt": "2026-11-24T01:37:31.000Z",
+      "updatedAt": "2026-11-24T01:37:31.000Z",
+      "uid": "12255985-8b7672e1-c7ac-40e4-b154-63426c5b658c"
+    },
+    {
+      "name": "06. Pendaftaran & Antrean Pasien",
+      "item": [
+        {
+          "name": "Daftar Registrasi Antrean (GET /api/v1/registrations)",
+          "id": "f28ecfbe-37be-4286-ad48-0d90fbe01120",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/registrations?date=&polyclinic_id=&status=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "registrations"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "",
+                  "description": "Filter tanggal registrasi (YYYY-MM-DD)"
+                },
+                {
+                  "key": "polyclinic_id",
+                  "value": "",
+                  "description": "Filter ID unit poliklinik"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Filter status antrean"
+                }
+              ]
+            },
+            "description": "Mendapatkan daftar antrean kunjungan pasien rawat jalan."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:41:05.000Z",
+          "updatedAt": "2026-11-24T01:41:05.000Z",
+          "uid": "12255985-f28ecfbe-37be-4286-ad48-0d90fbe01120"
+        },
+        {
+          "name": "Pendaftaran Kunjungan (POST /api/v1/registrations)",
+          "id": "eba4458c-2d2e-44eb-939d-91a28d651d36",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"polyclinic_id\": 1,\n  \"doctor_id\": 1,\n  \"schedule_id\": 1,\n  \"insurance_type\": \"GENERAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "registrations"
+              ]
+            },
+            "description": "Mendaftarkan kunjungan pasien rawat jalan dengan penomoran antrean otomatis dan inisialisasi tagihan billing."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:41:05.000Z",
+          "updatedAt": "2026-11-24T01:41:05.000Z",
+          "uid": "12255985-eba4458c-2d2e-44eb-939d-91a28d651d36"
+        },
+        {
+          "name": "Detail Registrasi Kunjungan (GET /api/v1/registrations/:id)",
+          "id": "b6ce322c-d693-42fc-b033-532bd89bff91",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/registrations/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "registrations",
+                "1"
+              ]
+            },
+            "description": "Melihat detail lengkap satu pendaftaran kunjungan beserta data pasien, dokter, dan status klinis."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:41:05.000Z",
+          "updatedAt": "2026-11-24T01:41:05.000Z",
+          "uid": "12255985-b6ce322c-d693-42fc-b033-532bd89bff91"
+        },
+        {
+          "name": "Transisi Status Antrean (PATCH /api/v1/registrations/:id/status)",
+          "id": "ffe4a28c-0b1a-4bed-be27-81a898d591e0",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"IN_NURSE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/registrations/1/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "registrations",
+                "1",
+                "status"
+              ]
+            },
+            "description": "Memperbarui status alur antrean pasien (WAITING_NURSE -> IN_NURSE -> WAITING_DOCTOR -> IN_DOCTOR -> PHARMACY -> BILLING -> COMPLETED)."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:41:05.000Z",
+          "updatedAt": "2026-11-24T01:41:05.000Z",
+          "uid": "12255985-ffe4a28c-0b1a-4bed-be27-81a898d591e0"
+        }
+      ],
+      "id": "47fc7ea4-d3ad-4ba3-bfe0-692fd936c22b",
+      "description": "Endpoint pendaftaran kunjungan rawat jalan (Umum & BPJS), penerbitan nomor antrean harian per poli, dan manajemen transisi status antrean.",
+      "createdAt": "2026-11-24T01:41:05.000Z",
+      "updatedAt": "2026-11-24T01:41:05.000Z",
+      "uid": "12255985-47fc7ea4-d3ad-4ba3-bfe0-692fd936c22b"
+    },
+    {
+      "name": "07. Skrining & Asesmen Awal Nakes",
+      "item": [
+        {
+          "name": "Daftar Asesmen Nakes (GET /api/v1/nurse-assessments)",
+          "id": "2ef81326-c27b-4bbf-bdaf-2868532e26ab",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nurse-assessments?registration_id=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nurse-assessments"
+              ],
+              "query": [
+                {
+                  "key": "registration_id",
+                  "value": "",
+                  "description": "Filter ID registrasi kunjungan"
+                }
+              ]
+            },
+            "description": "Mendapatkan daftar data asesmen nakes yang telah diinputkan."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:43:29.000Z",
+          "updatedAt": "2026-11-24T01:43:29.000Z",
+          "uid": "12255985-2ef81326-c27b-4bbf-bdaf-2868532e26ab"
+        },
+        {
+          "name": "Input Asesmen Keperawatan (POST /api/v1/nurse-assessments)",
+          "id": "fcddaf30-0376-4ffe-9d81-4c70a52b64a1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registration_id\": 1,\n  \"nurse_id\": 1,\n  \"age_years\": 34,\n  \"gender\": \"L\",\n  \"weight_kg\": 70.5,\n  \"height_cm\": 172,\n  \"systolic\": 120,\n  \"diastolic\": 80,\n  \"pulse_rate\": 80,\n  \"body_temp\": 36.6,\n  \"respiratory_rate\": 18,\n  \"chief_complaint\": \"Demam dan pusing sejak 2 hari yang lalu\",\n  \"allergy_history\": \"Alergi obat Amoxicillin\",\n  \"disease_history\": \"Riwayat maag/gastritis\",\n  \"notes\": \"Pasien tampak lemas\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nurse-assessments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nurse-assessments"
+              ]
+            },
+            "description": "Menyimpan hasil skrining awal keperawatan dan otomatis memajukan status antrean menjadi WAITING_DOCTOR."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:43:29.000Z",
+          "updatedAt": "2026-11-24T01:43:29.000Z",
+          "uid": "12255985-fcddaf30-0376-4ffe-9d81-4c70a52b64a1"
+        },
+        {
+          "name": "Detail Asesmen Keperawatan (GET /api/v1/nurse-assessments/:id)",
+          "id": "ac0e6f17-a30c-4070-a43c-05fd0c9cdebb",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nurse-assessments/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nurse-assessments",
+                "1"
+              ]
+            },
+            "description": "Melihat detail lengkap asesmen awal keperawatan pasien."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:43:29.000Z",
+          "updatedAt": "2026-11-24T01:43:29.000Z",
+          "uid": "12255985-ac0e6f17-a30c-4070-a43c-05fd0c9cdebb"
+        }
+      ],
+      "id": "b53857f0-3ebd-4623-af7c-7679ae0551e9",
+      "description": "Endpoint asesmen awal keperawatan (triage): tanda-tanda vital (TTV), antropometri, riwayat alergi, dan riwayat penyakit.",
+      "createdAt": "2026-11-24T01:43:29.000Z",
+      "updatedAt": "2026-11-24T01:43:29.000Z",
+      "uid": "12255985-b53857f0-3ebd-4623-af7c-7679ae0551e9"
+    },
+    {
+      "name": "08. Pemeriksaan RME Dokter",
+      "item": [
+        {
+          "name": "List Pemeriksaan RME Dokter",
+          "id": "35d62baa-ae6e-413a-a089-d12ecfd10831",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/examinations?registration_id=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "examinations"
+              ],
+              "query": [
+                {
+                  "key": "registration_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Mendapatkan daftar pemeriksaan RME dokter dengan filter registrasi atau dokter."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:49:05.000Z",
+          "updatedAt": "2026-11-24T01:49:05.000Z",
+          "uid": "12255985-35d62baa-ae6e-413a-a089-d12ecfd10831"
+        },
+        {
+          "name": "Input Pemeriksaan SOAP & ICD-10",
+          "id": "3c47882e-97ff-42e9-8047-71233ce72755",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registration_id\": 1,\n  \"doctor_id\": 1,\n  \"physical_exam\": \"Faring hiperemis (+), tonsil T1/T1\",\n  \"primary_diagnosis_code\": \"J06.9\",\n  \"primary_diagnosis_desc\": \"Infeksi saluran pernapasan akut atas, tidak spesifik (ISPA)\",\n  \"secondary_diagnosis\": \"Faringitis akut\",\n  \"doctor_notes\": \"Istirahat cukup dan minum air hangat\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/examinations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "examinations"
+              ]
+            },
+            "description": "Input rekam medis elektronik dokter dengan diagnosis ICD-10 dan status antrean otomatis menjadi IN_DOCTOR."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:49:05.000Z",
+          "updatedAt": "2026-11-24T01:49:05.000Z",
+          "uid": "12255985-3c47882e-97ff-42e9-8047-71233ce72755"
+        },
+        {
+          "name": "Detail Pemeriksaan RME & Riwayat Nakes",
+          "id": "554afbbd-fc40-43c4-b091-c4dd683d6266",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/examinations/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "examinations",
+                "1"
+              ]
+            },
+            "description": "Mengambil detail pemeriksaan dokter beserta eager loading informasi asesmen awal perawat."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:49:05.000Z",
+          "updatedAt": "2026-11-24T01:49:05.000Z",
+          "uid": "12255985-554afbbd-fc40-43c4-b091-c4dd683d6266"
+        },
+        {
+          "name": "Update Pemeriksaan RME Dokter",
+          "id": "cff9f5ec-0dc1-4671-8f48-8713085a352f",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"secondary_diagnosis\": \"Faringitis akut dan rhinitis\",\n  \"doctor_notes\": \"Kontrol ulang 3 hari jika demam menetap\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/examinations/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "examinations",
+                "1"
+              ]
+            },
+            "description": "Memperbarui catatan medis atau diagnosis sekunder pemeriksaan RME."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:49:05.000Z",
+          "updatedAt": "2026-11-24T01:49:05.000Z",
+          "uid": "12255985-cff9f5ec-0dc1-4671-8f48-8713085a352f"
+        },
+        {
+          "name": "Tambah Tindakan Medis (Kunci Tarif & Rekalkulasi Billing)",
+          "id": "8ce5f560-605f-4779-bb6d-1762aabf8e7b",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action_id\": 1,\n  \"notes\": \"Pemeriksaan fisik dan konsultasi standar\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/examinations/1/actions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "examinations",
+                "1",
+                "actions"
+              ]
+            },
+            "description": "Menambahkan tindakan medis pada sesi pemeriksaan dokter, otomatis mengunci tarif dari master dan menghitung ulang total tagihan billing."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:52:43.000Z",
+          "updatedAt": "2026-11-24T01:52:43.000Z",
+          "uid": "12255985-8ce5f560-605f-4779-bb6d-1762aabf8e7b"
+        },
+        {
+          "name": "Daftar Tindakan Medis Pemeriksaan",
+          "id": "18eadc3b-0076-48e8-99fe-d62b07c077ac",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/examinations/1/actions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "examinations",
+                "1",
+                "actions"
+              ]
+            },
+            "description": "Melihat seluruh tindakan medis yang telah diberikan dokter pada pemeriksaan tertentu."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:52:43.000Z",
+          "updatedAt": "2026-11-24T01:52:43.000Z",
+          "uid": "12255985-18eadc3b-0076-48e8-99fe-d62b07c077ac"
+        },
+        {
+          "name": "Hapus Tindakan Medis Pemeriksaan",
+          "id": "104336e9-6983-4062-b03e-f0b1775b0a0d",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/examinations/1/actions/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "examinations",
+                "1",
+                "actions",
+                "1"
+              ]
+            },
+            "description": "Menghapus tindakan medis dari pemeriksaan dan otomatis menghitung ulang tagihan billing."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:52:43.000Z",
+          "updatedAt": "2026-11-24T01:52:43.000Z",
+          "uid": "12255985-104336e9-6983-4062-b03e-f0b1775b0a0d"
+        }
+      ],
+      "id": "c3fae179-ed7a-44f7-a16b-1d6ee1b5703c",
+      "createdAt": "2026-11-24T01:49:05.000Z",
+      "updatedAt": "2026-11-24T01:49:05.000Z",
+      "uid": "12255985-c3fae179-ed7a-44f7-a16b-1d6ee1b5703c"
+    },
+    {
+      "name": "09. Farmasi & e-Resep",
+      "item": [
+        {
+          "name": "Daftar Antrean Resep Farmasi",
+          "id": "98cfb96b-a821-4772-b816-205330bf4182",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pharma_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pharmacy/prescriptions?status=PENDING",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pharmacy",
+                "prescriptions"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                }
+              ]
+            },
+            "description": "Melihat daftar antrean resep obat dengan filter status PENDING atau DISPENSED."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:55:48.000Z",
+          "updatedAt": "2026-11-24T01:55:48.000Z",
+          "uid": "12255985-98cfb96b-a821-4772-b816-205330bf4182"
+        },
+        {
+          "name": "Pembuatan e-Resep Dokter (Validasi Stok Real-time)",
+          "id": "1aa65329-ac9f-4558-a890-4203755f469a",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"examination_id\": 1,\n  \"items\": [\n    {\n      \"medicine_id\": 1,\n      \"quantity\": 10,\n      \"dosage\": \"500 mg\",\n      \"frequency\": \"3x1 tablet sesudah makan\",\n      \"instructions\": \"Habiskan obat bila radang\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pharmacy/prescriptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pharmacy",
+                "prescriptions"
+              ]
+            },
+            "description": "Input e-resep dokter dengan validasi ketersediaan stok obat secara real-time dan transisi status antrean ke PHARMACY."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:55:48.000Z",
+          "updatedAt": "2026-11-24T01:55:48.000Z",
+          "uid": "12255985-1aa65329-ac9f-4558-a890-4203755f469a"
+        },
+        {
+          "name": "Detail e-Resep & Rincian Obat",
+          "id": "e023fe7b-be5c-491e-8375-ac7ff6b815d0",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pharma_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pharmacy/prescriptions/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pharmacy",
+                "prescriptions",
+                "1"
+              ]
+            },
+            "description": "Mendapatkan detail resep obat beserta rincian nama obat, dosis, frekuensi, dan status penyerahan."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:55:48.000Z",
+          "updatedAt": "2026-11-24T01:55:48.000Z",
+          "uid": "12255985-e023fe7b-be5c-491e-8375-ac7ff6b815d0"
+        },
+        {
+          "name": "Penyerahan Obat (Dispensing) & Mutasi Stok Atomik",
+          "id": "461dd159-e9c8-4c76-a3ab-4953fde4c5f5",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pharma_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pharmacy/prescriptions/1/dispense",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pharmacy",
+                "prescriptions",
+                "1",
+                "dispense"
+              ]
+            },
+            "description": "Melakukan penyerahan fisik obat oleh petugas farmasi dengan row-locking FOR UPDATE, memotong stok obat secara atomik, mencatat log mutasi stok, dan memajukan status antrean menjadi BILLING."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:57:50.000Z",
+          "updatedAt": "2026-11-24T01:57:50.000Z",
+          "uid": "12255985-461dd159-e9c8-4c76-a3ab-4953fde4c5f5"
+        }
+      ],
+      "id": "f38f95a3-3eee-4dea-b68d-1f367ca1a684",
+      "createdAt": "2026-11-24T01:55:48.000Z",
+      "updatedAt": "2026-11-24T01:55:48.000Z",
+      "uid": "12255985-f38f95a3-3eee-4dea-b68d-1f367ca1a684"
+    },
+    {
+      "name": "10. Kasir & Billing Terpadu",
+      "item": [
+        {
+          "name": "Daftar Tagihan Pasien (Billing)",
+          "id": "1fc1e8b1-b005-438c-afe7-d86c64fa638b",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cashier_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/billings?payment_status=UNPAID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "billings"
+              ],
+              "query": [
+                {
+                  "key": "payment_status",
+                  "value": "UNPAID"
+                }
+              ]
+            },
+            "description": "Melihat daftar tagihan pasien rawat jalan dengan filter status UNPAID atau PAID, serta jenis penjamin."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:59:28.000Z",
+          "updatedAt": "2026-11-24T01:59:28.000Z",
+          "uid": "12255985-1fc1e8b1-b005-438c-afe7-d86c64fa638b"
+        },
+        {
+          "name": "Detail Tagihan Billing",
+          "id": "eba16a77-233e-4667-93fd-98dc29bd4669",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cashier_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/billings/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "billings",
+                "1"
+              ]
+            },
+            "description": "Mendapatkan detail tagihan billing kunjungan beserta riwayat pembayaran kasir."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:59:28.000Z",
+          "updatedAt": "2026-11-24T01:59:28.000Z",
+          "uid": "12255985-eba16a77-233e-4667-93fd-98dc29bd4669"
+        },
+        {
+          "name": "Ringkasan Rincian Tagihan Terpadu (Cost Aggregator)",
+          "id": "43ddf700-f48a-4455-9c53-5095912b2e76",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cashier_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/billings/1/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "billings",
+                "1",
+                "summary"
+              ]
+            },
+            "description": "Endpoint agregasi tagihan terpadu yang merangkum rincian seluruh pos pelayanan: biaya registrasi, rincian tindakan medis, e-resep obat, dan pengujian laboratorium."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T01:59:28.000Z",
+          "updatedAt": "2026-11-24T01:59:28.000Z",
+          "uid": "12255985-43ddf700-f48a-4455-9c53-5095912b2e76"
+        },
+        {
+          "name": "Proses Pembayaran Kasir (Cash / Cover BPJS)",
+          "id": "df7365fd-d3fc-41e8-9fa9-d028b9eb7b42",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cashier_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payment_method\": \"CASH\",\n  \"amount_received\": 100000,\n  \"notes\": \"Pembayaran lunas uang pas / kembalian dihitung sistem\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/billings/1/pay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "billings",
+                "1",
+                "pay"
+              ]
+            },
+            "description": "Melakukan proses transaksi pembayaran kasir secara atomik dengan row lock FOR UPDATE untuk mencegah double payment, menghitung uang kembalian untuk pembayaran CASH atau membebaskan biaya bila tercover BPJS, mengubah status billing menjadi PAID dan status antrean kunjungan menjadi COMPLETED."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T02:01:01.000Z",
+          "updatedAt": "2026-11-24T02:01:01.000Z",
+          "uid": "12255985-df7365fd-d3fc-41e8-9fa9-d028b9eb7b42"
+        }
+      ],
+      "id": "ec044af9-91c4-4321-8771-a03f95a71431",
+      "createdAt": "2026-11-24T01:59:28.000Z",
+      "updatedAt": "2026-11-24T01:59:28.000Z",
+      "uid": "12255985-ec044af9-91c4-4321-8771-a03f95a71431"
+    },
+    {
+      "name": "11. Audit Trail & Log Keamanan (Admin Only)",
+      "item": [
+        {
+          "name": "Kueri Riwayat Audit Trail Administrator",
+          "id": "1309eab9-ac67-4580-9828-d1d50fe235ca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit-logs?module=PATIENTS",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "module",
+                  "value": "PATIENTS"
+                }
+              ]
+            },
+            "description": "Melihat riwayat jejak audit (audit trail) immutable seluruh sistem SIMRS dengan filter modul, aksi, atau user ID. Hanya dapat diakses oleh Administrator."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T02:10:43.000Z",
+          "updatedAt": "2026-11-24T02:10:43.000Z",
+          "uid": "12255985-1309eab9-ac67-4580-9828-d1d50fe235ca"
+        },
+        {
+          "name": "Detail Log Audit",
+          "id": "4e8aab1e-b14a-450b-b69a-29adf0f5a8c3",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit-logs/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit-logs",
+                "1"
+              ]
+            },
+            "description": "Mendapatkan detail suatu log audit termasuk IP address, user agent, nilai sebelum, dan nilai sesudah perubahan."
+          },
+          "response": [],
+          "createdAt": "2026-11-24T02:10:43.000Z",
+          "updatedAt": "2026-11-24T02:10:43.000Z",
+          "uid": "12255985-4e8aab1e-b14a-450b-b69a-29adf0f5a8c3"
+        }
+      ],
+      "id": "537956d2-55c7-4095-95eb-ba7518d0588b",
+      "createdAt": "2026-11-24T02:10:43.000Z",
+      "updatedAt": "2026-11-24T02:10:43.000Z",
+      "uid": "12255985-537956d2-55c7-4095-95eb-ba7518d0588b"
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}
