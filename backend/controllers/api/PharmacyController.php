@@ -12,6 +12,7 @@ use app\models\Prescription;
 use app\models\PrescriptionItem;
 use app\models\Registration;
 use yii\data\ActiveDataProvider;
+use yii\filters\AccessControl;
 use yii\filters\auth\HttpBearerAuth;
 
 class PharmacyController extends BaseApiController
@@ -23,6 +24,40 @@ class PharmacyController extends BaseApiController
             'class' => HttpBearerAuth::class,
             'except' => ['options'],
         ];
+
+        $behaviors['access'] = [
+            'class' => AccessControl::class,
+            'rules' => [
+                [
+                    'allow' => true,
+                    'actions' => ['options'],
+                ],
+                [
+                    'allow' => true,
+                    'actions' => ['create'],
+                    'matchCallback' => function () {
+                        $user = Yii::$app->user->identity;
+                        return $user !== null && in_array($user->role, ['doctor', 'admin'], true);
+                    },
+                ],
+                [
+                    'allow' => true,
+                    'actions' => ['dispense'],
+                    'matchCallback' => function () {
+                        $user = Yii::$app->user->identity;
+                        return $user !== null && in_array($user->role, ['pharmacist', 'admin'], true);
+                    },
+                ],
+                [
+                    'allow' => true,
+                    'actions' => ['index', 'view'],
+                    'matchCallback' => function () {
+                        return !Yii::$app->user->isGuest;
+                    },
+                ],
+            ],
+        ];
+
         return $behaviors;
     }
 

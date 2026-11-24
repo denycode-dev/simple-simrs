@@ -12,6 +12,7 @@ use app\tests\Support\FunctionalTester;
 final class DoctorExaminationApiCest
 {
     private string $doctorToken = 'access_token_doctor_0000000000004';
+    private string $nurseToken = 'access_token_nurse_00000000000003';
 
     public function createDoctorExaminationSuccessfullyWithNurseAssessment(FunctionalTester $I): void
     {
@@ -31,6 +32,7 @@ final class DoctorExaminationApiCest
         $regId = $reg['data']['id'];
 
         // 2. Nurse performs initial assessment
+        $I->haveHttpHeader('Authorization', 'Bearer ' . $this->nurseToken);
         $I->sendAjaxPostRequest('/api/v1/nurse-assessments', [
             'registration_id' => $regId,
             'nurse_id' => 1,
@@ -50,6 +52,7 @@ final class DoctorExaminationApiCest
         $I->seeResponseCodeIs(201);
 
         // 3. Doctor submits examination (SOAP + ICD-10)
+        $I->haveHttpHeader('Authorization', 'Bearer ' . $this->doctorToken);
         $I->sendAjaxPostRequest('/api/v1/examinations', [
             'registration_id' => $regId,
             'doctor_id' => 1,

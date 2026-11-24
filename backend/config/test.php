@@ -246,6 +246,12 @@ return [
                 'OPTIONS api/v1/billings/<id:\d+>' => 'api/billing/options',
                 'OPTIONS api/v1/billings' => 'api/billing/options',
 
+                // Audit Logs REST endpoints (Task 34 & Task 36)
+                'GET api/v1/audit-logs' => 'api/audit-log/index',
+                'GET api/v1/audit-logs/<id:\d+>' => 'api/audit-log/view',
+                'OPTIONS api/v1/audit-logs/<id:\d+>' => 'api/audit-log/options',
+                'OPTIONS api/v1/audit-logs' => 'api/audit-log/options',
+
                 // CORS Preflight routing for REST API
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>/<action:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>' => 'api/<controller>/options',

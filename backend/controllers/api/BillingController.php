@@ -12,6 +12,7 @@ use app\models\ExaminationAction;
 use app\models\PrescriptionItem;
 use yii\data\ActiveDataProvider;
 use yii\db\Query;
+use yii\filters\AccessControl;
 use yii\filters\auth\HttpBearerAuth;
 
 class BillingController extends BaseApiController
@@ -23,6 +24,32 @@ class BillingController extends BaseApiController
             'class' => HttpBearerAuth::class,
             'except' => ['options'],
         ];
+
+        $behaviors['access'] = [
+            'class' => AccessControl::class,
+            'rules' => [
+                [
+                    'allow' => true,
+                    'actions' => ['options'],
+                ],
+                [
+                    'allow' => true,
+                    'actions' => ['pay'],
+                    'matchCallback' => function () {
+                        $user = Yii::$app->user->identity;
+                        return $user !== null && in_array($user->role, ['cashier', 'admin'], true);
+                    },
+                ],
+                [
+                    'allow' => true,
+                    'actions' => ['index', 'view', 'summary'],
+                    'matchCallback' => function () {
+                        return !Yii::$app->user->isGuest;
+                    },
+                ],
+            ],
+        ];
+
         return $behaviors;
     }
 
