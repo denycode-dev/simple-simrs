@@ -145,6 +145,34 @@ return [
                 'OPTIONS api/v1/patients/<id:\d+>' => 'api/patient/options',
                 'OPTIONS api/v1/patients' => 'api/patient/options',
 
+                // Doctors Master REST endpoints (Task 9)
+                'GET api/v1/doctors' => 'api/doctor/index',
+                'POST api/v1/doctors' => 'api/doctor/create',
+                'GET api/v1/doctors/<id:\d+>' => 'api/doctor/view',
+                'PUT api/v1/doctors/<id:\d+>' => 'api/doctor/update',
+                'PATCH api/v1/doctors/<id:\d+>' => 'api/doctor/update',
+                'OPTIONS api/v1/doctors/<id:\d+>' => 'api/doctor/options',
+                'OPTIONS api/v1/doctors' => 'api/doctor/options',
+
+                // Polyclinics Master REST endpoints (Task 9)
+                'GET api/v1/polyclinics' => 'api/polyclinic/index',
+                'POST api/v1/polyclinics' => 'api/polyclinic/create',
+                'GET api/v1/polyclinics/<id:\d+>' => 'api/polyclinic/view',
+                'PUT api/v1/polyclinics/<id:\d+>' => 'api/polyclinic/update',
+                'PATCH api/v1/polyclinics/<id:\d+>' => 'api/polyclinic/update',
+                'OPTIONS api/v1/polyclinics/<id:\d+>' => 'api/polyclinic/options',
+                'OPTIONS api/v1/polyclinics' => 'api/polyclinic/options',
+
+                // Doctor Schedules REST endpoints (Task 9)
+                'GET api/v1/doctor-schedules' => 'api/doctor-schedule/index',
+                'POST api/v1/doctor-schedules' => 'api/doctor-schedule/create',
+                'GET api/v1/doctor-schedules/<id:\d+>' => 'api/doctor-schedule/view',
+                'PUT api/v1/doctor-schedules/<id:\d+>' => 'api/doctor-schedule/update',
+                'PATCH api/v1/doctor-schedules/<id:\d+>' => 'api/doctor-schedule/update',
+                'DELETE api/v1/doctor-schedules/<id:\d+>' => 'api/doctor-schedule/delete',
+                'OPTIONS api/v1/doctor-schedules/<id:\d+>' => 'api/doctor-schedule/options',
+                'OPTIONS api/v1/doctor-schedules' => 'api/doctor-schedule/options',
+
                 // CORS Preflight routing for REST API
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>/<action:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
