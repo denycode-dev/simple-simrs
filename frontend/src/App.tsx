@@ -13,6 +13,7 @@ import {
   MasterMedicinesPage,
   MasterDoctorsPage,
 } from '@/features/master';
+import { RegistrationForm } from '@/features/registration';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components/ui';
 import type { MenuItem } from '@/config/dashboard-menu';
 
@@ -128,7 +129,9 @@ export function App() {
           user && <UserProfile user={user} onLogout={logout} isLoading={isAuthLoading} />
         }
       >
-        {activeMenuId === 'master-patients' ? (
+        {activeMenuId === 'reg-new' ? (
+          <RegistrationForm />
+        ) : activeMenuId === 'master-patients' ? (
           <MasterPatientsPage />
         ) : activeMenuId === 'master-medicines' || activeMenuId === 'master-medicines-alt' ? (
           <MasterMedicinesPage />
