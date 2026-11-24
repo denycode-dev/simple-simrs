@@ -235,6 +235,15 @@ $config = [
                 'OPTIONS api/v1/examinations/<id:\d+>/actions' => 'api/examination/options',
                 'OPTIONS api/v1/examinations/<id:\d+>/actions/<actionId:\d+>' => 'api/examination/options',
 
+                // Pharmacy & Prescriptions REST endpoints (Task 20 & Task 21)
+                'GET api/v1/pharmacy/prescriptions' => 'api/pharmacy/index',
+                'POST api/v1/pharmacy/prescriptions' => 'api/pharmacy/create',
+                'GET api/v1/pharmacy/prescriptions/<id:\d+>' => 'api/pharmacy/view',
+                'POST api/v1/pharmacy/prescriptions/<id:\d+>/dispense' => 'api/pharmacy/dispense',
+                'OPTIONS api/v1/pharmacy/prescriptions/<id:\d+>/dispense' => 'api/pharmacy/options',
+                'OPTIONS api/v1/pharmacy/prescriptions/<id:\d+>' => 'api/pharmacy/options',
+                'OPTIONS api/v1/pharmacy/prescriptions' => 'api/pharmacy/options',
+
                 // CORS Preflight routing for REST API
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>/<action:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
