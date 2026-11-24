@@ -19,6 +19,7 @@ import { DoctorExaminationForm } from '@/features/examination';
 import { PrescriptionQueueTable } from '@/features/pharmacy';
 import { LaboratoryPage } from '@/features/laboratory';
 import { BillingPage } from '@/features/billing';
+import { DashboardAnalyticsPage } from '@/features/dashboard';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components/ui';
 import type { MenuItem } from '@/config/dashboard-menu';
 
@@ -134,7 +135,9 @@ export function App() {
           user && <UserProfile user={user} onLogout={logout} isLoading={isAuthLoading} />
         }
       >
-        {activeMenuId === 'billing' ? (
+        {activeMenuId === 'dashboard-analytics' ? (
+          <DashboardAnalyticsPage />
+        ) : activeMenuId === 'billing' ? (
           <BillingPage />
         ) : activeMenuId === 'laboratory' ? (
           <LaboratoryPage />
