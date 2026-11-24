@@ -6,6 +6,8 @@ namespace app\controllers\api;
 
 use Yii;
 use app\models\Billing;
+use app\models\BillingPayment;
+use app\models\Registration;
 use app\models\ExaminationAction;
 use app\models\PrescriptionItem;
 use yii\data\ActiveDataProvider;
@@ -193,5 +195,97 @@ class BillingController extends BaseApiController
             $data['payments'] = [];
         }
         return $data;
+    }
+    public function actionPay(int $id): array
+    {
+        $body = Yii::$app->request->getBodyParams();
+        $method = $body['payment_method'] ?? null;
+
+        if (empty($method) || !in_array($method, ['CASH', 'BPJS'], true)) {
+            return $this->validationErrorResponse([
+                'payment_method' => ['Metode pembayaran wajib diisi dan harus berupa CASH atau BPJS.']
+            ]);
+        }
+
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            // Row-level lock FOR UPDATE to prevent race condition double payment
+            $sql = 'SELECT * FROM ' . Billing::tableName() . ' WHERE id = :id FOR UPDATE';
+            /** @var Billing|null $billing */
+            $billing = Billing::findBySql($sql, [':id' => $id])->one();
+
+            if ($billing === null) {
+                return $this->notFoundResponse('Data tagihan billing tidak ditemukan.');
+            }
+
+            if ($billing->payment_status === 'PAID') {
+                return $this->validationErrorResponse(
+                    ['payment_status' => ['Tagihan ini sudah lunas dibayar sebelumnya.']],
+                    'Tagihan ini sudah lunas dibayar sebelumnya.'
+                );
+            }
+
+            // Recalculate to ensure accurate amounts
+            $billing = Billing::recalculate($billing->registration_id) ?? $billing;
+
+            $cashierId = Yii::$app->user->id ?? 7;
+            $notes = $body['notes'] ?? null;
+
+            if ($method === 'CASH') {
+                $amountDue = (float)$billing->patient_payable;
+                $received = (float)($body['amount_received'] ?? 0);
+
+                if ($received < $amountDue) {
+                    return $this->validationErrorResponse(
+                        ['amount_received' => ['Nominal uang yang diterima kurang dari total tagihan.']],
+                        'Nominal uang yang diterima kurang dari total tagihan. (Tagihan: ' . $amountDue . ', Diterima: ' . $received . ')'
+                    );
+                }
+
+                $change = $received - $amountDue;
+                $amount = $amountDue;
+            } else {
+                // BPJS Coverage
+                $amount = 0.00;
+                $received = 0.00;
+                $change = 0.00;
+            }
+
+            $payment = new BillingPayment();
+            $payment->billing_id = $billing->id;
+            $payment->payment_number = BillingPayment::generatePaymentNumber();
+            $payment->payment_method = $method;
+            $payment->amount = $amount;
+            $payment->amount_received = $received;
+            $payment->change_amount = $change;
+            $payment->cashier_id = (int)$cashierId;
+            $payment->notes = $notes;
+
+            if (!$payment->save()) {
+                throw new \Exception('Gagal mencatat data pembayaran: ' . json_encode($payment->errors));
+            }
+
+            // Mark billing as PAID
+            $billing->payment_status = 'PAID';
+            $billing->updated_at = date('Y-m-d H:i:s');
+            $billing->save(false);
+
+            // Advance registration status to COMPLETED
+            $reg = Registration::findOne($billing->registration_id);
+            if ($reg !== null) {
+                $reg->status = 'COMPLETED';
+                $reg->save(false);
+            }
+
+            $transaction->commit();
+
+            return $this->successResponse([
+                'billing' => $this->formatBillingData($billing),
+                'payment' => $payment->toArray(),
+            ], 'Pembayaran tagihan berhasil diproses.');
+        } catch (\Throwable $e) {
+            $transaction->rollBack();
+            return $this->errorResponse($e->getMessage(), null, 500);
+        }
     }
 }
