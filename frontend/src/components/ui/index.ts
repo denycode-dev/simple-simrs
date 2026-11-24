@@ -6,3 +6,5 @@ export * from './Alert';
 export * from './DataTable';
 
 export * from './MaskedField';
+
+export * from './FormField';
