@@ -16,6 +16,26 @@ export class ApiClientError extends Error {
   }
 }
 
+type ErrorHandler = (error: ApiClientError) => void;
+const errorHandlers: Set<ErrorHandler> = new Set();
+
+export function registerGlobalErrorHandler(handler: ErrorHandler): () => void {
+  errorHandlers.add(handler);
+  return () => {
+    errorHandlers.delete(handler);
+  };
+}
+
+function notifyGlobalErrorHandlers(error: ApiClientError) {
+  errorHandlers.forEach((handler) => {
+    try {
+      handler(error);
+    } catch {
+      // Ignore handler error
+    }
+  });
+}
+
 /**
  * Standard typed HTTP client wrapper around native fetch (zero-dependency).
  */
@@ -55,7 +75,14 @@ export async function apiClient<T>(
     ...customConfig,
   };
 
-  const response = await fetch(url, config);
+  let response: Response;
+  try {
+    response = await fetch(url, config);
+  } catch (fetchErr: any) {
+    const netError = new ApiClientError(fetchErr.message || 'Koneksi jaringan terputus.', 0);
+    notifyGlobalErrorHandlers(netError);
+    throw netError;
+  }
 
   if (!response.ok) {
     let errorMessage = `Permintaan gagal: HTTP ${response.status}`;
@@ -67,7 +94,13 @@ export async function apiClient<T>(
     } catch {
       // Body bukan JSON
     }
-    throw new ApiClientError(errorMessage, response.status, errorDetails);
+
+    const apiError = new ApiClientError(errorMessage, response.status, errorDetails);
+    // Suppress global modal for 422 inline form errors
+    if (response.status !== 422) {
+      notifyGlobalErrorHandlers(apiError);
+    }
+    throw apiError;
   }
 
   if (response.status === 204) {

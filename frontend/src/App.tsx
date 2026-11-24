@@ -21,10 +21,12 @@ import { LaboratoryPage } from '@/features/laboratory';
 import { BillingPage } from '@/features/billing';
 import { DashboardAnalyticsPage } from '@/features/dashboard';
 import { AuditTrailPage } from '@/features/audit';
+import { GlobalErrorProvider } from '@/contexts/GlobalErrorContext';
+import { GlobalErrorModal } from '@/components/layout/GlobalErrorModal';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components/ui';
 import type { MenuItem } from '@/config/dashboard-menu';
 
-export function App() {
+function AppContent() {
   const { user, isAuthenticated, isLoading: isAuthLoading, error: authError, login, logout } = useAuth();
   const {
     patients,
@@ -384,6 +386,17 @@ export function App() {
         )}
       </DashboardLayout>
     </Theme>
+  );
+}
+
+
+
+export function App() {
+  return (
+    <GlobalErrorProvider>
+      <AppContent />
+      <GlobalErrorModal />
+    </GlobalErrorProvider>
   );
 }
 
