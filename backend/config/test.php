@@ -202,6 +202,13 @@ return [
                 'OPTIONS api/v1/registrations/<id:\d+>' => 'api/registration/options',
                 'OPTIONS api/v1/registrations' => 'api/registration/options',
 
+                // Nurse Assessments REST endpoints (Task 15)
+                'GET api/v1/nurse-assessments' => 'api/nurse-assessment/index',
+                'POST api/v1/nurse-assessments' => 'api/nurse-assessment/create',
+                'GET api/v1/nurse-assessments/<id:\d+>' => 'api/nurse-assessment/view',
+                'OPTIONS api/v1/nurse-assessments/<id:\d+>' => 'api/nurse-assessment/options',
+                'OPTIONS api/v1/nurse-assessments' => 'api/nurse-assessment/options',
+
                 // CORS Preflight routing for REST API
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>/<action:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
