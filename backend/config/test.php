@@ -142,6 +142,8 @@ return [
                 'PUT api/v1/patients/<id:\d+>' => 'api/patient/update',
                 'PATCH api/v1/patients/<id:\d+>' => 'api/patient/update',
                 'DELETE api/v1/patients/<id:\d+>' => 'api/patient/delete',
+                'POST api/v1/patients/<id:\d+>/unmask' => 'api/patient/unmask',
+                'OPTIONS api/v1/patients/<id:\d+>/unmask' => 'api/patient/options',
                 'OPTIONS api/v1/patients/<id:\d+>' => 'api/patient/options',
                 'OPTIONS api/v1/patients' => 'api/patient/options',
 
