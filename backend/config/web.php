@@ -203,6 +203,15 @@ $config = [
                 'OPTIONS api/v1/medicines/<id:\d+>' => 'api/medicine/options',
                 'OPTIONS api/v1/medicines' => 'api/medicine/options',
 
+                // Registrations & Queue REST endpoints (Task 12 & Task 14)
+                'GET api/v1/registrations' => 'api/registration/index',
+                'POST api/v1/registrations' => 'api/registration/create',
+                'GET api/v1/registrations/<id:\d+>' => 'api/registration/view',
+                'PATCH api/v1/registrations/<id:\d+>/status' => 'api/registration/update-status',
+                'OPTIONS api/v1/registrations/<id:\d+>/status' => 'api/registration/options',
+                'OPTIONS api/v1/registrations/<id:\d+>' => 'api/registration/options',
+                'OPTIONS api/v1/registrations' => 'api/registration/options',
+
                 // CORS Preflight routing for REST API
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>/<action:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
