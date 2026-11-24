@@ -8,8 +8,9 @@ use Yii;
 use app\models\MedicalExamination;
 use app\models\ExaminationAction;
 use app\models\MedicalAction;
-use app\models\Billing;
-use app\models\Registration;
+use app\models\Prescription;
+use app\models\PrescriptionItem;
+use app\services\DoctorExaminationService;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use yii\filters\auth\HttpBearerAuth;
@@ -58,6 +59,9 @@ class ExaminationController extends BaseApiController
             'doctor',
             'registration.patient',
             'registration.nurseAssessment',
+            'registration.billing',
+            'actions.action',
+            'prescriptions.items.medicine',
         ]);
 
         $regId = Yii::$app->request->get('registration_id');
@@ -92,6 +96,7 @@ class ExaminationController extends BaseApiController
                 'registration.nurseAssessment',
                 'registration.billing',
                 'actions.action',
+                'prescriptions.items.medicine',
             ])
             ->one();
 
@@ -117,6 +122,26 @@ class ExaminationController extends BaseApiController
             $data['actions'] = [];
         }
 
+        if (!empty($exam->prescriptions)) {
+            $data['prescriptions'] = array_map(function (Prescription $p) {
+                $presData = $p->toArray();
+                if (!empty($p->items)) {
+                    $presData['items'] = array_map(function (PrescriptionItem $item) {
+                        $itemData = $item->toArray();
+                        if ($item->medicine) {
+                            $itemData['medicine'] = $item->medicine->toArray();
+                        }
+                        return $itemData;
+                    }, $p->items);
+                } else {
+                    $presData['items'] = [];
+                }
+                return $presData;
+            }, $exam->prescriptions);
+        } else {
+            $data['prescriptions'] = [];
+        }
+
         if ($exam->doctor) {
             $data['doctor'] = $exam->doctor->toArray();
         }
@@ -138,32 +163,21 @@ class ExaminationController extends BaseApiController
 
     public function actionCreate(): array
     {
-        $exam = new MedicalExamination();
-        $exam->load(Yii::$app->request->getBodyParams(), '');
+        $service = new DoctorExaminationService();
+        $result = $service->create(Yii::$app->request->getBodyParams());
 
-        if (!$exam->validate()) {
-            return $this->validationErrorResponse($exam->errors, 'Validasi pemeriksaan medis gagal.');
+        if (!$result['success'] || $result['examination'] === null) {
+            if ($result['statusCode'] === 422) {
+                return $this->validationErrorResponse($result['errors'], $result['message']);
+            }
+            return $this->errorResponse($result['message'], $result['errors'], $result['statusCode']);
         }
 
-        $transaction = Yii::$app->db->beginTransaction();
-        try {
-            if (!$exam->save()) {
-                throw new \Exception('Gagal menyimpan rekam medis pemeriksaan dokter.');
-            }
-
-            // Update registration status to IN_DOCTOR if still WAITING_DOCTOR
-            $reg = Registration::findOne($exam->registration_id);
-            if ($reg !== null && in_array($reg->status, ['WAITING_NURSE', 'IN_NURSE', 'WAITING_DOCTOR'], true)) {
-                $reg->status = 'IN_DOCTOR';
-                $reg->save(false);
-            }
-
-            $transaction->commit();
-            return $this->successResponse($exam, 'Pemeriksaan medis RME berhasil disimpan.', 201);
-        } catch (\Throwable $e) {
-            $transaction->rollBack();
-            return $this->errorResponse($e->getMessage(), $exam->errors, 500);
-        }
+        return $this->successResponse(
+            $this->formatExamData($result['examination']),
+            $result['message'],
+            201
+        );
     }
 
     public function actionUpdate(int $id): array
@@ -184,6 +198,7 @@ class ExaminationController extends BaseApiController
 
         return $this->successResponse($exam, 'Pemeriksaan medis RME berhasil diperbarui.');
     }
+
     public function actionAddAction(int $id): array
     {
         $exam = MedicalExamination::findOne($id);

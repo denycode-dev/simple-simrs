@@ -23,6 +23,11 @@ use yii\db\ActiveRecord;
  */
 class ExaminationAction extends ActiveRecord
 {
+    /**
+     * When true, skips automatic billing recalculation on save/delete (used by batch transactions).
+     */
+    public bool $skipBillingRecalculate = false;
+
     public static function tableName(): string
     {
         return '{{%examination_actions}}';
@@ -78,13 +83,17 @@ class ExaminationAction extends ActiveRecord
     public function afterSave($insert, $changedAttributes): void
     {
         parent::afterSave($insert, $changedAttributes);
-        $this->recalculateRegistrationBilling();
+        if (!$this->skipBillingRecalculate) {
+            $this->recalculateRegistrationBilling();
+        }
     }
 
     public function afterDelete(): void
     {
         parent::afterDelete();
-        $this->recalculateRegistrationBilling();
+        if (!$this->skipBillingRecalculate) {
+            $this->recalculateRegistrationBilling();
+        }
     }
 
     private function recalculateRegistrationBilling(): void

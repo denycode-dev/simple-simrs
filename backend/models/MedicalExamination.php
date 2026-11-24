@@ -64,9 +64,14 @@ class MedicalExamination extends ActiveRecord
         return $this->hasMany(ExaminationAction::class, ['examination_id' => 'id'])->with('action');
     }
 
+    public function getPrescriptions(): ActiveQuery
+    {
+        return $this->hasMany(Prescription::class, ['examination_id' => 'id'])->with('items.medicine');
+    }
+
     public function extraFields(): array
     {
-        return ['registration', 'doctor', 'actions'];
+        return ['registration', 'doctor', 'actions', 'prescriptions'];
     }
 
     public function beforeSave($insert): bool

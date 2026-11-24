@@ -1929,7 +1929,7 @@
           "uid": "12255985-35d62baa-ae6e-413a-a089-d12ecfd10831"
         },
         {
-          "name": "Input Pemeriksaan SOAP & ICD-10",
+          "name": "Input Pemeriksaan RME Dokter (SOAP, Tindakan & e-Resep Atomik)",
           "id": "3c47882e-97ff-42e9-8047-71233ce72755",
           "request": {
             "method": "POST",
@@ -1949,7 +1949,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"registration_id\": 1,\n  \"doctor_id\": 1,\n  \"physical_exam\": \"Faring hiperemis (+), tonsil T1/T1\",\n  \"primary_diagnosis_code\": \"J06.9\",\n  \"primary_diagnosis_desc\": \"Infeksi saluran pernapasan akut atas, tidak spesifik (ISPA)\",\n  \"secondary_diagnosis\": \"Faringitis akut\",\n  \"doctor_notes\": \"Istirahat cukup dan minum air hangat\"\n}"
+              "raw": "{\n  \"registration_id\": 1,\n  \"doctor_id\": 1,\n  \"physical_exam\": \"Faring hiperemis (+), tonsil T1/T1\",\n  \"primary_diagnosis_code\": \"J06.9\",\n  \"primary_diagnosis_desc\": \"Infeksi saluran pernapasan akut atas, tidak spesifik (ISPA)\",\n  \"secondary_diagnosis\": \"Faringitis akut\",\n  \"doctor_notes\": \"Istirahat cukup, minum air hangat, dan konsumsi obat sesuai aturan pakai\",\n  \"next_status\": \"PHARMACY\",\n  \"actions\": [\n    {\n      \"action_id\": 1,\n      \"notes\": \"Konsultasi dan pemeriksaan dokter umum\"\n    }\n  ],\n  \"prescription_items\": [\n    {\n      \"medicine_id\": 1,\n      \"quantity\": 6,\n      \"dosage\": \"500 mg\",\n      \"frequency\": \"3x1 tablet sesudah makan\",\n      \"instructions\": \"Bila demam atau nyeri\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/examinations",
@@ -1962,7 +1967,7 @@
                 "examinations"
               ]
             },
-            "description": "Input rekam medis elektronik dokter dengan diagnosis ICD-10 dan status antrean otomatis menjadi IN_DOCTOR."
+            "description": "Input rekam medis elektronik (RME) dokter secara atomik (1 transaksi ACID) yang mendukung penyimpanan SOAP & diagnosis ICD-10, daftar tindakan medis opsional (`actions`), e-resep obat opsional (`prescription_items`), transisi status registrasi (`next_status`), serta rekalkulasi billing tunggal.\n\n**Backward-Compatible:**\n- Kirim hanya field RME (`registration_id`, `doctor_id`, `primary_diagnosis_code`, `primary_diagnosis_desc`, dst.) untuk menyimpan RME saja (status otomatis menjadi `IN_DOCTOR`).\n\n**Field Opsional Tambahan:**\n- `actions`: Array tindakan medis `[{ \"action_id\": 1, \"notes\": \"...\" }]` (tarif dikunci otomatis dari master `medical_actions`).\n- `prescription_items`: Array obat e-resep `[{ \"medicine_id\": 1, \"quantity\": 6, \"dosage\": \"500 mg\", \"frequency\": \"3x1\", \"instructions\": \"...\" }]` (pre-validasi stok real-time teragregasi per `medicine_id` dan harga satuan dikunci dari master `medicines`).\n- `next_status`: `\"IN_DOCTOR\"` | `\"PHARMACY\"` | `\"BILLING\"`. Default otomatis: `\"PHARMACY\"` bila `prescription_items` diisi, atau `\"IN_DOCTOR\"` bila tanpa resep. Menolak `\"BILLING\"` dengan HTTP 422 bila `prescription_items` tidak kosong.\n\n**Atomisitas:**\n- Jika salah satu validasi gagal (termasuk stok obat tidak mencukupi atau `action_id` tidak ditemukan), seluruh transaksi ditolak dengan HTTP `422` tanpa meninggalkan data setengah jadi.\n- Endpoint granular `POST/DELETE /api/v1/examinations/:id/actions` dan `POST /api/v1/pharmacy/prescriptions` tetap dipertahankan untuk revisi tindakan atau resep susulan."
           },
           "response": [],
           "createdAt": "2026-11-24T01:49:05.000Z",

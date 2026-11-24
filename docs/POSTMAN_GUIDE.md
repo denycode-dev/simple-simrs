@@ -48,7 +48,7 @@ Koleksi Postman ini dilengkapi dengan fitur otomatisasi pengisian token Bearer (
 5. **`05. Master Data - Tindakan Medis & Obat`**: CRUD tindakan medis, tarif, obat, serta penyesuaian stok obat (`/adjust-stock`).
 6. **`06. Pendaftaran & Antrean Pasien`**: Pendaftaran kunjungan umum/BPJS, penomoran antrean poli otomatis, dan transisi lifecycle status.
 7. **`07. Skrining & Asesmen Awal Nakes`**: Input tanda-tanda vital (TTV), skrining alergi, dan riwayat penyakit oleh perawat.
-8. **`08. Pemeriksaan RME Dokter`**: Rekam medis elektronik SOAP, diagnosis ICD-10, dan penambahan tindakan medis dengan penguncian tarif.
+8. **`08. Pemeriksaan RME Dokter`**: Rekam medis elektronik SOAP & diagnosis ICD-10 yang diperluas secara atomik (`POST /api/v1/examinations` mendukung `actions`, `prescription_items`, `next_status`, dan rekalkulasi billing tunggal dalam 1 transaksi ACID), serta endpoint granular penambahan/penghapusan tindakan medis.
 9. **`09. Farmasi & e-Resep`**: Pembuatan e-resep dokter dengan validasi ketersediaan stok real-time dan dispensing obat atomik (`FOR UPDATE`).
 10. **`10. Kasir & Billing Terpadu`**: Agregasi rincian biaya tagihan terpadu dan pembayaran kasir atomik (Cash dengan perhitungan kembalian atau Bebas Biaya Cover BPJS).
 11. **`11. Audit Trail & Log Keamanan (Admin Only)`**: Kueri jejak audit append-only dengan filter modul, aksi, dan penelusuran user ID.
