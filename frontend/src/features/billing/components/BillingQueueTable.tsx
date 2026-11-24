@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardContent, Button, Badge } from '../../../components/ui';
+import { Card } from '@astryxdesign/core/Card';
+import { Button } from '@astryxdesign/core/Button';
+import { Badge } from '@astryxdesign/core/Badge';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHeaderCell } from '@astryxdesign/core/Table';
+import { TextInput } from '@astryxdesign/core/TextInput';
+import { Selector } from '@astryxdesign/core/Selector';
+import { Spinner } from '@astryxdesign/core/Spinner';
+import { EmptyState } from '@astryxdesign/core/EmptyState';
+import { HStack } from '@astryxdesign/core/HStack';
+import { VStack } from '@astryxdesign/core/VStack';
 import { formatCurrency } from '../../../utils/formatters';
 import type { BillingDetail } from './PaymentModal';
 
@@ -40,121 +49,132 @@ export const BillingQueueTable: React.FC<BillingQueueTableProps> = ({
   });
 
   return (
-    <Card className="w-full bg-white border border-border-default shadow-sm">
-      <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border-default pb-4">
-        <div>
-          <h2 className="text-lg font-bold text-text-main">
-            Daftar Tagihan Kasir Rawat Jalan
-          </h2>
-          <p className="text-sm text-text-muted">
-            Konsolidasi biaya pendaftaran, tindakan poliklinik, obat farmasi, dan pemeriksaan laboratorium
-          </p>
-        </div>
+    <Card elevation="low" padding={4}>
+      <VStack gap={4}>
+        <HStack justify="between" align="center" className="border-b border-slate-200 pb-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">
+              Daftar Tagihan Kasir Rawat Jalan
+            </h2>
+            <p className="text-sm text-slate-500">
+              Konsolidasi biaya pendaftaran, tindakan poliklinik, obat farmasi, dan pemeriksaan laboratorium
+            </p>
+          </div>
 
-        {onRefresh && (
-          <Button variant="outline" size="sm" onClick={onRefresh} disabled={isLoading}>
-            Segarkan Tagihan
-          </Button>
-        )}
-      </CardHeader>
+          {onRefresh && (
+            <Button
+              variant="secondary"
+              size="sm"
+              label="Segarkan Tagihan"
+              onClick={onRefresh}
+              isDisabled={isLoading}
+            />
+          )}
+        </HStack>
 
-      <CardContent className="p-4 space-y-4">
         {/* Controls Bar */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1">
-            <input
-              type="text"
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="md:col-span-2">
+            <TextInput
+              label="Pencarian Tagihan"
+              isLabelHidden
               placeholder="Cari nomor invoice, no RM, nama pasien, atau dokter..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-border-default rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              onChange={(val) => setSearchTerm(val)}
+              width="100%"
             />
           </div>
-          <div className="w-full sm:w-44">
-            <select
+          <div>
+            <Selector
+              label="Status Tagihan"
+              isLabelHidden
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-border-default rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="ALL">Semua Status</option>
-              <option value="UNPAID">Belum Bayar (UNPAID)</option>
-              <option value="PAID">Lunas (PAID)</option>
-            </select>
+              onChange={(val) => setStatusFilter(val)}
+              options={[
+                { value: 'ALL', label: 'Semua Status' },
+                { value: 'UNPAID', label: 'Belum Bayar (UNPAID)' },
+                { value: 'PAID', label: 'Lunas (PAID)' },
+              ]}
+              width="100%"
+            />
           </div>
-          <div className="w-full sm:w-44">
-            <select
+          <div>
+            <Selector
+              label="Jenis Penjamin"
+              isLabelHidden
               value={insuranceFilter}
-              onChange={(e) => setInsuranceFilter(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-border-default rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="ALL">Semua Penjamin</option>
-              <option value="GENERAL">Umum (Tunai)</option>
-              <option value="BPJS">BPJS Kesehatan</option>
-            </select>
+              onChange={(val) => setInsuranceFilter(val)}
+              options={[
+                { value: 'ALL', label: 'Semua Penjamin' },
+                { value: 'GENERAL', label: 'Umum (Tunai)' },
+                { value: 'BPJS', label: 'BPJS Kesehatan' },
+              ]}
+              width="100%"
+            />
           </div>
         </div>
 
         {/* Content Table */}
         {isLoading ? (
-          <div className="py-12 text-center text-text-muted">
-            <div className="animate-spin inline-block w-6 h-6 border-2 border-primary border-t-transparent rounded-full mb-2"></div>
-            <p className="text-sm">Memuat data tagihan kasir...</p>
+          <div className="py-12 flex flex-col items-center justify-center gap-3">
+            <Spinner size="md" />
+            <p className="text-sm text-slate-500">Memuat data tagihan kasir...</p>
           </div>
         ) : filteredBillings.length === 0 ? (
-          <div className="py-12 text-center border-2 border-dashed border-border-default rounded-lg">
-            <p className="text-sm font-medium text-text-muted">
-              Tidak ada tagihan billing rawat jalan yang ditemukan.
-            </p>
-          </div>
+          <EmptyState
+            title="Tidak Ada Tagihan Ditemukan"
+            description="Tidak ditemukan data tagihan kasir rawat jalan dengan kriteria filter saat ini."
+          />
         ) : (
-          <div className="overflow-x-auto border border-border-default rounded-lg">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-text-muted border-b border-border-default font-semibold text-xs uppercase tracking-wider">
-                <tr>
-                  <th className="py-3 px-4">No. Invoice</th>
-                  <th className="py-3 px-4">Pasien & No. RM</th>
-                  <th className="py-3 px-4">Layanan & DPJP</th>
-                  <th className="py-3 px-4">Penjamin</th>
-                  <th className="py-3 px-4 text-right">Total Tagihan</th>
-                  <th className="py-3 px-4 text-center">Status</th>
-                  <th className="py-3 px-4 text-center">Aksi Kasir</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-light">
+          <div className="border border-slate-200 rounded-lg overflow-hidden">
+            <Table density="balanced" dividers="rows" hasHover>
+              <TableHeader>
+                <TableRow>
+                  <TableHeaderCell>No. Invoice</TableHeaderCell>
+                  <TableHeaderCell>Pasien & No. RM</TableHeaderCell>
+                  <TableHeaderCell>Layanan & DPJP</TableHeaderCell>
+                  <TableHeaderCell>Penjamin</TableHeaderCell>
+                  <TableHeaderCell style={{ textAlign: 'right' }}>Total Tagihan</TableHeaderCell>
+                  <TableHeaderCell style={{ textAlign: 'center' }}>Status</TableHeaderCell>
+                  <TableHeaderCell style={{ textAlign: 'center' }}>Aksi Kasir</TableHeaderCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filteredBillings.map((b) => {
                   const isBpjs = b.insurance_type === 'BPJS';
                   const isPaid = b.payment_status === 'PAID';
 
                   return (
-                    <tr key={b.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-3 px-4">
-                        <span className="font-mono font-medium text-primary text-xs">
+                    <TableRow key={b.id}>
+                      <TableCell>
+                        <span className="font-mono font-bold text-teal-700 text-xs">
                           {b.invoice_number}
                         </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="font-semibold text-text-main">
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-semibold text-slate-900 text-sm">
                           {b.registration?.patient?.name || 'Pasien'}
                         </div>
-                        <div className="font-mono text-xs text-text-muted">
+                        <div className="font-mono text-xs text-slate-500">
                           {b.registration?.patient?.medical_record_number || '-'}
                         </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="font-medium text-text-main text-xs">
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-slate-800 text-xs">
                           {b.registration?.polyclinic?.name || '-'}
                         </div>
-                        <div className="text-xs text-text-muted">
+                        <div className="text-xs text-slate-500">
                           {b.registration?.doctor?.name || '-'}
                         </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge variant={isBpjs ? 'success' : 'neutral'}>
-                          {isBpjs ? 'BPJS Kesehatan' : 'Umum (Tunai)'}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="font-mono font-bold text-text-main">
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={isBpjs ? 'success' : 'neutral'}
+                          label={isBpjs ? 'BPJS Kesehatan' : 'Umum (Tunai)'}
+                        />
+                      </TableCell>
+                      <TableCell style={{ textAlign: 'right' }}>
+                        <div className="font-mono font-bold text-slate-900 text-sm">
                           {formatCurrency(Number(b.total_amount) || 0)}
                         </div>
                         {isBpjs && (
@@ -162,39 +182,38 @@ export const BillingQueueTable: React.FC<BillingQueueTableProps> = ({
                             Kover BPJS: Rp 0
                           </div>
                         )}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <Badge variant={isPaid ? 'success' : 'warning'}>
-                          {isPaid ? 'Lunas' : 'Belum Bayar'}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4 text-center">
+                      </TableCell>
+                      <TableCell style={{ textAlign: 'center' }}>
+                        <Badge
+                          variant={isPaid ? 'success' : 'warning'}
+                          label={isPaid ? 'Lunas' : 'Belum Bayar'}
+                        />
+                      </TableCell>
+                      <TableCell style={{ textAlign: 'center' }}>
                         {isPaid ? (
                           <Button
-                            variant="outline"
+                            variant="secondary"
                             size="sm"
+                            label="Cetak Kuitansi"
                             onClick={() => onOpenInvoice(b)}
-                          >
-                            Cetak Kuitansi
-                          </Button>
+                          />
                         ) : (
                           <Button
                             variant="primary"
                             size="sm"
+                            label="Bayar Tagihan"
                             onClick={() => onOpenPayment(b)}
-                          >
-                            Bayar Tagihan
-                          </Button>
+                          />
                         )}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
-      </CardContent>
+      </VStack>
     </Card>
   );
 };

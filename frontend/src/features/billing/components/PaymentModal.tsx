@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardContent, CardFooter, Button, Badge } from '../../../components/ui';
+import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
+import { Banner } from '@astryxdesign/core/Banner';
+import { Button } from '@astryxdesign/core/Button';
+import { Badge } from '@astryxdesign/core/Badge';
+import { TextInput } from '@astryxdesign/core/TextInput';
+import { TextArea } from '@astryxdesign/core/TextArea';
+import { HStack } from '@astryxdesign/core/HStack';
 import { formatCurrency } from '../../../utils/formatters';
 import { apiClient } from '../../../lib/api-client';
 
@@ -121,201 +127,201 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   return (
-    <div
+    <Dialog
+      isOpen={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      width={720}
+      purpose="form"
       role="dialog"
       aria-modal="true"
       aria-labelledby="payment-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in"
     >
-      <Card className="w-full max-w-2xl bg-white shadow-xl max-h-[92vh] flex flex-col">
-        <CardHeader className="flex items-center justify-between border-b border-border-default pb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 id="payment-modal-title" className="text-xl font-bold text-text-main">
-                Pembayaran Kasir Rawat Jalan
-              </h2>
-              <Badge variant={billing.payment_status === 'PAID' ? 'success' : 'warning'}>
-                {billing.payment_status === 'PAID' ? 'LUNAS' : 'BELUM BAYAR'}
-              </Badge>
+      <div className="p-6 bg-white rounded-xl shadow-2xl flex flex-col max-h-[92vh]">
+        <DialogHeader
+          title={
+            <div>
+              <HStack gap={2} align="center">
+                <h2 id="payment-modal-title" className="text-xl font-bold text-slate-900">
+                  Pembayaran Kasir Rawat Jalan
+                </h2>
+                <Badge
+                  variant={billing.payment_status === 'PAID' ? 'success' : 'warning'}
+                  label={billing.payment_status === 'PAID' ? 'LUNAS' : 'BELUM BAYAR'}
+                />
+              </HStack>
+              <p className="text-sm text-slate-500 mt-1">
+                Invoice: <span className="font-mono text-teal-700 font-semibold">{billing.invoice_number}</span> | Pasien:{' '}
+                <span className="font-semibold text-slate-900">{billing.registration?.patient?.name || 'Pasien'}</span> (
+                <span className="font-mono text-slate-500">{billing.registration?.patient?.medical_record_number}</span>)
+              </p>
             </div>
-            <p className="text-sm text-text-muted mt-1">
-              Invoice: <span className="font-mono text-primary font-semibold">{billing.invoice_number}</span> | Pasien:{' '}
-              <span className="font-semibold text-text-main">{billing.registration?.patient?.name || 'Pasien'}</span> (
-              <span className="font-mono text-text-muted">{billing.registration?.patient?.medical_record_number}</span>)
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Tutup modal kasir"
-            className="text-text-muted hover:text-text-main text-2xl font-bold leading-none p-1 rounded focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            &times;
-          </button>
-        </CardHeader>
+          }
+          onOpenChange={() => onClose()}
+        />
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
-          <CardContent className="space-y-5 p-5">
-            {errorMessage && (
-              <div
-                role="alert"
-                className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm"
-              >
-                {errorMessage}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto mt-4 space-y-5">
+          {errorMessage && (
+            <Banner
+              status="error"
+              title="Kesalahan Pembayaran"
+              description={errorMessage}
+              container="card"
+            />
+          )}
+
+          {/* Rincian Pos Biaya */}
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2.5 text-sm">
+            <h3 className="font-bold text-xs uppercase tracking-wider mb-2 text-slate-600">
+              Rincian Tagihan Layanan Pasien
+            </h3>
+            <div className="flex justify-between text-slate-600">
+              <span>1. Biaya Administrasi & Pendaftaran</span>
+              <span className="font-mono font-medium text-slate-900">
+                {formatCurrency(Number(billing.total_registration_fee) || 0)}
+              </span>
+            </div>
+            <div className="flex justify-between text-slate-600">
+              <span>2. Tindakan Medis Poliklinik</span>
+              <span className="font-mono font-medium text-slate-900">
+                {formatCurrency(Number(billing.total_actions_fee) || 0)}
+              </span>
+            </div>
+            <div className="flex justify-between text-slate-600">
+              <span>3. Obat & Farmasi e-Resep</span>
+              <span className="font-mono font-medium text-slate-900">
+                {formatCurrency(Number(billing.total_medicines_fee) || 0)}
+              </span>
+            </div>
+            <div className="flex justify-between text-slate-600">
+              <span>4. Pemeriksaan Penunjang Laboratorium</span>
+              <span className="font-mono font-medium text-slate-900">
+                {formatCurrency(Number(billing.total_lab_fee) || 0)}
+              </span>
+            </div>
+            <div className="border-t border-slate-200 pt-2.5 flex justify-between font-bold text-base text-slate-900">
+              <span>Total Biaya Pelayanan:</span>
+              <span className="font-mono text-teal-700">
+                {formatCurrency(Number(billing.total_amount) || 0)}
+              </span>
+            </div>
+
+            {isBpjs && (
+              <div className="border-t border-emerald-200 bg-emerald-50/90 -mx-4 -mb-4 p-4 rounded-b-lg">
+                <div className="flex justify-between items-center text-emerald-800 font-semibold text-sm">
+                  <span>Ditanggung Penuh BPJS Kesehatan (Rp 0 Bebas Biaya):</span>
+                  <span className="font-mono text-base">- {formatCurrency(Number(billing.covered_by_bpjs) || Number(billing.total_amount))}</span>
+                </div>
+                <div className="flex justify-between items-center text-emerald-950 font-bold text-base mt-1">
+                  <span>Total Tagihan Pasien:</span>
+                  <span className="font-mono text-lg text-emerald-700">Rp 0</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Form Pembayaran Kasir */}
+          <div className="space-y-4">
+            <div>
+              <span className="block text-sm font-semibold text-slate-900 mb-2">
+                Metode Pembayaran
+              </span>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="payment_method"
+                    value="CASH"
+                    checked={paymentMethod === 'CASH'}
+                    onChange={() => setPaymentMethod('CASH')}
+                    disabled={isBpjs}
+                    className="text-teal-600 focus:ring-teal-500 h-4 w-4"
+                  />
+                  <span className="text-sm font-medium">Tunai (Cash Full Payment)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="payment_method"
+                    value="BPJS"
+                    checked={paymentMethod === 'BPJS'}
+                    onChange={() => setPaymentMethod('BPJS')}
+                    disabled={!isBpjs}
+                    className="text-teal-600 focus:ring-teal-500 h-4 w-4"
+                  />
+                  <span className="text-sm font-medium">Klaim Penjamin BPJS Kesehatan</span>
+                </label>
+              </div>
+            </div>
+
+            {paymentMethod === 'CASH' && (
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-4">
+                <div>
+                  <label htmlFor="amount-received" className="block text-sm font-semibold text-slate-900 mb-1">
+                    Uang Diterima (Rp) <span className="text-red-500">*</span>
+                  </label>
+                  <TextInput
+                    id="amount-received"
+                    label="Uang Diterima (Rp)"
+                    isLabelHidden
+                    type="text" inputMode="numeric"
+                    placeholder="Masukkan nominal uang tunai yang diterima..."
+                    value={amountReceivedStr}
+                    onChange={(val) => setAmountReceivedStr(val)}
+                    isRequired
+                    width="100%"
+                  />
+                </div>
+
+                <div className="flex justify-between items-center pt-2 border-t border-slate-200">
+                  <span className="text-sm font-semibold text-slate-900">Uang Kembalian Pasien:</span>
+                  <span
+                    className={`font-mono text-lg font-bold ${
+                      isInsufficient ? 'text-red-600' : 'text-emerald-600'
+                    }`}
+                  >
+                    {formatCurrency(changeAmount)}
+                  </span>
+                </div>
+
+                {isInsufficient && amountReceived > 0 && (
+                  <p className="text-xs text-red-600 font-medium">
+                    * Uang diterima kurang {formatCurrency(patientPayable - amountReceived)}
+                  </p>
+                )}
               </div>
             )}
 
-            {/* Rincian Pos Biaya */}
-            <div className="bg-slate-50 border border-border-default rounded-lg p-4 space-y-2.5 text-sm">
-              <h3 className="font-bold text-text-main text-xs uppercase tracking-wider mb-2 text-slate-600">
-                Rincian Tagihan Layanan Pasien
-              </h3>
-              <div className="flex justify-between text-text-muted">
-                <span>1. Biaya Administrasi & Pendaftaran</span>
-                <span className="font-mono font-medium text-text-main">
-                  {formatCurrency(Number(billing.total_registration_fee) || 0)}
-                </span>
-              </div>
-              <div className="flex justify-between text-text-muted">
-                <span>2. Tindakan Medis Poliklinik</span>
-                <span className="font-mono font-medium text-text-main">
-                  {formatCurrency(Number(billing.total_actions_fee) || 0)}
-                </span>
-              </div>
-              <div className="flex justify-between text-text-muted">
-                <span>3. Obat & Farmasi e-Resep</span>
-                <span className="font-mono font-medium text-text-main">
-                  {formatCurrency(Number(billing.total_medicines_fee) || 0)}
-                </span>
-              </div>
-              <div className="flex justify-between text-text-muted">
-                <span>4. Pemeriksaan Penunjang Laboratorium</span>
-                <span className="font-mono font-medium text-text-main">
-                  {formatCurrency(Number(billing.total_lab_fee) || 0)}
-                </span>
-              </div>
-              <div className="border-t border-border-default pt-2.5 flex justify-between font-bold text-base text-text-main">
-                <span>Total Biaya Pelayanan:</span>
-                <span className="font-mono text-primary">
-                  {formatCurrency(Number(billing.total_amount) || 0)}
-                </span>
-              </div>
-
-              {isBpjs && (
-                <div className="border-t border-emerald-200 bg-emerald-50/80 -mx-4 -mb-4 p-3.5 rounded-b-lg">
-                  <div className="flex justify-between items-center text-emerald-800 font-semibold text-sm">
-                    <span>Ditanggung Penuh BPJS Kesehatan (Rp 0 Bebas Biaya):</span>
-                    <span className="font-mono text-base">- {formatCurrency(Number(billing.covered_by_bpjs) || Number(billing.total_amount))}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-emerald-950 font-bold text-base mt-1">
-                    <span>Total Tagihan Pasien:</span>
-                    <span className="font-mono text-lg text-emerald-700">Rp 0</span>
-                  </div>
-                </div>
-              )}
+            <div>
+              <TextArea
+                label="Catatan Transaksi Kasir (Opsional)"
+                placeholder="Catatan tambahan pembayaran..."
+                value={notes}
+                onChange={(val) => setNotes(val)}
+                rows={2}
+                width="100%"
+              />
             </div>
+          </div>
 
-            {/* Form Pembayaran Kasir */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-text-main mb-1.5">
-                  Metode Pembayaran
-                </label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="payment_method"
-                      value="CASH"
-                      checked={paymentMethod === 'CASH'}
-                      onChange={() => setPaymentMethod('CASH')}
-                      disabled={isBpjs}
-                      className="text-primary focus:ring-primary h-4 w-4"
-                    />
-                    <span className="text-sm font-medium">Tunai (Cash Full Payment)</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="payment_method"
-                      value="BPJS"
-                      checked={paymentMethod === 'BPJS'}
-                      onChange={() => setPaymentMethod('BPJS')}
-                      disabled={!isBpjs}
-                      className="text-primary focus:ring-primary h-4 w-4"
-                    />
-                    <span className="text-sm font-medium">Klaim Penjamin BPJS Kesehatan</span>
-                  </label>
-                </div>
-              </div>
-
-              {paymentMethod === 'CASH' && (
-                <div className="p-4 bg-slate-50 border border-border-default rounded-lg space-y-4">
-                  <div>
-                    <label htmlFor="amount-received" className="block text-sm font-semibold text-text-main mb-1">
-                      Uang Diterima (Rp) <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="amount-received"
-                      type="number"
-                      placeholder="Masukkan nominal uang tunai yang diterima..."
-                      value={amountReceivedStr}
-                      onChange={(e) => setAmountReceivedStr(e.target.value)}
-                      min={0}
-                      required
-                      autoFocus
-                      className="w-full px-3 py-2 text-sm border border-border-default rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-
-                  <div className="flex justify-between items-center pt-2 border-t border-border-default">
-                    <span className="text-sm font-semibold text-text-main">Uang Kembalian Pasien:</span>
-                    <span
-                      className={`font-mono text-lg font-bold ${
-                        isInsufficient ? 'text-red-600' : 'text-emerald-600'
-                      }`}
-                    >
-                      {formatCurrency(changeAmount)}
-                    </span>
-                  </div>
-
-                  {isInsufficient && amountReceived > 0 && (
-                    <p className="text-xs text-red-600 font-medium">
-                      * Uang diterima kurang {formatCurrency(patientPayable - amountReceived)}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <div>
-                <label htmlFor="cashier-notes" className="block text-sm font-semibold text-text-main mb-1">
-                  Catatan Transaksi Kasir (Opsional)
-                </label>
-                <textarea
-                  id="cashier-notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Catatan tambahan pembayaran..."
-                  rows={2}
-                  className="w-full px-3 py-2 text-sm rounded-md border border-border-default focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-            </div>
-          </CardContent>
-
-          <CardFooter className="flex justify-end gap-3 border-t border-border-default pt-4 p-4">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-              Batal
-            </Button>
+          <HStack justify="end" gap={3} className="pt-4 border-t border-slate-200">
+            <Button
+              variant="secondary"
+              label="Batal"
+              onClick={onClose}
+              isDisabled={isSubmitting}
+            />
             <Button
               type="submit"
               variant="primary"
-              disabled={isSubmitting || (paymentMethod === 'CASH' && isInsufficient)}
-            >
-              {isSubmitting ? 'Memproses Transaksi...' : 'Konfirmasi & Selesaikan Pembayaran'}
-            </Button>
-          </CardFooter>
+              label={isSubmitting ? 'Memproses Transaksi...' : 'Konfirmasi & Selesaikan Pembayaran'}
+              isDisabled={isSubmitting || (paymentMethod === 'CASH' && isInsufficient)}
+              isLoading={isSubmitting}
+            />
+          </HStack>
         </form>
-      </Card>
-    </div>
+      </div>
+    </Dialog>
   );
 };

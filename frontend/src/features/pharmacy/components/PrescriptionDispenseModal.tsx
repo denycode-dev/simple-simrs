@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Alert, Badge } from '@/components/ui';
+import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
+import { Banner } from '@astryxdesign/core/Banner';
+import { Button } from '@astryxdesign/core/Button';
+import { Badge } from '@astryxdesign/core/Badge';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHeaderCell } from '@astryxdesign/core/Table';
+import { HStack } from '@astryxdesign/core/HStack';
 import { apiClient } from '@/lib/api-client';
 import { formatCurrency } from '@/utils/formatters';
 
@@ -63,155 +68,118 @@ export const PrescriptionDispenseModal: React.FC<PrescriptionDispenseModalProps>
   };
 
   return (
-    <div
+    <Dialog
+      isOpen={true}
+      onOpenChange={(open) => {
+        if (!open && !isSubmitting) onClose();
+      }}
+      width={720}
+      purpose="form"
       role="dialog"
       aria-modal="true"
       aria-labelledby="dispense-modal-title"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.6)',
-        backdropFilter: 'blur(2px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 'var(--space-4)',
-        zIndex: 65,
-      }}
-      onClick={() => !isSubmitting && onClose()}
     >
-      <div style={{ maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
-        <Card elevation="high" padding={6} style={{ backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-lg)' }}>
-          <CardHeader style={{ paddingBottom: 'var(--space-3)', borderBottom: '1px solid var(--color-border-subtle)', marginBottom: 'var(--space-4)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span
-                style={{
-                  fontFamily: 'monospace',
-                  fontWeight: 800,
-                  fontSize: '0.875rem',
-                  color: 'var(--color-primary)',
-                  backgroundColor: 'var(--color-primary-light)',
-                  padding: '2px 8px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--color-primary-border)',
-                }}
-              >
-                {prescription.prescription_number}
-              </span>
-              <Badge
-                variant={prescription.status === 'DISPENSED' ? 'success' : 'warning'}
-                label={prescription.status === 'DISPENSED' ? 'Sudah Diserahkan' : 'Menunggu Dispensing'}
-              />
+      <div className="p-6 bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh]">
+        <DialogHeader
+          title={
+            <div>
+              <HStack justify="between" align="center" className="mb-1">
+                <span className="font-mono font-bold text-xs text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded border border-teal-200">
+                  {prescription.prescription_number}
+                </span>
+                <Badge
+                  variant={prescription.status === 'DISPENSED' ? 'success' : 'warning'}
+                  label={prescription.status === 'DISPENSED' ? 'Sudah Diserahkan' : 'Menunggu Dispensing'}
+                />
+              </HStack>
+              <h2 id="dispense-modal-title" className="text-xl font-bold text-slate-900 mt-1">
+                Telaah & Penyerahan Obat Farmasi
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Pasien: <strong>{prescription.patient_name}</strong> ({prescription.medical_record_number}) • Dokter DPJP: {prescription.doctor_name}
+              </p>
             </div>
-            <CardTitle id="dispense-modal-title" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)', marginTop: 'var(--space-2)' }}>
-              Telaah & Penyerahan Obat Farmasi
-            </CardTitle>
-            <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>
-              Pasien: <strong>{prescription.patient_name}</strong> ({prescription.medical_record_number}) • Dokter DPJP: {prescription.doctor_name}
-            </div>
-          </CardHeader>
+          }
+          onOpenChange={() => !isSubmitting && onClose()}
+        />
 
-          <CardContent style={{ padding: 0 }}>
-            {error && <div style={{ marginBottom: 'var(--space-4)' }}><Alert variant="danger">{error}</Alert></div>}
-            {success && <div style={{ marginBottom: 'var(--space-4)' }}><Alert variant="success">{success}</Alert></div>}
+        <div className="flex-1 overflow-y-auto mt-4 space-y-4">
+          {error && <Banner status="error" title="Gagal Dispensing" description={error} container="card" />}
+          {success && <Banner status="success" title="Dispensing Berhasil" description={success} container="card" />}
 
-            {/* Checklist Telaah Resep */}
-            <div
-              style={{
-                padding: 'var(--space-3) var(--space-4)',
-                backgroundColor: 'var(--color-surface-hover)',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '0.8125rem',
-                color: 'var(--color-text-secondary)',
-                marginBottom: 'var(--space-4)',
-              }}
-            >
-              <strong>Prosedur Telaah Farmasi (5 Tepat):</strong> Pastikan tepat pasien, tepat obat, tepat dosis, tepat rute pemberian, dan tepat waktu.
-            </div>
+          {/* Checklist Telaah Resep */}
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700">
+            <strong>Prosedur Telaah Farmasi (5 Tepat):</strong> Pastikan tepat pasien, tepat obat, tepat dosis, tepat rute pemberian, dan tepat waktu.
+          </div>
 
-            {/* Tabel Rincian Obat Resep */}
-            <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: 'var(--space-4)' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
-                <thead>
-                  <tr style={{ backgroundColor: 'var(--color-surface-hover)', borderBottom: '1px solid var(--color-border)' }}>
-                    <th style={{ padding: 'var(--space-2) var(--space-3)', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Nama Obat</th>
-                    <th style={{ padding: 'var(--space-2) var(--space-3)', fontWeight: 600, color: 'var(--color-text-secondary)', width: '80px', textAlign: 'center' }}>Jumlah</th>
-                    <th style={{ padding: 'var(--space-2) var(--space-3)', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Aturan Pakai (Signa)</th>
-                    <th style={{ padding: 'var(--space-2) var(--space-3)', fontWeight: 600, color: 'var(--color-text-secondary)', width: '120px', textAlign: 'right' }}>Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {prescription.items.map((item) => (
-                    <tr key={item.id} style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
-                      <td style={{ padding: 'var(--space-2) var(--space-3)' }}>
-                        <div style={{ fontWeight: 700, color: 'var(--color-text-main)' }}>{item.medicine_name}</div>
-                        {item.medicine_code && (
-                          <div style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: 'var(--color-text-muted)' }}>
-                            {item.medicine_code}
-                          </div>
-                        )}
-                      </td>
-                      <td style={{ padding: 'var(--space-2) var(--space-3)', textAlign: 'center', fontWeight: 600 }}>
-                        {item.quantity}
-                      </td>
-                      <td style={{ padding: 'var(--space-2) var(--space-3)', color: 'var(--color-text-secondary)' }}>
-                        <span style={{ backgroundColor: 'var(--color-primary-light)', padding: '2px 6px', borderRadius: 'var(--radius-sm)', fontSize: '0.8125rem', color: 'var(--color-primary-dark)' }}>
-                          {item.dosage}
-                        </span>
-                      </td>
-                      <td style={{ padding: 'var(--space-2) var(--space-3)', textAlign: 'right', fontFamily: 'monospace', fontWeight: 600 }}>
-                        {formatCurrency(item.subtotal)}
-                      </td>
-                    </tr>
-                  ))}
-                  <tr style={{ backgroundColor: 'var(--color-surface-hover)', fontWeight: 700 }}>
-                    <td colSpan={3} style={{ padding: 'var(--space-2) var(--space-3)', textAlign: 'right' }}>
-                      Total Biaya Resep:
-                    </td>
-                    <td style={{ padding: 'var(--space-2) var(--space-3)', textAlign: 'right', fontFamily: 'monospace', color: 'var(--color-primary)' }}>
-                      {formatCurrency(prescription.total_price)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          {/* Tabel Rincian Obat Resep */}
+          <div className="border border-slate-200 rounded-lg overflow-hidden">
+            <Table density="balanced" dividers="rows" hasHover>
+              <TableHeader>
+                <TableRow>
+                  <TableHeaderCell>Nama Obat</TableHeaderCell>
+                  <TableHeaderCell style={{ width: '80px', textAlign: 'center' }}>Jumlah</TableHeaderCell>
+                  <TableHeaderCell>Aturan Pakai (Signa)</TableHeaderCell>
+                  <TableHeaderCell style={{ width: '130px', textAlign: 'right' }}>Subtotal</TableHeaderCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {prescription.items.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <div className="font-bold text-slate-900 text-sm">{item.medicine_name}</div>
+                      {item.medicine_code && (
+                        <div className="text-xs font-mono text-slate-400">
+                          {item.medicine_code}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell style={{ textAlign: 'center', fontWeight: 600 }}>
+                      {item.quantity}
+                    </TableCell>
+                    <TableCell>
+                      <span className="bg-teal-50 text-teal-800 border border-teal-200 px-2 py-0.5 rounded text-xs font-medium">
+                        {item.dosage}
+                      </span>
+                    </TableCell>
+                    <TableCell style={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: 600 }}>
+                      {formatCurrency(item.subtotal)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                <TableRow style={{ backgroundColor: 'rgba(248, 250, 252, 0.8)', fontWeight: 700 }}>
+                  <TableCell colSpan={3} style={{ textAlign: 'right' }}>
+                    Total Biaya Resep:
+                  </TableCell>
+                  <TableCell style={{ textAlign: 'right', fontFamily: 'monospace', color: '#0d9488' }}>
+                    {formatCurrency(prescription.total_price)}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </div>
 
-            {/* Tombol Aksi */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: 'var(--space-3)',
-                paddingTop: 'var(--space-3)',
-                borderTop: '1px solid var(--color-border-subtle)',
-              }}
-            >
-              <Button
-                type="button"
-                variant="secondary"
-                size="md"
-                label="Tutup"
-                onClick={onClose}
-                disabled={isSubmitting}
-              >
-                Tutup
-              </Button>
-              {prescription.status === 'PENDING' && (
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="md"
-                  label="Konfirmasi & Serahkan Obat (Dispensing)"
-                  onClick={handleDispense}
-                  isLoading={isSubmitting}
-                >
-                  Konfirmasi & Serahkan Obat (Dispensing)
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <HStack justify="end" gap={3} className="pt-4 border-t border-slate-200">
+          <Button
+            type="button"
+            variant="secondary"
+            label="Tutup"
+            onClick={onClose}
+            isDisabled={isSubmitting}
+          />
+          {prescription.status === 'PENDING' && (
+            <Button
+              type="button"
+              variant="primary"
+              label="Konfirmasi & Serahkan Obat (Dispensing)"
+              onClick={handleDispense}
+              isLoading={isSubmitting}
+              isDisabled={isSubmitting}
+            />
+          )}
+        </HStack>
       </div>
-    </div>
+    </Dialog>
   );
 };

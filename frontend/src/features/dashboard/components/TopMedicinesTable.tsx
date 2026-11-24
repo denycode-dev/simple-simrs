@@ -1,5 +1,9 @@
 import React from 'react';
-import { Card, CardHeader, CardContent } from '../../../components/ui';
+import { Card } from '@astryxdesign/core/Card';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHeaderCell } from '@astryxdesign/core/Table';
+import { Spinner } from '@astryxdesign/core/Spinner';
+import { EmptyState } from '@astryxdesign/core/EmptyState';
+import { VStack } from '@astryxdesign/core/VStack';
 
 export interface TopMedicineItem {
   medicine_name: string;
@@ -14,45 +18,61 @@ export interface TopMedicinesTableProps {
 
 export const TopMedicinesTable: React.FC<TopMedicinesTableProps> = ({ data, isLoading }) => {
   return (
-    <Card className="w-full bg-white border border-border-default shadow-sm">
-      <CardHeader className="border-b border-border-default pb-3">
-        <h3 className="text-base font-bold text-text-main">
-          5 Obat Paling Banyak Diresepkan
-        </h3>
-        <p className="text-xs text-text-muted">
-          Monitoring penggunaan perbekalan farmasi rawat jalan
-        </p>
-      </CardHeader>
-      <CardContent className="p-0">
+    <Card elevation="low" padding={4}>
+      <VStack gap={3}>
+        <div className="border-b border-slate-200 pb-3">
+          <h3 className="text-base font-bold text-slate-900">
+            5 Obat Paling Banyak Diresepkan
+          </h3>
+          <p className="text-xs text-slate-500">
+            Monitoring penggunaan perbekalan farmasi rawat jalan
+          </p>
+        </div>
+
         {isLoading ? (
-          <div className="py-8 text-center text-xs text-text-muted">Memuat data obat...</div>
+          <div className="py-8 flex flex-col items-center justify-center gap-2">
+            <Spinner size="sm" />
+            <span className="text-xs text-slate-500">Memuat data obat...</span>
+          </div>
         ) : data.length === 0 ? (
-          <div className="py-8 text-center text-xs text-text-muted">Belum ada resep obat.</div>
+          <EmptyState
+            title="Belum Ada Resep Obat"
+            description="Tidak ada resep obat farmasi yang tercatat pada periode ini."
+            isCompact
+          />
         ) : (
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-text-muted font-semibold border-b border-border-default uppercase">
-              <tr>
-                <th className="py-2.5 px-4">Nama Obat</th>
-                <th className="py-2.5 px-4">Satuan</th>
-                <th className="py-2.5 px-4 text-right">Diresepkan</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-light">
-              {data.map((med, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50">
-                  <td className="py-2.5 px-4 font-semibold text-text-main">
-                    {med.medicine_name}
-                  </td>
-                  <td className="py-2.5 px-4 text-text-muted">{med.unit}</td>
-                  <td className="py-2.5 px-4 text-right font-mono font-bold text-primary">
-                    {med.total_prescribed}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="border border-slate-200 rounded-lg overflow-hidden">
+            <Table density="balanced" dividers="rows" hasHover>
+              <TableHeader>
+                <TableRow>
+                  <TableHeaderCell>Nama Obat</TableHeaderCell>
+                  <TableHeaderCell>Satuan</TableHeaderCell>
+                  <TableHeaderCell style={{ textAlign: 'right' }}>Total Diresepkan</TableHeaderCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.map((med, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell>
+                      <span className="font-semibold text-slate-900 text-sm">
+                        {med.medicine_name}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-xs text-slate-500">{med.unit}</span>
+                    </TableCell>
+                    <TableCell style={{ textAlign: 'right' }}>
+                      <span className="font-mono font-bold text-teal-700 text-sm">
+                        {med.total_prescribed}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
-      </CardContent>
+      </VStack>
     </Card>
   );
 };

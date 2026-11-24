@@ -1,5 +1,8 @@
 import React from 'react';
-import { Card, CardHeader, CardContent, CardFooter, Button, Badge } from '../../../components/ui';
+import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
+import { Button } from '@astryxdesign/core/Button';
+import { Badge } from '@astryxdesign/core/Badge';
+import { HStack } from '@astryxdesign/core/HStack';
 import { formatCurrency } from '../../../utils/formatters';
 import type { BillingDetail } from './PaymentModal';
 
@@ -24,30 +27,31 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
   };
 
   return (
-    <div
+    <Dialog
+      isOpen={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      width={720}
+      purpose="info"
       role="dialog"
       aria-modal="true"
       aria-labelledby="invoice-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in"
     >
-      <Card className="w-full max-w-2xl bg-white shadow-2xl max-h-[92vh] flex flex-col">
-        <CardHeader className="flex items-center justify-between border-b border-border-default pb-3">
-          <div className="flex items-center gap-2">
-            <h2 id="invoice-title" className="text-lg font-bold text-text-main">
-              Kuitansi Resmi Pembayaran
-            </h2>
-            <Badge variant="success">LUNAS / TERBAYAR</Badge>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Tutup kuitansi"
-            className="text-text-muted hover:text-text-main text-2xl font-bold leading-none p-1 rounded focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            &times;
-          </button>
-        </CardHeader>
+      <div className="p-6 bg-white rounded-xl shadow-2xl flex flex-col max-h-[92vh]">
+        <DialogHeader
+          title={
+            <HStack gap={3} align="center">
+              <h2 id="invoice-title" className="text-lg font-bold text-slate-900">
+                Kuitansi Resmi Pembayaran
+              </h2>
+              <Badge variant="success" label="LUNAS / TERBAYAR" />
+            </HStack>
+          }
+          onOpenChange={() => onClose()}
+        />
 
-        <CardContent className="flex-1 overflow-y-auto p-6 space-y-6 print:p-0">
+        <div className="flex-1 overflow-y-auto mt-4 space-y-6 print:p-0">
           {/* Hospital Header / Kop Surat */}
           <div className="text-center border-b-2 border-slate-800 pb-4">
             <h1 className="text-xl font-bold tracking-tight text-slate-900 uppercase">
@@ -98,7 +102,7 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
               </div>
               <div>
                 <span className="text-slate-500">No. Rekam Medis:</span>{' '}
-                <span className="font-mono font-semibold text-primary">
+                <span className="font-mono font-semibold text-teal-700">
                   {billing.registration?.patient?.medical_record_number || '-'}
                 </span>
               </div>
@@ -176,7 +180,7 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
                   <td colSpan={2} className="py-2 px-3 text-right">
                     Total Yang Dibayarkan Pasien:
                   </td>
-                  <td className="py-2 px-3 text-right font-mono text-primary font-bold">
+                  <td className="py-2 px-3 text-right font-mono text-teal-700 font-bold">
                     {formatCurrency(Number(billing.patient_payable) || 0)}
                   </td>
                 </tr>
@@ -219,22 +223,18 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
               </p>
             </div>
           </div>
-        </CardContent>
+        </div>
 
-        <CardFooter className="flex justify-between items-center border-t border-border-default pt-4 p-4 print:hidden">
-          <p className="text-xs text-text-muted">
+        <HStack justify="between" align="center" className="pt-4 border-t border-slate-200 print:hidden">
+          <p className="text-xs text-slate-500">
             Kuitansi sah yang diterbitkan secara elektronik oleh SIMRS Inova Medika.
           </p>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>
-              Tutup
-            </Button>
-            <Button variant="primary" onClick={handlePrint}>
-              Cetak Kuitansi
-            </Button>
-          </div>
-        </CardFooter>
-      </Card>
-    </div>
+          <HStack gap={2}>
+            <Button variant="secondary" label="Tutup" onClick={onClose} />
+            <Button variant="primary" label="Cetak Kuitansi" onClick={handlePrint} />
+          </HStack>
+        </HStack>
+      </div>
+    </Dialog>
   );
 };

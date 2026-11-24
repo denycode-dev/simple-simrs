@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardContent, CardFooter, Button } from '../../../components/ui';
+import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
+import { Banner } from '@astryxdesign/core/Banner';
+import { Button } from '@astryxdesign/core/Button';
+import { TextArea } from '@astryxdesign/core/TextArea';
+import { HStack } from '@astryxdesign/core/HStack';
+import { Badge } from '@astryxdesign/core/Badge';
 
 export interface LabTestOption {
   test_code: string;
@@ -103,115 +108,115 @@ export const LabOrderModal: React.FC<LabOrderModalProps> = ({
   };
 
   return (
-    <div
+    <Dialog
+      isOpen={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      width={720}
+      purpose="form"
       role="dialog"
       aria-modal="true"
       aria-labelledby="lab-order-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in"
     >
-      <Card className="w-full max-w-2xl bg-white shadow-xl max-h-[90vh] flex flex-col">
-        <CardHeader className="flex items-center justify-between border-b border-border-default pb-4">
+      <div className="p-6 bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh]">
+        <DialogHeader
+          title={
+            <div>
+              <h2 id="lab-order-title" className="text-xl font-bold text-slate-900">
+                Permintaan Pemeriksaan Laboratorium
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">
+                Pasien: <span className="font-semibold text-slate-800">{patientName}</span> (
+                <span className="font-mono text-teal-700 font-medium">{medicalRecordNumber}</span>)
+              </p>
+            </div>
+          }
+          onOpenChange={() => onClose()}
+        />
+
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto mt-4 space-y-5">
+          {errorMessage && (
+            <Banner
+              status="error"
+              title="Validasi Gagal"
+              description={errorMessage}
+              container="card"
+            />
+          )}
+
           <div>
-            <h2 id="lab-order-title" className="text-xl font-bold text-text-main">
-              Permintaan Pemeriksaan Laboratorium
-            </h2>
-            <p className="text-sm text-text-muted mt-1">
-              Pasien: <span className="font-semibold text-text-main">{patientName}</span> ({' '}
-              <span className="font-mono text-primary font-medium">{medicalRecordNumber}</span> )
-            </p>
+            <TextArea
+              label="Indikasi Klinis / Catatan Dokter"
+              placeholder="Contoh: Suspek DM Tipe 2, lemas, polidipsia"
+              value={clinicalNotes}
+              onChange={(val) => setClinicalNotes(val)}
+              rows={2}
+              width="100%"
+            />
           </div>
-          <button
-            onClick={onClose}
-            aria-label="Tutup modal order lab"
-            className="text-text-muted hover:text-text-main text-2xl font-bold leading-none p-1 rounded focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            &times;
-          </button>
-        </CardHeader>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
-          <CardContent className="space-y-5">
-            {errorMessage && (
-              <div
-                role="alert"
-                className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm"
-              >
-                {errorMessage}
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="clinical-notes" className="block text-sm font-semibold text-text-main mb-1">
-                Indikasi Klinis / Catatan Dokter
-              </label>
-              <textarea
-                id="clinical-notes"
-                value={clinicalNotes}
-                onChange={(e) => setClinicalNotes(e.target.value)}
-                placeholder="Contoh: Suspek DM Tipe 2, lemas, polidipsia"
-                rows={2}
-                className="w-full px-3 py-2 text-sm rounded-md border border-border-default focus:outline-none focus:ring-2 focus:ring-primary"
+          <div>
+            <HStack justify="between" align="center" className="mb-2">
+              <span className="text-sm font-semibold text-slate-900">
+                Pilih Parameter Pemeriksaan ({selectedTests.length} dipilih)
+              </span>
+              <Badge
+                variant="teal"
+                label={`Estimasi: Rp ${totalTariff.toLocaleString('id-ID')}`}
               />
-            </div>
+            </HStack>
 
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-semibold text-text-main">
-                  Pilih Parameter Pemeriksaan ({selectedTests.length} dipilih)
-                </span>
-                <span className="text-sm font-medium text-primary">
-                  Estimasi Biaya: Rp {totalTariff.toLocaleString('id-ID')}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-56 overflow-y-auto p-1 border border-border-light rounded-md">
-                {AVAILABLE_LAB_TESTS.map((test) => {
-                  const isChecked = selectedTests.some((t) => t.test_code === test.test_code);
-                  return (
-                    <label
-                      key={test.test_code}
-                      className={`flex items-start p-2.5 rounded border cursor-pointer transition-colors ${
-                        isChecked
-                          ? 'border-primary bg-primary-light/40 text-primary-dark'
-                          : 'border-border-default hover:bg-slate-50 text-text-main'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => toggleTest(test)}
-                        className="mt-0.5 mr-2.5 h-4 w-4 text-primary rounded border-border-default focus:ring-primary"
-                      />
-                      <div className="text-xs">
-                        <div className="font-semibold">{test.test_name}</div>
-                        <div className="text-text-muted">
-                          Rujukan: {test.reference_range} {test.unit}
-                        </div>
-                        <div className="text-slate-600 font-medium mt-0.5">
-                          Rp {test.tariff.toLocaleString('id-ID')}
-                        </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto p-2 border border-slate-200 rounded-lg bg-slate-50/50">
+              {AVAILABLE_LAB_TESTS.map((test) => {
+                const isChecked = selectedTests.some((t) => t.test_code === test.test_code);
+                return (
+                  <label
+                    key={test.test_code}
+                    className={`flex items-start p-3 rounded-lg border cursor-pointer transition-all ${
+                      isChecked
+                        ? 'border-teal-500 bg-teal-50/70 shadow-xs'
+                        : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => toggleTest(test)}
+                      className="mt-0.5 mr-3 h-4 w-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+                    />
+                    <div className="text-xs">
+                      <div className="font-semibold text-slate-900">{test.test_name}</div>
+                      <div className="text-slate-500">
+                        Rujukan: {test.reference_range} {test.unit}
                       </div>
-                    </label>
-                  );
-                })}
-              </div>
+                      <div className="text-teal-700 font-medium mt-0.5">
+                        Rp {test.tariff.toLocaleString('id-ID')}
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
-          </CardContent>
+          </div>
 
-          <CardFooter className="flex justify-end gap-3 border-t border-border-default pt-4">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-              Batal
-            </Button>
+          <HStack justify="end" gap={3} className="pt-4 border-t border-slate-200">
+            <Button
+              variant="secondary"
+              label="Batal"
+              onClick={onClose}
+              isDisabled={isSubmitting}
+            />
             <Button
               type="submit"
               variant="primary"
-              disabled={isSubmitting || selectedTests.length === 0}
-            >
-              {isSubmitting ? 'Mengirim...' : 'Kirim Permintaan Lab'}
-            </Button>
-          </CardFooter>
+              label={isSubmitting ? 'Mengirim...' : 'Kirim Permintaan Lab'}
+              isDisabled={isSubmitting || selectedTests.length === 0}
+              isLoading={isSubmitting}
+            />
+          </HStack>
         </form>
-      </Card>
-    </div>
+      </div>
+    </Dialog>
   );
 };

@@ -1,5 +1,8 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components/ui';
+import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
+import { Button } from '@astryxdesign/core/Button';
+import { Badge } from '@astryxdesign/core/Badge';
+import { HStack } from '@astryxdesign/core/HStack';
 
 export interface QueueTicketData {
   id: number;
@@ -26,154 +29,88 @@ export const QueueTicketModal: React.FC<QueueTicketModalProps> = ({ ticket, onCl
   };
 
   return (
-    <div
+    <Dialog
+      isOpen={true}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      width={460}
+      purpose="info"
       role="dialog"
       aria-modal="true"
       aria-labelledby="ticket-modal-title"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.6)',
-        backdropFilter: 'blur(2px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 'var(--space-4)',
-        zIndex: 70,
-      }}
-      onClick={onClose}
     >
-      <div
-        style={{ maxWidth: '440px', width: '100%' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Card
-          elevation="high"
-          padding={6}
-          style={{
-            backgroundColor: 'var(--color-surface)',
-            border: '2px dashed var(--color-primary-border)',
-            borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-lg)',
-          }}
-        >
-          <CardHeader style={{ textAlign: 'center', paddingBottom: 'var(--space-3)', borderBottom: '1px solid var(--color-border-subtle)' }}>
-            <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              RUMAH SAKIT INOVA MEDIKA
+      <div className="p-6 bg-white rounded-xl shadow-2xl flex flex-col border-2 border-dashed border-teal-300">
+        <DialogHeader
+          title={
+            <div className="text-center w-full">
+              <span className="text-xs font-bold text-teal-700 tracking-wider uppercase">
+                RUMAH SAKIT INOVA MEDIKA
+              </span>
+              <h2 id="ticket-modal-title" className="text-lg font-bold text-slate-900 mt-1">
+                Karcis Antrean Rawat Jalan
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {ticket.registration_date} • Loket Pendaftaran
+              </p>
             </div>
-            <CardTitle id="ticket-modal-title" style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--color-text-main)', marginTop: '4px' }}>
-              Karcis Antrean Rawat Jalan
-            </CardTitle>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-              {ticket.registration_date} • Loket Pendaftaran
-            </div>
-          </CardHeader>
+          }
+          onOpenChange={() => onClose()}
+        />
 
-          <CardContent style={{ padding: 'var(--space-4) 0', textAlign: 'center' }}>
-            {/* Nomor Antrean Utama */}
-            <div
-              style={{
-                backgroundColor: 'var(--color-primary-light)',
-                border: '1px solid var(--color-primary-border)',
-                borderRadius: 'var(--radius-lg)',
-                padding: 'var(--space-4)',
-                marginBottom: 'var(--space-4)',
-              }}
-            >
-              <div style={{ fontSize: '0.8125rem', color: 'var(--color-primary)', fontWeight: 600 }}>
-                NOMOR ANTREAN ANDA
-              </div>
-              <div
-                style={{
-                  fontSize: '2.75rem',
-                  fontWeight: 800,
-                  fontFamily: 'monospace',
-                  color: 'var(--color-primary-dark)',
-                  letterSpacing: '0.05em',
-                  margin: '4px 0',
-                }}
-              >
-                {ticket.queue_number}
-              </div>
-              <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>
-                Urutan Ke: <strong>{ticket.queue_sequence}</strong>
-              </div>
+        <div className="py-4 space-y-4 text-center">
+          {/* Nomor Antrean Utama */}
+          <div className="bg-teal-50 border border-teal-200 rounded-xl p-4">
+            <span className="text-xs text-teal-800 font-semibold uppercase tracking-wider">
+              NOMOR ANTREAN ANDA
+            </span>
+            <div className="text-5xl font-extrabold font-mono text-teal-900 my-1 tracking-wider">
+              {ticket.queue_number}
             </div>
-
-            {/* Rincian Kunjungan */}
-            <div
-              style={{
-                textAlign: 'left',
-                backgroundColor: 'var(--color-surface-hover)',
-                borderRadius: 'var(--radius-md)',
-                padding: 'var(--space-3) var(--space-4)',
-                fontSize: '0.8125rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 'var(--space-2)',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Nama Pasien:</span>
-                <strong style={{ color: 'var(--color-text-main)' }}>{ticket.patient_name}</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>No. Rekam Medis:</span>
-                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--color-primary)' }}>
-                  {ticket.medical_record_number}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Poli Tujuan:</span>
-                <strong style={{ color: 'var(--color-text-main)' }}>{ticket.polyclinic_name}</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Dokter DPJP:</span>
-                <span style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>{ticket.doctor_name}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Penjamin:</span>
-                <Badge
-                  variant={ticket.insurance_type === 'BPJS' ? 'success' : 'info'}
-                  label={ticket.insurance_type === 'BPJS' ? 'BPJS Kesehatan' : 'Umum / Mandiri'}
-                />
-              </div>
+            <div className="text-xs text-slate-600 font-medium">
+              Urutan Ke: <strong>{ticket.queue_sequence}</strong>
             </div>
-
-            {/* Catatan Alur */}
-            <div
-              style={{
-                marginTop: 'var(--space-4)',
-                padding: 'var(--space-2) var(--space-3)',
-                borderRadius: 'var(--radius-sm)',
-                backgroundColor: 'var(--color-warning-bg)',
-                color: 'var(--color-warning-text)',
-                fontSize: '0.75rem',
-                fontWeight: 500,
-              }}
-            >
-              Silakan menunggu di ruang Triage untuk pemeriksaan tanda-tanda vital oleh Perawat (Status: WAITING_NURSE).
-            </div>
-          </CardContent>
-
-          <div
-            style={{
-              display: 'flex',
-              gap: 'var(--space-3)',
-              justifyContent: 'flex-end',
-              paddingTop: 'var(--space-3)',
-              borderTop: '1px solid var(--color-border-subtle)',
-            }}
-          >
-            <Button variant="secondary" size="md" label="Tutup" onClick={onClose}>
-              Tutup
-            </Button>
-            <Button variant="primary" size="md" label="🖨️ Cetak Karcis" onClick={handlePrint}>
-              🖨️ Cetak Karcis
-            </Button>
           </div>
-        </Card>
+
+          {/* Rincian Kunjungan */}
+          <div className="text-left bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs space-y-2">
+            <div className="flex justify-between">
+              <span className="text-slate-500">Nama Pasien:</span>
+              <strong className="text-slate-900">{ticket.patient_name}</strong>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">No. Rekam Medis:</span>
+              <span className="font-mono font-bold text-teal-700">
+                {ticket.medical_record_number}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Poli Tujuan:</span>
+              <strong className="text-slate-900">{ticket.polyclinic_name}</strong>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Dokter DPJP:</span>
+              <span className="text-slate-800 font-medium">{ticket.doctor_name}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500">Penjamin:</span>
+              <Badge
+                variant={ticket.insurance_type === 'BPJS' ? 'success' : 'teal'}
+                label={ticket.insurance_type === 'BPJS' ? 'BPJS Kesehatan' : 'Umum / Mandiri'}
+              />
+            </div>
+          </div>
+
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-xs text-left">
+            Silakan menunggu di ruang Triage untuk pemeriksaan tanda-tanda vital oleh Perawat (Status: WAITING_NURSE).
+          </div>
+        </div>
+
+        <HStack justify="end" gap={3} className="pt-3 border-t border-slate-200">
+          <Button variant="secondary" size="md" label="Tutup" onClick={onClose} />
+          <Button variant="primary" size="md" label="🖨️ Cetak Karcis" onClick={handlePrint} />
+        </HStack>
       </div>
-    </div>
+    </Dialog>
   );
 };

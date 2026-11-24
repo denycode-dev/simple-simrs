@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Input, Alert, Badge } from '@/components/ui';
+import { Card, CardContent, Button, Input, Alert, Badge } from '@/components/ui';
+import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
 import { apiClient } from '@/lib/api-client';
 
 export interface DoctorRecord {
@@ -345,33 +346,31 @@ export const MasterDoctorsPage: React.FC = () => {
 
       {/* Modal Tambah Jadwal Praktik */}
       {isScheduleModalOpen && (
-        <div
+        <Dialog
+          isOpen={isScheduleModalOpen}
+          onOpenChange={(open) => {
+            if (!open && !isSubmittingSchedule) setIsScheduleModalOpen(false);
+          }}
+          width={560}
+          purpose="form"
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-add-schedule-title"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.6)',
-            backdropFilter: 'blur(2px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 'var(--space-4)',
-            zIndex: 60,
-          }}
-          onClick={() => !isSubmittingSchedule && setIsScheduleModalOpen(false)}
         >
-          <div style={{ maxWidth: '520px', width: '100%' }} onClick={(e) => e.stopPropagation()}>
-            <Card elevation="high" padding={6} style={{ backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-lg)' }}>
-              <CardHeader style={{ paddingBottom: 'var(--space-3)', marginBottom: 'var(--space-4)', borderBottom: '1px solid var(--color-border-subtle)' }}>
-                <CardTitle id="modal-add-schedule-title" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
-                  Tambah Jadwal Praktik Dokter
-                </CardTitle>
-                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-                  Sistem otomatis menolak jadwal jika bertabrakan jamnya dengan jadwal lain dokter pada hari yang sama.
+          <div className="p-6 bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh]">
+            <DialogHeader
+              title={
+                <div>
+                  <h2 id="modal-add-schedule-title" className="text-xl font-bold text-slate-900">
+                    Tambah Jadwal Praktik Dokter
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Sistem otomatis menolak jadwal jika bertabrakan jamnya dengan jadwal lain dokter pada hari yang sama.
+                  </p>
                 </div>
-              </CardHeader>
+              }
+              onOpenChange={() => !isSubmittingSchedule && setIsScheduleModalOpen(false)}
+            />
 
               <CardContent style={{ padding: 0 }}>
                 {scheduleError && <div style={{ marginBottom: 'var(--space-4)' }}><Alert variant="danger">{scheduleError}</Alert></div>}
@@ -555,9 +554,8 @@ export const MasterDoctorsPage: React.FC = () => {
                   </div>
                 </form>
               </CardContent>
-            </Card>
           </div>
-        </div>
+        </Dialog>
       )}
     </section>
   );

@@ -1,6 +1,11 @@
 import React from 'react';
 import { useGlobalError } from '../../contexts/GlobalErrorContext';
-import { Card, CardHeader, CardContent, CardFooter, Button, Badge } from '../ui';
+import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
+import { Banner } from '@astryxdesign/core/Banner';
+import { Badge } from '@astryxdesign/core/Badge';
+import { Button } from '@astryxdesign/core/Button';
+import { HStack } from '@astryxdesign/core/HStack';
+import { VStack } from '@astryxdesign/core/VStack';
 
 export const GlobalErrorModal: React.FC = () => {
   const { error, clearError } = useGlobalError();
@@ -31,61 +36,73 @@ export const GlobalErrorModal: React.FC = () => {
   };
 
   return (
-    <div
+    <Dialog
+      isOpen={Boolean(error)}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) clearError();
+      }}
+      width={520}
+      purpose="info"
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="global-error-title"
       aria-describedby="global-error-desc"
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in"
     >
-      <Card className="w-full max-w-lg bg-white shadow-2xl border-t-4 border-t-red-600">
-        <CardHeader className="flex items-start justify-between border-b border-border-default pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-lg">
-              !
+      <div className="p-5 bg-white rounded-lg shadow-xl border-t-4 border-t-red-600">
+        <DialogHeader
+          title={
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-lg">
+                !
+              </div>
+              <div>
+                <h2 id="global-error-title" className="text-lg font-bold text-slate-900">
+                  {getTitle()}
+                </h2>
+                <Badge
+                  label={isNetwork ? 'NETWORK_ERROR' : `STATUS_${error.statusCode}`}
+                  variant={is403 ? 'warning' : 'error'}
+                />
+              </div>
             </div>
-            <div>
-              <h2 id="global-error-title" className="text-lg font-bold text-slate-900">
-                {getTitle()}
-              </h2>
-              <Badge variant={is403 ? 'warning' : 'danger'}>
-                {isNetwork ? 'NETWORK_ERROR' : `STATUS_${error.statusCode}`}
-              </Badge>
-            </div>
-          </div>
-          <button
-            onClick={clearError}
-            aria-label="Tutup jendela error"
-            className="text-slate-400 hover:text-slate-700 text-2xl font-bold leading-none p-1 rounded focus:outline-none"
-          >
-            &times;
-          </button>
-        </CardHeader>
+          }
+          onOpenChange={() => clearError()}
+        />
 
-        <CardContent className="p-5 space-y-3">
-          <p id="global-error-desc" className="text-sm text-slate-700 leading-relaxed">
-            {error.message}
-          </p>
+        <div className="py-4">
+          <VStack gap={4}>
+            <p id="global-error-desc" className="text-sm text-slate-700 leading-relaxed">
+              {error.message}
+            </p>
 
-          {is500 && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded text-xs text-red-800">
-              Tim teknis SIMRS telah menerima notifikasi insiden ini. Silakan coba kembali dalam beberapa saat atau hubungi administrator sistem jika kendala berlanjut.
-            </div>
-          )}
+            {is500 && (
+              <Banner
+                status="error"
+                title="Kendala Server"
+                description="Tim teknis SIMRS telah menerima notifikasi insiden ini. Silakan coba kembali dalam beberapa saat atau hubungi administrator sistem jika kendala berlanjut."
+                container="card"
+              />
+            )}
 
-          {is403 && (
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
-              Peran akun Anda tidak memiliki izin untuk melihat atau memodifikasi modul ini. Hubungi kepala unit atau admin RS untuk pemutakhiran hak akses (RBAC).
-            </div>
-          )}
-        </CardContent>
+            {is403 && (
+              <Banner
+                status="warning"
+                title="Akses Dibatasi"
+                description="Peran akun Anda tidak memiliki izin untuk melihat atau memodifikasi modul ini. Hubungi kepala unit atau admin RS untuk pemutakhiran hak akses (RBAC)."
+                container="card"
+              />
+            )}
+          </VStack>
+        </div>
 
-        <CardFooter className="flex justify-end gap-3 border-t border-border-default pt-3 p-4">
-          <Button variant="primary" onClick={handleAction}>
-            {is401 ? 'Login Ulang Sekarang' : 'Tutup'}
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+        <HStack justify="end" gap={3} className="pt-3 border-t border-slate-200">
+          <Button
+            variant="primary"
+            label={is401 ? 'Login Ulang Sekarang' : 'Tutup'}
+            onClick={handleAction}
+          />
+        </HStack>
+      </div>
+    </Dialog>
   );
 };

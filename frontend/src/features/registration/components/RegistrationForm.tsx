@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Button, Input, Alert } from '@/components/ui';
+import { Card } from '@astryxdesign/core/Card';
+import { Button } from '@astryxdesign/core/Button';
+import { TextInput } from '@astryxdesign/core/TextInput';
+import { Selector } from '@astryxdesign/core/Selector';
+import { Banner } from '@astryxdesign/core/Banner';
+import { HStack } from '@astryxdesign/core/HStack';
+import { VStack } from '@astryxdesign/core/VStack';
 import { apiClient } from '@/lib/api-client';
 import { QueueTicketModal, type QueueTicketData } from './QueueTicketModal';
 
@@ -186,282 +192,165 @@ export const RegistrationForm: React.FC = () => {
   };
 
   return (
-    <section aria-labelledby="registration-form-heading" style={{ maxWidth: '820px', margin: '0 auto' }}>
-      <div style={{ marginBottom: 'var(--space-5)' }}>
+    <section aria-labelledby="registration-form-heading" className="max-w-4xl mx-auto">
+      <div className="mb-6">
         <h2
           id="registration-form-heading"
-          style={{
-            fontSize: '1.375rem',
-            fontWeight: 700,
-            color: 'var(--color-text-main)',
-            letterSpacing: '-0.01em',
-          }}
+          className="text-2xl font-bold text-slate-900 tracking-tight"
         >
           Formulir Pendaftaran Rawat Jalan
         </h2>
-        <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+        <p className="text-sm text-slate-500 mt-1">
           Pendaftaran kunjungan pasien umum dan BPJS Kesehatan dengan generator nomor antrean harian otomatis.
         </p>
       </div>
 
       {loadError && (
-        <div style={{ marginBottom: 'var(--space-4)' }}>
-          <Alert variant="danger" title="Gagal Memuat Master Data">
-            {loadError}
-          </Alert>
+        <div className="mb-4">
+          <Banner status="error" title="Gagal Memuat Master Data" description={loadError} container="card" />
         </div>
       )}
 
       {submitError && (
-        <div style={{ marginBottom: 'var(--space-4)' }}>
-          <Alert variant="danger" title="Gagal Menyimpan Pendaftaran">
-            {submitError}
-          </Alert>
+        <div className="mb-4">
+          <Banner status="error" title="Gagal Menyimpan Pendaftaran" description={submitError} container="card" />
         </div>
       )}
 
-      <Card elevation="med" padding={6} style={{ backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)' }}>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
+      <Card elevation="low" padding={6}>
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Section 1: Pemilihan Pasien */}
           <div>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-main)', marginBottom: 'var(--space-3)' }}>
+            <h3 className="text-base font-bold text-slate-900 mb-3">
               1. Identitas Pasien
             </h3>
 
-            <div style={{ marginBottom: 'var(--space-3)' }}>
-              <Input
-                id="search_patient_term"
+            <VStack gap={3}>
+              <TextInput
                 label="Cari Pasien (No. RM, NIK, atau Nama)"
                 placeholder="Ketik untuk memfilter daftar pasien..."
                 value={patientSearch}
-                onChange={(e) => setPatientSearch(e.target.value)}
+                onChange={(val) => setPatientSearch(val)}
+                width="100%"
               />
-            </div>
 
-            <div>
-              <label
-                htmlFor="patient_selector"
-                style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: 'var(--color-text-main)',
-                  marginBottom: 'var(--space-1)',
-                }}
-              >
-                Pilih Pasien Terdaftar *
-              </label>
-              <select
-                id="patient_selector"
+              <Selector
+                label="Pilih Pasien Terdaftar *"
                 value={selectedPatientId}
-                onChange={(e) => setSelectedPatientId(e.target.value)}
-                style={{
-                  width: '100%',
-                  height: '42px',
-                  padding: '0 var(--space-3)',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-surface)',
-                  color: 'var(--color-text-main)',
-                  fontSize: '0.875rem',
-                }}
-                disabled={isLoadingMaster}
-                required
-              >
-                <option value="">-- Pilih Pasien Dari Direktori ({filteredPatients.length} ditemukan) --</option>
-                {filteredPatients.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    [{p.medical_record_number}] {p.name} - NIK: {p.nik}
-                  </option>
-                ))}
-              </select>
-            </div>
+                onChange={(val) => setSelectedPatientId(val)}
+                options={[
+                  { value: '', label: `-- Pilih Pasien Dari Direktori (${filteredPatients.length} ditemukan) --` },
+                  ...filteredPatients.map((p) => ({
+                    value: String(p.id),
+                    label: `[${p.medical_record_number}] ${p.name} - NIK: ${p.nik}`,
+                  })),
+                ]}
+                isDisabled={isLoadingMaster}
+                width="100%"
+              />
 
-            {selectedPatient && (
-              <div
-                style={{
-                  marginTop: 'var(--space-3)',
-                  padding: 'var(--space-3) var(--space-4)',
-                  backgroundColor: 'var(--color-primary-light)',
-                  border: '1px solid var(--color-primary-border)',
-                  borderRadius: 'var(--radius-md)',
-                  fontSize: '0.8125rem',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: 'var(--space-2)',
-                }}
-              >
-                <div>
-                  <strong>{selectedPatient.name}</strong> • RM: <span style={{ fontFamily: 'monospace' }}>{selectedPatient.medical_record_number}</span>
-                </div>
-                <div>
-                  NIK: <span style={{ fontFamily: 'monospace' }}>{selectedPatient.nik}</span>
-                  {selectedPatient.bpjs_number && (
-                    <span style={{ marginLeft: 'var(--space-3)' }}>
-                      BPJS: <span style={{ fontFamily: 'monospace' }}>{selectedPatient.bpjs_number}</span>
+              {selectedPatient && (
+                <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg text-xs flex justify-between flex-wrap gap-2 text-teal-950">
+                  <div>
+                    <strong>{selectedPatient.name}</strong> • RM:{' '}
+                    <span className="font-mono font-bold text-teal-800">
+                      {selectedPatient.medical_record_number}
                     </span>
-                  )}
+                  </div>
+                  <div>
+                    NIK: <span className="font-mono">{selectedPatient.nik}</span>
+                    {selectedPatient.bpjs_number && (
+                      <span className="ml-3">
+                        BPJS: <span className="font-mono">{selectedPatient.bpjs_number}</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </VStack>
           </div>
 
           {/* Section 2: Pemilihan Poliklinik & Dokter */}
-          <div style={{ paddingTop: 'var(--space-4)', borderTop: '1px solid var(--color-border-subtle)' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-main)', marginBottom: 'var(--space-3)' }}>
+          <div className="pt-4 border-t border-slate-200">
+            <h3 className="text-base font-bold text-slate-900 mb-3">
               2. Tujuan Poliklinik & Dokter DPJP
             </h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
-              <div>
-                <label
-                  htmlFor="polyclinic_selector"
-                  style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    color: 'var(--color-text-main)',
-                    marginBottom: 'var(--space-1)',
-                  }}
-                >
-                  Poliklinik Tujuan *
-                </label>
-                <select
-                  id="polyclinic_selector"
-                  value={selectedPoliId}
-                  onChange={(e) => {
-                    setSelectedPoliId(e.target.value);
-                    setSelectedScheduleId('');
-                  }}
-                  style={{
-                    width: '100%',
-                    height: '42px',
-                    padding: '0 var(--space-3)',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--color-border)',
-                    backgroundColor: 'var(--color-surface)',
-                    color: 'var(--color-text-main)',
-                    fontSize: '0.875rem',
-                  }}
-                  required
-                >
-                  <option value="">-- Pilih Poliklinik --</option>
-                  {polyclinics.map((poli) => (
-                    <option key={poli.id} value={poli.id}>
-                      {poli.name} ({poli.code})
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Selector
+                label="Poliklinik Tujuan *"
+                value={selectedPoliId}
+                onChange={(val) => {
+                  setSelectedPoliId(val);
+                  setSelectedScheduleId('');
+                }}
+                options={[
+                  { value: '', label: '-- Pilih Poliklinik --' },
+                  ...polyclinics.map((poli) => ({
+                    value: String(poli.id),
+                    label: `${poli.name} (${poli.code})`,
+                  })),
+                ]}
+                width="100%"
+              />
 
-              <div>
-                <label
-                  htmlFor="doctor_selector"
-                  style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    color: 'var(--color-text-main)',
-                    marginBottom: 'var(--space-1)',
-                  }}
-                >
-                  Dokter Spesialis DPJP *
-                </label>
-                <select
-                  id="doctor_selector"
-                  value={selectedDoctorId}
-                  onChange={(e) => {
-                    setSelectedDoctorId(e.target.value);
-                    setSelectedScheduleId('');
-                  }}
-                  style={{
-                    width: '100%',
-                    height: '42px',
-                    padding: '0 var(--space-3)',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--color-border)',
-                    backgroundColor: 'var(--color-surface)',
-                    color: 'var(--color-text-main)',
-                    fontSize: '0.875rem',
-                  }}
-                  required
-                >
-                  <option value="">-- Pilih Dokter DPJP --</option>
-                  {doctors.map((doc) => (
-                    <option key={doc.id} value={doc.id}>
-                      {doc.name} ({doc.specialization})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Selector
+                label="Dokter Spesialis DPJP *"
+                value={selectedDoctorId}
+                onChange={(val) => {
+                  setSelectedDoctorId(val);
+                  setSelectedScheduleId('');
+                }}
+                options={[
+                  { value: '', label: '-- Pilih Dokter DPJP --' },
+                  ...doctors.map((doc) => ({
+                    value: String(doc.id),
+                    label: `${doc.name} (${doc.specialization})`,
+                  })),
+                ]}
+                width="100%"
+              />
             </div>
 
-            <div style={{ marginTop: 'var(--space-4)' }}>
-              <label
-                htmlFor="schedule_selector"
-                style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: 'var(--color-text-main)',
-                  marginBottom: 'var(--space-1)',
-                }}
-              >
-                Jadwal Praktik Dokter Tersedia *
-              </label>
-              <select
-                id="schedule_selector"
+            <div className="mt-4">
+              <Selector
+                label="Jadwal Praktik Dokter Tersedia *"
                 value={selectedScheduleId}
-                onChange={(e) => setSelectedScheduleId(e.target.value)}
-                style={{
-                  width: '100%',
-                  height: '42px',
-                  padding: '0 var(--space-3)',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-surface)',
-                  color: 'var(--color-text-main)',
-                  fontSize: '0.875rem',
-                }}
-                required
-              >
-                <option value="">
-                  {availableSchedules.length === 0
-                    ? '-- Tidak ada jadwal sesuai pilihan Poli / Dokter --'
-                    : '-- Pilih Jadwal Praktik Hari Ini --'}
-                </option>
-                {availableSchedules.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    Hari {s.day_of_week} ({s.start_time} - {s.end_time} WIB) • Kuota: {s.quota} pasien
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedScheduleId(val)}
+                options={[
+                  {
+                    value: '',
+                    label:
+                      availableSchedules.length === 0
+                        ? '-- Tidak ada jadwal sesuai pilihan Poli / Dokter --'
+                        : '-- Pilih Jadwal Praktik Hari Ini --',
+                  },
+                  ...availableSchedules.map((s) => ({
+                    value: String(s.id),
+                    label: `Hari ${s.day_of_week} (${s.start_time} - ${s.end_time} WIB) • Kuota: ${s.quota} pasien`,
+                  })),
+                ]}
+                width="100%"
+              />
             </div>
           </div>
 
           {/* Section 3: Jenis Penjamin (Umum vs BPJS) */}
-          <div style={{ paddingTop: 'var(--space-4)', borderTop: '1px solid var(--color-border-subtle)' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-main)', marginBottom: 'var(--space-2)' }}>
+          <div className="pt-4 border-t border-slate-200">
+            <h3 className="text-base font-bold text-slate-900 mb-1">
               3. Pilih Jenis Penjamin
             </h3>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', marginBottom: 'var(--space-3)' }}>
+            <p className="text-xs text-slate-500 mb-3">
               Pasien BPJS berhak atas pembebasan biaya pendaftaran dan layanan rawat jalan terpadu.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--space-3)',
-                  padding: 'var(--space-3) var(--space-4)',
-                  borderRadius: 'var(--radius-md)',
-                  border: `2px solid ${insuranceType === 'GENERAL' ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                  backgroundColor: insuranceType === 'GENERAL' ? 'var(--color-primary-light)' : 'var(--color-surface)',
-                  cursor: 'pointer',
-                  transition: 'all 150ms ease',
-                }}
+                className={`flex items-center gap-3 p-3.5 rounded-lg border-2 cursor-pointer transition-all ${
+                  insuranceType === 'GENERAL'
+                    ? 'border-teal-500 bg-teal-50/70 shadow-xs'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
               >
                 <input
                   type="radio"
@@ -469,29 +358,24 @@ export const RegistrationForm: React.FC = () => {
                   value="GENERAL"
                   checked={insuranceType === 'GENERAL'}
                   onChange={() => setInsuranceType('GENERAL')}
+                  className="text-teal-600 focus:ring-teal-500 h-4 w-4"
                 />
                 <div>
-                  <div style={{ fontWeight: 700, color: 'var(--color-text-main)', fontSize: '0.875rem' }}>
+                  <div className="font-bold text-slate-900 text-sm">
                     Umum / Mandiri (Cash)
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                  <div className="text-xs text-slate-500 mt-0.5">
                     Biaya registrasi: Rp 25.000 (Draf Tagihan Kasir)
                   </div>
                 </div>
               </label>
 
               <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--space-3)',
-                  padding: 'var(--space-3) var(--space-4)',
-                  borderRadius: 'var(--radius-md)',
-                  border: `2px solid ${insuranceType === 'BPJS' ? 'var(--color-success-border)' : 'var(--color-border)'}`,
-                  backgroundColor: insuranceType === 'BPJS' ? 'var(--color-success-bg)' : 'var(--color-surface)',
-                  cursor: 'pointer',
-                  transition: 'all 150ms ease',
-                }}
+                className={`flex items-center gap-3 p-3.5 rounded-lg border-2 cursor-pointer transition-all ${
+                  insuranceType === 'BPJS'
+                    ? 'border-emerald-500 bg-emerald-50/70 shadow-xs'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
               >
                 <input
                   type="radio"
@@ -499,12 +383,13 @@ export const RegistrationForm: React.FC = () => {
                   value="BPJS"
                   checked={insuranceType === 'BPJS'}
                   onChange={() => setInsuranceType('BPJS')}
+                  className="text-emerald-600 focus:ring-emerald-500 h-4 w-4"
                 />
                 <div>
-                  <div style={{ fontWeight: 700, color: 'var(--color-text-main)', fontSize: '0.875rem' }}>
+                  <div className="font-bold text-slate-900 text-sm">
                     BPJS Kesehatan
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                  <div className="text-xs text-slate-500 mt-0.5">
                     Dicover 100% BPJS (Bebas Biaya Pendaftaran)
                   </div>
                 </div>
@@ -513,25 +398,15 @@ export const RegistrationForm: React.FC = () => {
           </div>
 
           {/* Tombol Submit */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: 'var(--space-3)',
-              paddingTop: 'var(--space-4)',
-              borderTop: '1px solid var(--color-border-subtle)',
-            }}
-          >
+          <HStack justify="end" gap={3} className="pt-4 border-t border-slate-200">
             <Button
               type="submit"
               variant="primary"
               size="lg"
               label="Daftarkan & Terbitkan Karcis Antrean"
               isLoading={isSubmitting}
-            >
-              Daftarkan & Terbitkan Karcis Antrean
-            </Button>
-          </div>
+            />
+          </HStack>
         </form>
       </Card>
 

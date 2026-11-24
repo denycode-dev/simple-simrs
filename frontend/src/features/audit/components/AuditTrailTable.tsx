@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardContent, Button, Badge } from '../../../components/ui';
+import { Card } from '@astryxdesign/core/Card';
+import { Button } from '@astryxdesign/core/Button';
+import { Badge } from '@astryxdesign/core/Badge';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHeaderCell } from '@astryxdesign/core/Table';
+import { TextInput } from '@astryxdesign/core/TextInput';
+import { Selector } from '@astryxdesign/core/Selector';
+import { Spinner } from '@astryxdesign/core/Spinner';
+import { EmptyState } from '@astryxdesign/core/EmptyState';
+import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
+import { HStack } from '@astryxdesign/core/HStack';
+import { VStack } from '@astryxdesign/core/VStack';
 
 export interface AuditLogItem {
   id: number;
@@ -57,211 +67,226 @@ export const AuditTrailTable: React.FC<AuditTrailTableProps> = ({
   const getActionBadge = (action: string) => {
     switch (action) {
       case 'UNMASK_DATA':
-        return <Badge variant="warning">UNMASK_DATA</Badge>;
+        return <Badge variant="warning" label="UNMASK_DATA" />;
       case 'PAYMENT':
-        return <Badge variant="success">PAYMENT</Badge>;
+        return <Badge variant="success" label="PAYMENT" />;
       case 'DISPENSE':
-        return <Badge variant="info">DISPENSE</Badge>;
+        return <Badge variant="info" label="DISPENSE" />;
       case 'CREATE':
-        return <Badge variant="primary">CREATE</Badge>;
+        return <Badge variant="teal" label="CREATE" />;
       case 'UPDATE':
-        return <Badge variant="neutral">UPDATE</Badge>;
+        return <Badge variant="neutral" label="UPDATE" />;
       case 'DELETE':
-        return <Badge variant="danger">DELETE</Badge>;
+        return <Badge variant="error" label="DELETE" />;
       default:
-        return <Badge variant="neutral">{action}</Badge>;
+        return <Badge variant="neutral" label={action} />;
     }
   };
 
   return (
-    <Card className="w-full bg-white border border-border-default shadow-sm">
-      <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border-default pb-4">
-        <div>
-          <h2 className="text-lg font-bold text-text-main">
-            Catatan Jejak Audit Sistem (Audit Trail)
-          </h2>
-          <p className="text-sm text-text-muted">
-            Log aktivitas tidak dapat diubah (immutable log) untuk kepatuhan UU PDP dan tata kelola keamanan SIMRS
-          </p>
-        </div>
+    <Card elevation="low" padding={4}>
+      <VStack gap={4}>
+        <HStack justify="between" align="center" className="border-b border-slate-200 pb-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">
+              Catatan Jejak Audit Sistem (Audit Trail)
+            </h2>
+            <p className="text-sm text-slate-500">
+              Log aktivitas tidak dapat diubah (immutable log) untuk kepatuhan UU PDP dan tata kelola keamanan SIMRS
+            </p>
+          </div>
 
-        {onRefresh && (
-          <Button variant="outline" size="sm" onClick={onRefresh} disabled={isLoading}>
-            Segarkan Log
-          </Button>
-        )}
-      </CardHeader>
+          {onRefresh && (
+            <Button
+              variant="secondary"
+              size="sm"
+              label="Segarkan Log"
+              onClick={onRefresh}
+              isDisabled={isLoading}
+            />
+          )}
+        </HStack>
 
-      <CardContent className="p-4 space-y-4">
         {/* Controls Bar */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1">
-            <input
-              type="text"
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="md:col-span-2">
+            <TextInput
+              label="Pencarian Log"
+              isLabelHidden
               placeholder="Cari user, nama staf, IP address, atau ID record..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-border-default rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              onChange={(val) => setSearchTerm(val)}
+              width="100%"
             />
           </div>
-          <div className="w-full sm:w-44">
-            <select
+          <div>
+            <Selector
+              label="Filter Aksi"
+              isLabelHidden
               value={actionFilter}
-              onChange={(e) => setActionFilter(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-border-default rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="ALL">Semua Aksi</option>
-              <option value="UNMASK_DATA">UNMASK_DATA</option>
-              <option value="PAYMENT">PAYMENT</option>
-              <option value="DISPENSE">DISPENSE</option>
-              <option value="CREATE">CREATE</option>
-              <option value="UPDATE">UPDATE</option>
-              <option value="DELETE">DELETE</option>
-              <option value="LOGIN">LOGIN</option>
-            </select>
+              onChange={(val) => setActionFilter(val)}
+              options={[
+                { value: 'ALL', label: 'Semua Aksi' },
+                { value: 'UNMASK_DATA', label: 'UNMASK_DATA' },
+                { value: 'PAYMENT', label: 'PAYMENT' },
+                { value: 'DISPENSE', label: 'DISPENSE' },
+                { value: 'CREATE', label: 'CREATE' },
+                { value: 'UPDATE', label: 'UPDATE' },
+                { value: 'DELETE', label: 'DELETE' },
+                { value: 'LOGIN', label: 'LOGIN' },
+              ]}
+              width="100%"
+            />
           </div>
-          <div className="w-full sm:w-44">
-            <select
+          <div>
+            <Selector
+              label="Filter Modul"
+              isLabelHidden
               value={moduleFilter}
-              onChange={(e) => setModuleFilter(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-border-default rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="ALL">Semua Modul</option>
-              <option value="PATIENT">PATIENT</option>
-              <option value="REGISTRATION">REGISTRATION</option>
-              <option value="EXAMINATION">EXAMINATION</option>
-              <option value="PHARMACY">PHARMACY</option>
-              <option value="LABORATORY">LABORATORY</option>
-              <option value="BILLING">BILLING</option>
-              <option value="AUTH">AUTH</option>
-            </select>
+              onChange={(val) => setModuleFilter(val)}
+              options={[
+                { value: 'ALL', label: 'Semua Modul' },
+                { value: 'PATIENT', label: 'PATIENT' },
+                { value: 'REGISTRATION', label: 'REGISTRATION' },
+                { value: 'EXAMINATION', label: 'EXAMINATION' },
+                { value: 'PHARMACY', label: 'PHARMACY' },
+                { value: 'LABORATORY', label: 'LABORATORY' },
+                { value: 'BILLING', label: 'BILLING' },
+                { value: 'AUTH', label: 'AUTH' },
+              ]}
+              width="100%"
+            />
           </div>
         </div>
 
         {/* Content Table */}
         {isLoading ? (
-          <div className="py-12 text-center text-text-muted">
-            <div className="animate-spin inline-block w-6 h-6 border-2 border-primary border-t-transparent rounded-full mb-2"></div>
-            <p className="text-sm">Memuat catatan jejak audit...</p>
+          <div className="py-12 flex flex-col items-center justify-center gap-3">
+            <Spinner size="md" />
+            <p className="text-sm text-slate-500">Memuat catatan jejak audit...</p>
           </div>
         ) : filteredLogs.length === 0 ? (
-          <div className="py-12 text-center border-2 border-dashed border-border-default rounded-lg">
-            <p className="text-sm font-medium text-text-muted">
-              Tidak ada riwayat aktivitas audit yang ditemukan.
-            </p>
-          </div>
+          <EmptyState
+            title="Tidak Ada Catatan Audit"
+            description="Tidak ditemukan riwayat jejak audit dengan filter pencarian saat ini."
+          />
         ) : (
-          <div className="overflow-x-auto border border-border-default rounded-lg">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-text-muted border-b border-border-default font-semibold text-xs uppercase tracking-wider">
-                <tr>
-                  <th className="py-3 px-4">Waktu (WIB)</th>
-                  <th className="py-3 px-4">Pengguna & Peran</th>
-                  <th className="py-3 px-4">Modul</th>
-                  <th className="py-3 px-4">Aktivitas</th>
-                  <th className="py-3 px-4">IP Address</th>
-                  <th className="py-3 px-4 text-center">Perubahan Data</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-light">
+          <div className="border border-slate-200 rounded-lg overflow-hidden">
+            <Table density="balanced" dividers="rows" hasHover>
+              <TableHeader>
+                <TableRow>
+                  <TableHeaderCell>Waktu (WIB)</TableHeaderCell>
+                  <TableHeaderCell>Pengguna & Peran</TableHeaderCell>
+                  <TableHeaderCell>Modul</TableHeaderCell>
+                  <TableHeaderCell>Aktivitas</TableHeaderCell>
+                  <TableHeaderCell>IP Address</TableHeaderCell>
+                  <TableHeaderCell style={{ textAlign: 'center' }}>Perubahan Data</TableHeaderCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filteredLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3 px-4 font-mono text-xs text-text-muted whitespace-nowrap">
-                      {log.created_at}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="font-semibold text-text-main text-xs">
+                  <TableRow key={log.id}>
+                    <TableCell>
+                      <span className="font-mono text-xs text-slate-500 whitespace-nowrap">
+                        {log.created_at}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-semibold text-slate-900 text-xs">
                         {log.user?.name || log.user?.username || `User #${log.user_id}`}
                       </div>
-                      <div className="text-[11px] text-text-muted font-mono">
+                      <div className="text-[11px] text-slate-500 font-mono">
                         {log.user?.role || 'Staff'} ({log.user?.username || 'user'})
                       </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-800">
-                        {log.module}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="neutral" label={log.module} />
+                    </TableCell>
+                    <TableCell>
+                      <HStack gap={1.5} align="center">
+                        {getActionBadge(log.action)}
+                        {log.record_id ? (
+                          <span className="font-mono text-[11px] text-slate-500">
+                            ID: #{log.record_id}
+                          </span>
+                        ) : null}
+                      </HStack>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-mono text-xs text-slate-600 whitespace-nowrap">
+                        {log.ip_address || '-'}
                       </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      {getActionBadge(log.action)}
-                      {log.record_id ? (
-                        <span className="font-mono text-[11px] text-text-muted ml-1.5">
-                          ID: #{log.record_id}
-                        </span>
-                      ) : null}
-                    </td>
-                    <td className="py-3 px-4 font-mono text-xs text-text-muted whitespace-nowrap">
-                      {log.ip_address || '-'}
-                    </td>
-                    <td className="py-3 px-4 text-center">
+                    </TableCell>
+                    <TableCell style={{ textAlign: 'center' }}>
                       {(log.old_values || log.new_values) ? (
                         <Button
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
+                          label="Lihat Detail"
                           onClick={() => setSelectedLogForDetail(log)}
-                        >
-                          Lihat Detail
-                        </Button>
+                        />
                       ) : (
-                        <span className="text-xs text-text-muted">-</span>
+                        <span className="text-xs text-slate-400">-</span>
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
-      </CardContent>
+      </VStack>
 
-      {/* JSON Payload Modal Detail */}
+      {/* Detail Dialog */}
       {selectedLogForDetail && (
-        <div
+        <Dialog
+          isOpen={true}
+          onOpenChange={(open) => {
+            if (!open) setSelectedLogForDetail(null);
+          }}
+          width={640}
+          purpose="info"
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
         >
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-xl max-h-[85vh] flex flex-col p-5">
-            <div className="flex justify-between items-center border-b border-border-default pb-3">
-              <h3 className="font-bold text-text-main text-base">
-                Detail Jejak Audit #{selectedLogForDetail.id}
-              </h3>
-              <button
-                onClick={() => setSelectedLogForDetail(null)}
-                className="text-text-muted hover:text-text-main text-xl font-bold"
-              >
-                &times;
-              </button>
-            </div>
+          <div className="p-6 bg-white rounded-xl shadow-2xl flex flex-col max-h-[85vh]">
+            <DialogHeader
+              title={`Detail Jejak Audit #${selectedLogForDetail.id}`}
+              subtitle={`Modul: ${selectedLogForDetail.module} • Aksi: ${selectedLogForDetail.action}`}
+              onOpenChange={() => setSelectedLogForDetail(null)}
+            />
             <div className="flex-1 overflow-y-auto py-4 space-y-4 text-xs">
               <div>
-                <p className="font-semibold text-text-muted mb-1 uppercase tracking-wider">
+                <p className="font-semibold text-slate-600 mb-1 uppercase tracking-wider">
                   Nilai Sebelum (Old Values):
                 </p>
-                <pre className="p-3 bg-slate-50 border border-border-default rounded-md overflow-x-auto font-mono text-slate-800">
+                <pre className="p-3 bg-slate-50 border border-slate-200 rounded-lg overflow-x-auto font-mono text-slate-800">
                   {selectedLogForDetail.old_values
                     ? JSON.stringify(selectedLogForDetail.old_values, null, 2)
                     : 'null (Data Baru / Tidak Ada)'}
                 </pre>
               </div>
               <div>
-                <p className="font-semibold text-text-muted mb-1 uppercase tracking-wider">
+                <p className="font-semibold text-slate-600 mb-1 uppercase tracking-wider">
                   Nilai Sesudah (New Values):
                 </p>
-                <pre className="p-3 bg-slate-50 border border-border-default rounded-md overflow-x-auto font-mono text-slate-800">
+                <pre className="p-3 bg-slate-50 border border-slate-200 rounded-lg overflow-x-auto font-mono text-slate-800">
                   {selectedLogForDetail.new_values
                     ? JSON.stringify(selectedLogForDetail.new_values, null, 2)
                     : 'null'}
                 </pre>
               </div>
             </div>
-            <div className="flex justify-end pt-3 border-t border-border-default">
-              <Button variant="outline" size="sm" onClick={() => setSelectedLogForDetail(null)}>
-                Tutup
-              </Button>
-            </div>
+            <HStack justify="end" className="pt-3 border-t border-slate-200">
+              <Button
+                variant="secondary"
+                size="sm"
+                label="Tutup"
+                onClick={() => setSelectedLogForDetail(null)}
+              />
+            </HStack>
           </div>
-        </div>
+        </Dialog>
       )}
     </Card>
   );

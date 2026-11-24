@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardContent, CardFooter, Button, Badge } from '../../../components/ui';
+import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
+import { Banner } from '@astryxdesign/core/Banner';
+import { Badge } from '@astryxdesign/core/Badge';
+import { Button } from '@astryxdesign/core/Button';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHeaderCell } from '@astryxdesign/core/Table';
+import { TextInput } from '@astryxdesign/core/TextInput';
+import { Selector } from '@astryxdesign/core/Selector';
+import { HStack } from '@astryxdesign/core/HStack';
 
 export interface LabOrderItem {
   id: number;
@@ -76,7 +83,6 @@ export const LabResultModal: React.FC<LabResultModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check that all items have a result value
     const emptyItems = itemsData.filter((i) => !i.result_value.trim());
     if (emptyItems.length > 0) {
       setErrorMessage(`Harap isi hasil untuk semua parameter (${emptyItems.length} belum diisi).`);
@@ -88,7 +94,7 @@ export const LabResultModal: React.FC<LabResultModalProps> = ({
 
     try {
       const payload = {
-        completed_by: 1, // Petugas lab
+        completed_by: 1,
         items: itemsData.map((item) => ({
           id: item.id,
           result_value: item.result_value,
@@ -122,160 +128,168 @@ export const LabResultModal: React.FC<LabResultModalProps> = ({
   const isReadOnly = order.status === 'COMPLETED';
 
   return (
-    <div
+    <Dialog
+      isOpen={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      width={980}
+      purpose="form"
       role="dialog"
       aria-modal="true"
       aria-labelledby="lab-result-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in"
     >
-      <Card className="w-full max-w-4xl bg-white shadow-xl max-h-[90vh] flex flex-col">
-        <CardHeader className="flex items-center justify-between border-b border-border-default pb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 id="lab-result-title" className="text-xl font-bold text-text-main">
-                {isReadOnly ? 'Lembar Hasil Pemeriksaan Laboratorium' : 'Input Hasil Pemeriksaan Laboratorium'}
-              </h2>
-              <Badge variant={order.status === 'COMPLETED' ? 'success' : 'warning'}>
-                {order.status}
-              </Badge>
-            </div>
-            <p className="text-sm text-text-muted mt-1">
-              Order: <span className="font-mono text-primary font-semibold">{order.order_number}</span> | Pasien:{' '}
-              <span className="font-semibold text-text-main">{order.patient_name}</span> (
-              <span className="font-mono text-text-muted">{order.medical_record_number}</span>) | DPJP:{' '}
-              <span>{order.doctor_name}</span> ({order.polyclinic_name})
-            </p>
-            {order.clinical_notes && (
-              <p className="text-xs text-text-muted mt-1 italic">
-                Catatan Klinis: "{order.clinical_notes}"
+      <div className="p-6 bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh]">
+        <DialogHeader
+          title={
+            <div>
+              <HStack gap={3} align="center">
+                <h2 id="lab-result-title" className="text-xl font-bold text-slate-900">
+                  {isReadOnly ? 'Lembar Hasil Pemeriksaan Laboratorium' : 'Input Hasil Pemeriksaan Laboratorium'}
+                </h2>
+                <Badge
+                  variant={order.status === 'COMPLETED' ? 'success' : 'warning'}
+                  label={order.status}
+                />
+              </HStack>
+              <p className="text-sm text-slate-500 mt-1">
+                Order: <span className="font-mono text-teal-700 font-semibold">{order.order_number}</span> | Pasien:{' '}
+                <span className="font-semibold text-slate-900">{order.patient_name}</span> (
+                <span className="font-mono text-slate-500">{order.medical_record_number}</span>) | DPJP:{' '}
+                <span>{order.doctor_name}</span> ({order.polyclinic_name})
               </p>
-            )}
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Tutup modal hasil lab"
-            className="text-text-muted hover:text-text-main text-2xl font-bold leading-none p-1 rounded focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            &times;
-          </button>
-        </CardHeader>
-
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
-          <CardContent className="space-y-4">
-            {errorMessage && (
-              <div
-                role="alert"
-                className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm"
-              >
-                {errorMessage}
-              </div>
-            )}
-
-            <div className="overflow-x-auto border border-border-default rounded-md">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 text-text-muted border-b border-border-default font-semibold text-xs">
-                  <tr>
-                    <th className="py-2.5 px-3">Parameter Uji</th>
-                    <th className="py-2.5 px-3">Nilai Rujukan</th>
-                    <th className="py-2.5 px-3">Satuan</th>
-                    <th className="py-2.5 px-3 w-40">Hasil Pemeriksaan</th>
-                    <th className="py-2.5 px-3 w-36">Status Hasil</th>
-                    <th className="py-2.5 px-3">Keterangan</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border-light">
-                  {itemsData.map((item, index) => (
-                    <tr
-                      key={item.id}
-                      className={item.status_flag === 'ABNORMAL' ? 'bg-red-50/40' : 'hover:bg-slate-50/50'}
-                    >
-                      <td className="py-2.5 px-3 font-medium text-text-main">
-                        {item.test_name}
-                      </td>
-                      <td className="py-2.5 px-3 text-text-muted font-mono text-xs">
-                        {item.reference_range}
-                      </td>
-                      <td className="py-2.5 px-3 text-text-muted font-mono text-xs">
-                        {item.unit}
-                      </td>
-                      <td className="py-2.5 px-3">
-                        {isReadOnly ? (
-                          <span
-                            className={`font-mono font-semibold ${
-                              item.status_flag === 'ABNORMAL' ? 'text-red-600' : 'text-text-main'
-                            }`}
-                          >
-                            {item.result_value || '-'}
-                          </span>
-                        ) : (
-                          <input
-                            type="text"
-                            value={item.result_value}
-                            onChange={(e) => handleItemChange(index, 'result_value', e.target.value)}
-                            placeholder="Nilai..."
-                            className="w-full px-2 py-1 text-sm border border-border-default rounded focus:ring-1 focus:ring-primary focus:outline-none"
-                            required
-                          />
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3">
-                        {isReadOnly ? (
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${
-                              item.status_flag === 'ABNORMAL'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-emerald-100 text-emerald-800'
-                            }`}
-                          >
-                            {item.status_flag}
-                          </span>
-                        ) : (
-                          <select
-                            value={item.status_flag}
-                            onChange={(e) => handleItemChange(index, 'status_flag', e.target.value)}
-                            className={`w-full px-2 py-1 text-xs font-semibold rounded border focus:outline-none ${
-                              item.status_flag === 'ABNORMAL'
-                                ? 'border-red-300 bg-red-50 text-red-700'
-                                : 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                            }`}
-                          >
-                            <option value="NORMAL">NORMAL</option>
-                            <option value="ABNORMAL">ABNORMAL</option>
-                          </select>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3">
-                        {isReadOnly ? (
-                          <span className="text-xs text-text-muted">{item.notes || '-'}</span>
-                        ) : (
-                          <input
-                            type="text"
-                            value={item.notes}
-                            onChange={(e) => handleItemChange(index, 'notes', e.target.value)}
-                            placeholder="Catatan..."
-                            className="w-full px-2 py-1 text-xs border border-border-default rounded focus:ring-1 focus:ring-primary focus:outline-none"
-                          />
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {order.clinical_notes && (
+                <p className="text-xs text-slate-500 mt-1 italic">
+                  Catatan Klinis: "{order.clinical_notes}"
+                </p>
+              )}
             </div>
-          </CardContent>
+          }
+          onOpenChange={() => onClose()}
+        />
 
-          <CardFooter className="flex justify-end gap-3 border-t border-border-default pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
-              {isReadOnly ? 'Tutup' : 'Batal'}
-            </Button>
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto mt-4 space-y-4">
+          {errorMessage && (
+            <Banner
+              status="error"
+              title="Kesalahan Formulir"
+              description={errorMessage}
+              container="card"
+            />
+          )}
+
+          <div className="border border-slate-200 rounded-lg overflow-hidden">
+            <Table density="balanced" dividers="rows" hasHover>
+              <TableHeader>
+                <TableRow>
+                  <TableHeaderCell>Parameter Uji</TableHeaderCell>
+                  <TableHeaderCell>Nilai Rujukan</TableHeaderCell>
+                  <TableHeaderCell>Satuan</TableHeaderCell>
+                  <TableHeaderCell style={{ width: '180px' }}>Hasil Pemeriksaan</TableHeaderCell>
+                  <TableHeaderCell style={{ width: '160px' }}>Status Hasil</TableHeaderCell>
+                  <TableHeaderCell>Keterangan</TableHeaderCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {itemsData.map((item, index) => (
+                  <TableRow
+                    key={item.id}
+                    style={{
+                      backgroundColor: item.status_flag === 'ABNORMAL' ? 'rgba(254, 242, 242, 0.6)' : undefined,
+                    }}
+                  >
+                    <TableCell>
+                      <span className="font-semibold text-slate-900 text-sm">{item.test_name}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-mono text-xs text-slate-600">{item.reference_range}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-mono text-xs text-slate-600">{item.unit}</span>
+                    </TableCell>
+                    <TableCell>
+                      {isReadOnly ? (
+                        <span
+                          className={`font-mono font-bold text-sm ${
+                            item.status_flag === 'ABNORMAL' ? 'text-red-600' : 'text-slate-900'
+                          }`}
+                        >
+                          {item.result_value || '-'}
+                        </span>
+                      ) : (
+                        <TextInput
+                          label="Hasil"
+                          isLabelHidden
+                          value={item.result_value}
+                          onChange={(val) => handleItemChange(index, 'result_value', val)}
+                          placeholder="Nilai..."
+                          size="sm"
+                          isRequired
+                          width="100%"
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isReadOnly ? (
+                        <Badge
+                          variant={item.status_flag === 'ABNORMAL' ? 'error' : 'success'}
+                          label={item.status_flag}
+                        />
+                      ) : (
+                        <Selector
+                          label="Status"
+                          isLabelHidden
+                          size="sm"
+                          value={item.status_flag}
+                          onChange={(val) => handleItemChange(index, 'status_flag', val)}
+                          options={[
+                            { value: 'NORMAL', label: 'NORMAL' },
+                            { value: 'ABNORMAL', label: 'ABNORMAL' },
+                          ]}
+                          width="100%"
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isReadOnly ? (
+                        <span className="text-xs text-slate-500">{item.notes || '-'}</span>
+                      ) : (
+                        <TextInput
+                          label="Catatan"
+                          isLabelHidden
+                          value={item.notes}
+                          onChange={(val) => handleItemChange(index, 'notes', val)}
+                          placeholder="Catatan..."
+                          size="sm"
+                          width="100%"
+                        />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <HStack justify="end" gap={3} className="pt-4 border-t border-slate-200">
+            <Button
+              variant="secondary"
+              label={isReadOnly ? 'Tutup' : 'Batal'}
+              onClick={onClose}
+              isDisabled={isSubmitting}
+            />
             {!isReadOnly && (
-              <Button type="submit" variant="primary" disabled={isSubmitting}>
-                {isSubmitting ? 'Menyimpan...' : 'Simpan & Verifikasi Hasil'}
-              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                label={isSubmitting ? 'Menyimpan...' : 'Simpan & Verifikasi Hasil'}
+                isDisabled={isSubmitting}
+                isLoading={isSubmitting}
+              />
             )}
-          </CardFooter>
+          </HStack>
         </form>
-      </Card>
-    </div>
+      </div>
+    </Dialog>
   );
 };

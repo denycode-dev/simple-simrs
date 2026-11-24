@@ -23,7 +23,8 @@ import { DashboardAnalyticsPage } from '@/features/dashboard';
 import { AuditTrailPage } from '@/features/audit';
 import { GlobalErrorProvider } from '@/contexts/GlobalErrorContext';
 import { GlobalErrorModal } from '@/components/layout/GlobalErrorModal';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components/ui';
+import { CardContent, Button, Badge } from '@/components/ui';
+import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
 import type { MenuItem } from '@/config/dashboard-menu';
 
 function AppContent() {
@@ -240,61 +241,37 @@ function AppContent() {
 
             {/* Modal Detail Rekam Medis Pasien Terpilih */}
             {selectedPatient && (
-              <div
+              <Dialog
+                isOpen={Boolean(selectedPatient)}
+                onOpenChange={(open) => {
+                  if (!open) setSelectedPatient(null);
+                }}
+                width={560}
+                purpose="info"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="modal-patient-title"
-                style={{
-                  position: 'fixed',
-                  inset: 0,
-                  backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                  backdropFilter: 'blur(2px)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 'var(--space-4)',
-                  zIndex: 60,
-                }}
-                onClick={() => setSelectedPatient(null)}
               >
-                <div
-                  style={{ maxWidth: '520px', width: '100%' }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Card
-                    elevation="high"
-                    padding={6}
-                    style={{
-                      backgroundColor: 'var(--color-surface)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-lg)',
-                      boxShadow: 'var(--shadow-lg)',
-                    }}
-                  >
-                    <CardHeader style={{ paddingBottom: 'var(--space-3)', marginBottom: 'var(--space-4)', borderBottom: '1px solid var(--color-border-subtle)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span
-                          style={{
-                            fontSize: '0.8125rem',
-                            fontFamily: 'monospace',
-                            fontWeight: 700,
-                            color: 'var(--color-primary)',
-                            backgroundColor: 'var(--color-primary-light)',
-                            padding: '2px 8px',
-                            borderRadius: 'var(--radius-sm)',
-                          }}
-                        >
-                          {selectedPatient.medicalRecordNumber}
+                <div className="p-6 bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh]">
+                  <DialogHeader
+                    title={
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-mono font-bold text-xs text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                            {selectedPatient.medicalRecordNumber}
+                          </span>
+                          <Badge variant="teal" label={selectedPatient.status} />
+                        </div>
+                        <h2 id="modal-patient-title" className="text-xl font-bold text-slate-900 mt-1">
+                          {selectedPatient.name}
+                        </h2>
+                        <span className="text-xs text-slate-500 font-medium">
+                          {selectedPatient.gender === 'L' ? 'Laki-laki' : 'Perempuan'}, {selectedPatient.age} tahun
                         </span>
-                        <Badge variant="primary" label={selectedPatient.status} />
                       </div>
-                      <CardTitle id="modal-patient-title" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)', marginTop: 'var(--space-2)' }}>
-                        {selectedPatient.name}
-                      </CardTitle>
-                      <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>
-                        {selectedPatient.gender === 'L' ? 'Laki-laki' : 'Perempuan'}, {selectedPatient.age} tahun
-                      </span>
-                    </CardHeader>
+                    }
+                    onOpenChange={() => setSelectedPatient(null)}
+                  />
                     <CardContent style={{ padding: 0, display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
                       <div>
                         <strong style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -340,9 +317,8 @@ function AppContent() {
                         Tutup
                       </Button>
                     </div>
-                  </Card>
                 </div>
-              </div>
+              </Dialog>
             )}
           </section>
         ) : (

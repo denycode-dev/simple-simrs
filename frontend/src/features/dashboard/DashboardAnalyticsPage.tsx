@@ -5,7 +5,11 @@ import type { PolyclinicStat } from './components/VisitsByPolyChart';
 import { RevenueSummaryCard } from './components/RevenueSummaryCard';
 import { TopMedicinesTable } from './components/TopMedicinesTable';
 import type { TopMedicineItem } from './components/TopMedicinesTable';
-import { Button } from '../../components/ui';
+import { Button } from '@astryxdesign/core/Button';
+import { Banner } from '@astryxdesign/core/Banner';
+import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl';
+import { HStack } from '@astryxdesign/core/HStack';
+import { VStack } from '@astryxdesign/core/VStack';
 
 export interface AnalyticsSummaryResponse {
   visits: {
@@ -67,72 +71,50 @@ export const DashboardAnalyticsPage: React.FC = () => {
   }, [fetchAnalytics]);
 
   return (
-    <div className="space-y-6">
+    <VStack gap={6} className="w-full">
       {/* Page Header & Period Filters */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <HStack justify="between" align="center" className="flex-col sm:flex-row gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-text-main tracking-tight">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
             Dashboard Operasional & Eksekutif SIMRS
           </h1>
-          <p className="text-sm text-text-muted mt-1">
+          <p className="text-sm text-slate-500 mt-1">
             Ringkasan performa kunjungan rawat jalan, utilisasi poliklinik, pendapatan kas, dan farmasi
           </p>
         </div>
 
-        {/* Filter Buttons */}
-        <div className="inline-flex p-1 bg-slate-100 rounded-lg border border-border-default text-xs font-semibold">
-          <button
-            onClick={() => setPeriod('today')}
-            className={`px-3 py-1.5 rounded-md transition-colors ${
-              period === 'today' ? 'bg-white shadow text-primary font-bold' : 'text-text-muted hover:text-text-main'
-            }`}
-          >
-            Hari Ini
-          </button>
-          <button
-            onClick={() => setPeriod('week')}
-            className={`px-3 py-1.5 rounded-md transition-colors ${
-              period === 'week' ? 'bg-white shadow text-primary font-bold' : 'text-text-muted hover:text-text-main'
-            }`}
-          >
-            7 Hari Terakhir
-          </button>
-          <button
-            onClick={() => setPeriod('month')}
-            className={`px-3 py-1.5 rounded-md transition-colors ${
-              period === 'month' ? 'bg-white shadow text-primary font-bold' : 'text-text-muted hover:text-text-main'
-            }`}
-          >
-            Bulan Ini
-          </button>
-          <button
-            onClick={() => setPeriod('all')}
-            className={`px-3 py-1.5 rounded-md transition-colors ${
-              period === 'all' ? 'bg-white shadow text-primary font-bold' : 'text-text-muted hover:text-text-main'
-            }`}
-          >
-            Semua Waktu
-          </button>
-        </div>
-      </div>
+        {/* Filter Segmented Control */}
+        <SegmentedControl
+          value={period}
+          onChange={(val) => setPeriod(val as any)}
+          label="Filter Periode Analitik"
+          size="sm"
+        >
+          <SegmentedControlItem value="today" label="Hari Ini" />
+          <SegmentedControlItem value="week" label="7 Hari Terakhir" />
+          <SegmentedControlItem value="month" label="Bulan Ini" />
+          <SegmentedControlItem value="all" label="Semua Waktu" />
+        </SegmentedControl>
+      </HStack>
 
       {errorMessage && (
-        <div
-          role="alert"
-          className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center justify-between"
+        <Banner
+          status="error"
+          title="Koneksi Layanan Gagal"
+          description={errorMessage}
+          container="card"
         >
-          <span>{errorMessage}</span>
-          <Button variant="outline" size="sm" onClick={fetchAnalytics}>
-            Coba Lagi
-          </Button>
-        </div>
+          <div className="pt-2">
+            <Button variant="secondary" size="sm" label="Coba Lagi" onClick={fetchAnalytics} />
+          </div>
+        </Banner>
       )}
 
       {/* KPI Metrics Summary Row */}
       <KpiMetricsRow data={data} isLoading={isLoading} />
 
       {/* Two Column Layout for Charts & Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
         <VisitsByPolyChart
           data={data?.polyclinics || []}
           isLoading={isLoading}
@@ -148,6 +130,6 @@ export const DashboardAnalyticsPage: React.FC = () => {
         data={data?.top_medicines || []}
         isLoading={isLoading}
       />
-    </div>
+    </VStack>
   );
 };

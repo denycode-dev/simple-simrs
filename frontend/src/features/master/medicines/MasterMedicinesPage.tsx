@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Input, Alert, Badge } from '@/components/ui';
+import { Card, CardContent, Button, Input, Alert, Badge } from '@/components/ui';
+import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
 import { apiClient } from '@/lib/api-client';
 import { formatCurrency } from '@/utils/formatters';
 
@@ -274,33 +275,31 @@ export const MasterMedicinesPage: React.FC = () => {
 
       {/* Modal Mutasi Stok */}
       {selectedMedicine && (
-        <div
+        <Dialog
+          isOpen={Boolean(selectedMedicine)}
+          onOpenChange={(open) => {
+            if (!open && !isAdjusting) setSelectedMedicine(null);
+          }}
+          width={520}
+          purpose="form"
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-adjust-stock-title"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.6)',
-            backdropFilter: 'blur(2px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 'var(--space-4)',
-            zIndex: 60,
-          }}
-          onClick={() => !isAdjusting && setSelectedMedicine(null)}
         >
-          <div style={{ maxWidth: '480px', width: '100%' }} onClick={(e) => e.stopPropagation()}>
-            <Card elevation="high" padding={6} style={{ backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-lg)' }}>
-              <CardHeader style={{ paddingBottom: 'var(--space-3)', marginBottom: 'var(--space-4)', borderBottom: '1px solid var(--color-border-subtle)' }}>
-                <CardTitle id="modal-adjust-stock-title" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
-                  Penyesuaian Mutasi Stok Obat
-                </CardTitle>
-                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-                  {selectedMedicine.name} ({selectedMedicine.code}) — Stok saat ini: <strong>{selectedMedicine.stock} {selectedMedicine.unit}</strong>
+          <div className="p-6 bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh]">
+            <DialogHeader
+              title={
+                <div>
+                  <h2 id="modal-adjust-stock-title" className="text-xl font-bold text-slate-900">
+                    Penyesuaian Mutasi Stok Obat
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {selectedMedicine.name} ({selectedMedicine.code}) — Stok saat ini: <strong>{selectedMedicine.stock} {selectedMedicine.unit}</strong>
+                  </p>
                 </div>
-              </CardHeader>
+              }
+              onOpenChange={() => !isAdjusting && setSelectedMedicine(null)}
+            />
 
               <CardContent style={{ padding: 0 }}>
                 {adjustError && <div style={{ marginBottom: 'var(--space-4)' }}><Alert variant="danger">{adjustError}</Alert></div>}
@@ -395,9 +394,8 @@ export const MasterMedicinesPage: React.FC = () => {
                   </div>
                 </form>
               </CardContent>
-            </Card>
           </div>
-        </div>
+        </Dialog>
       )}
     </section>
   );

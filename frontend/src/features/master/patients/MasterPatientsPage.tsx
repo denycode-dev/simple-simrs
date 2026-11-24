@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Input, Alert, Badge } from '@/components/ui';
+import { Card, CardContent, Button, Input, Alert, Badge } from '@/components/ui';
+import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
 import { apiClient } from '@/lib/api-client';
 
 export interface PatientRecord {
@@ -301,36 +302,31 @@ export const MasterPatientsPage: React.FC = () => {
 
       {/* Modal Tambah Pasien Baru */}
       {isModalOpen && (
-        <div
+        <Dialog
+          isOpen={isModalOpen}
+          onOpenChange={(open) => {
+            if (!open && !isSubmitting) setIsModalOpen(false);
+          }}
+          width={600}
+          purpose="form"
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-add-patient-title"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.6)',
-            backdropFilter: 'blur(2px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 'var(--space-4)',
-            zIndex: 60,
-          }}
-          onClick={() => !isSubmitting && setIsModalOpen(false)}
         >
-          <div
-            style={{ maxWidth: '580px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Card elevation="high" padding={6} style={{ backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-lg)' }}>
-              <CardHeader style={{ paddingBottom: 'var(--space-3)', marginBottom: 'var(--space-4)', borderBottom: '1px solid var(--color-border-subtle)' }}>
-                <CardTitle id="modal-add-patient-title" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
-                  Pendaftaran Master Pasien Baru
-                </CardTitle>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-                  No. Rekam Medis (RM) akan diterbitkan otomatis secara sekuensial oleh sistem.
-                </p>
-              </CardHeader>
+          <div className="p-6 bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh]">
+            <DialogHeader
+              title={
+                <div>
+                  <h2 id="modal-add-patient-title" className="text-xl font-bold text-slate-900">
+                    Pendaftaran Master Pasien Baru
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    No. Rekam Medis (RM) akan diterbitkan otomatis secara sekuensial oleh sistem.
+                  </p>
+                </div>
+              }
+              onOpenChange={() => !isSubmitting && setIsModalOpen(false)}
+            />
 
               <CardContent style={{ padding: 0 }}>
                 {formError && <div style={{ marginBottom: 'var(--space-4)' }}><Alert variant="danger">{formError}</Alert></div>}
@@ -493,9 +489,8 @@ export const MasterPatientsPage: React.FC = () => {
                   </div>
                 </form>
               </CardContent>
-            </Card>
           </div>
-        </div>
+        </Dialog>
       )}
     </section>
   );
