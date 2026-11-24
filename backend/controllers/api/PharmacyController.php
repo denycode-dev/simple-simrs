@@ -212,10 +212,11 @@ class PharmacyController extends BaseApiController
 
                 // Adjust stock atomically with stock log
                 $medicine->adjustStock(
-                    -$item->quantity,
                     'OUT',
+                    (int)$item->quantity,
                     "Penyerahan obat resep {$prescription->prescription_number}",
-                    $userId ? (int)$userId : null
+                    'PRESCRIPTION',
+                    (int)$prescription->id
                 );
             }
 
