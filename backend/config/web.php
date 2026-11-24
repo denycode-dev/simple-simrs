@@ -183,6 +183,26 @@ $config = [
                 'OPTIONS api/v1/doctor-schedules/<id:\d+>' => 'api/doctor-schedule/options',
                 'OPTIONS api/v1/doctor-schedules' => 'api/doctor-schedule/options',
 
+                // Medical Actions REST endpoints (Task 10)
+                'GET api/v1/medical-actions' => 'api/medical-action/index',
+                'POST api/v1/medical-actions' => 'api/medical-action/create',
+                'GET api/v1/medical-actions/<id:\d+>' => 'api/medical-action/view',
+                'PUT api/v1/medical-actions/<id:\d+>' => 'api/medical-action/update',
+                'PATCH api/v1/medical-actions/<id:\d+>' => 'api/medical-action/update',
+                'OPTIONS api/v1/medical-actions/<id:\d+>' => 'api/medical-action/options',
+                'OPTIONS api/v1/medical-actions' => 'api/medical-action/options',
+
+                // Medicines & Stock Mutation REST endpoints (Task 10)
+                'GET api/v1/medicines' => 'api/medicine/index',
+                'POST api/v1/medicines' => 'api/medicine/create',
+                'POST api/v1/medicines/<id:\d+>/adjust-stock' => 'api/medicine/adjust-stock',
+                'GET api/v1/medicines/<id:\d+>' => 'api/medicine/view',
+                'PUT api/v1/medicines/<id:\d+>' => 'api/medicine/update',
+                'PATCH api/v1/medicines/<id:\d+>' => 'api/medicine/update',
+                'OPTIONS api/v1/medicines/<id:\d+>/adjust-stock' => 'api/medicine/options',
+                'OPTIONS api/v1/medicines/<id:\d+>' => 'api/medicine/options',
+                'OPTIONS api/v1/medicines' => 'api/medicine/options',
+
                 // CORS Preflight routing for REST API
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>/<action:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
