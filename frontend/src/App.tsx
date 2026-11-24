@@ -15,6 +15,7 @@ import {
 } from '@/features/master';
 import { RegistrationForm, QueueStatusBoard } from '@/features/registration';
 import { NurseQueueList } from '@/features/nurse';
+import { DoctorExaminationForm } from '@/features/examination';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components/ui';
 import type { MenuItem } from '@/config/dashboard-menu';
 
@@ -130,7 +131,9 @@ export function App() {
           user && <UserProfile user={user} onLogout={logout} isLoading={isAuthLoading} />
         }
       >
-        {activeMenuId === 'nurse-triage' ? (
+        {activeMenuId === 'doctor-consultation' ? (
+          <DoctorExaminationForm />
+        ) : activeMenuId === 'nurse-triage' ? (
           <NurseQueueList />
         ) : activeMenuId === 'reg-new' ? (
           <RegistrationForm />
