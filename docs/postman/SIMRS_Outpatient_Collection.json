@@ -95,11 +95,51 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "var jsonData = pm.response.json();",
-                  "if (jsonData.success && jsonData.data && jsonData.data.token) {",
-                  "    pm.collectionVariables.set('token', jsonData.data.token);",
-                  "    console.log('Token Bearer dokter berhasil disimpan ke variabel koleksi.');",
-                  "}"
+                  "pm.test(\"Status response 200 OK - Login Berhasil\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token Bearer diekstrak dan disimpan otomatis ke variabel\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an(\"object\");",
+                  "    pm.expect(jsonData.data.token).to.be.a(\"string\");",
+                  "",
+                  "    var token = jsonData.data.token;",
+                  "    var user = jsonData.data.user || {};",
+                  "    var role = user.role || \"\";",
+                  "",
+                  "    // Simpan ke variabel umum untuk API yang membutuhkan bearer token",
+                  "    pm.collectionVariables.set(\"bearer_token\", token);",
+                  "    pm.collectionVariables.set(\"token\", token);",
+                  "    if (pm.environment) {",
+                  "        pm.environment.set(\"bearer_token\", token);",
+                  "        pm.environment.set(\"token\", token);",
+                  "    }",
+                  "",
+                  "    // Simpan ke variabel spesifik peran (RBAC)",
+                  "    var roleVarMap = {",
+                  "        \"admin\": \"admin_token\",",
+                  "        \"doctor\": \"doctor_token\",",
+                  "        \"nurse\": \"nurse_token\",",
+                  "        \"registration\": \"reg_token\",",
+                  "        \"pharmacist\": \"pharma_token\",",
+                  "        \"pharmacy\": \"pharma_token\",",
+                  "        \"lab\": \"lab_token\",",
+                  "        \"cashier\": \"cashier_token\"",
+                  "    };",
+                  "",
+                  "    if (role && roleVarMap[role]) {",
+                  "        var roleVarName = roleVarMap[role];",
+                  "        pm.collectionVariables.set(roleVarName, token);",
+                  "        if (pm.environment) {",
+                  "            pm.environment.set(roleVarName, token);",
+                  "        }",
+                  "        console.log(\"[Auth Script] \" + roleVarName + \" disetel untuk peran: \" + role);",
+                  "    }",
+                  "",
+                  "    console.log(\"[Auth Script] Token Bearer otomatis aktif: \" + token);",
+                  "});"
                 ]
               }
             }
@@ -147,11 +187,51 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "var jsonData = pm.response.json();",
-                  "if (jsonData.success && jsonData.data && jsonData.data.token) {",
-                  "    pm.collectionVariables.set('token', jsonData.data.token);",
-                  "    console.log('Token Bearer admin berhasil disimpan.');",
-                  "}"
+                  "pm.test(\"Status response 200 OK - Login Berhasil\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token Bearer diekstrak dan disimpan otomatis ke variabel\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an(\"object\");",
+                  "    pm.expect(jsonData.data.token).to.be.a(\"string\");",
+                  "",
+                  "    var token = jsonData.data.token;",
+                  "    var user = jsonData.data.user || {};",
+                  "    var role = user.role || \"\";",
+                  "",
+                  "    // Simpan ke variabel umum untuk API yang membutuhkan bearer token",
+                  "    pm.collectionVariables.set(\"bearer_token\", token);",
+                  "    pm.collectionVariables.set(\"token\", token);",
+                  "    if (pm.environment) {",
+                  "        pm.environment.set(\"bearer_token\", token);",
+                  "        pm.environment.set(\"token\", token);",
+                  "    }",
+                  "",
+                  "    // Simpan ke variabel spesifik peran (RBAC)",
+                  "    var roleVarMap = {",
+                  "        \"admin\": \"admin_token\",",
+                  "        \"doctor\": \"doctor_token\",",
+                  "        \"nurse\": \"nurse_token\",",
+                  "        \"registration\": \"reg_token\",",
+                  "        \"pharmacist\": \"pharma_token\",",
+                  "        \"pharmacy\": \"pharma_token\",",
+                  "        \"lab\": \"lab_token\",",
+                  "        \"cashier\": \"cashier_token\"",
+                  "    };",
+                  "",
+                  "    if (role && roleVarMap[role]) {",
+                  "        var roleVarName = roleVarMap[role];",
+                  "        pm.collectionVariables.set(roleVarName, token);",
+                  "        if (pm.environment) {",
+                  "            pm.environment.set(roleVarName, token);",
+                  "        }",
+                  "        console.log(\"[Auth Script] \" + roleVarName + \" disetel untuk peran: \" + role);",
+                  "    }",
+                  "",
+                  "    console.log(\"[Auth Script] Token Bearer otomatis aktif: \" + token);",
+                  "});"
                 ]
               }
             }
@@ -226,7 +306,62 @@
           "response": [],
           "createdAt": "2026-11-24T00:49:59.000Z",
           "updatedAt": "2026-11-24T00:49:59.000Z",
-          "uid": "12255985-fe1dc713-3929-4d64-9b8b-e8d1ff69e71e"
+          "uid": "12255985-fe1dc713-3929-4d64-9b8b-e8d1ff69e71e",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status response 200 OK - Login Berhasil\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token Bearer diekstrak dan disimpan otomatis ke variabel\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an(\"object\");",
+                  "    pm.expect(jsonData.data.token).to.be.a(\"string\");",
+                  "",
+                  "    var token = jsonData.data.token;",
+                  "    var user = jsonData.data.user || {};",
+                  "    var role = user.role || \"\";",
+                  "",
+                  "    // Simpan ke variabel umum untuk API yang membutuhkan bearer token",
+                  "    pm.collectionVariables.set(\"bearer_token\", token);",
+                  "    pm.collectionVariables.set(\"token\", token);",
+                  "    if (pm.environment) {",
+                  "        pm.environment.set(\"bearer_token\", token);",
+                  "        pm.environment.set(\"token\", token);",
+                  "    }",
+                  "",
+                  "    // Simpan ke variabel spesifik peran (RBAC)",
+                  "    var roleVarMap = {",
+                  "        \"admin\": \"admin_token\",",
+                  "        \"doctor\": \"doctor_token\",",
+                  "        \"nurse\": \"nurse_token\",",
+                  "        \"registration\": \"reg_token\",",
+                  "        \"pharmacist\": \"pharma_token\",",
+                  "        \"pharmacy\": \"pharma_token\",",
+                  "        \"lab\": \"lab_token\",",
+                  "        \"cashier\": \"cashier_token\"",
+                  "    };",
+                  "",
+                  "    if (role && roleVarMap[role]) {",
+                  "        var roleVarName = roleVarMap[role];",
+                  "        pm.collectionVariables.set(roleVarName, token);",
+                  "        if (pm.environment) {",
+                  "            pm.environment.set(roleVarName, token);",
+                  "        }",
+                  "        console.log(\"[Auth Script] \" + roleVarName + \" disetel untuk peran: \" + role);",
+                  "    }",
+                  "",
+                  "    console.log(\"[Auth Script] Token Bearer otomatis aktif: \" + token);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Login Kasir Pembayaran",
@@ -263,7 +398,62 @@
           "response": [],
           "createdAt": "2026-11-24T00:49:59.000Z",
           "updatedAt": "2026-11-24T00:49:59.000Z",
-          "uid": "12255985-2ca54ff4-bf9f-4318-868c-1e247413b0c9"
+          "uid": "12255985-2ca54ff4-bf9f-4318-868c-1e247413b0c9",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status response 200 OK - Login Berhasil\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token Bearer diekstrak dan disimpan otomatis ke variabel\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an(\"object\");",
+                  "    pm.expect(jsonData.data.token).to.be.a(\"string\");",
+                  "",
+                  "    var token = jsonData.data.token;",
+                  "    var user = jsonData.data.user || {};",
+                  "    var role = user.role || \"\";",
+                  "",
+                  "    // Simpan ke variabel umum untuk API yang membutuhkan bearer token",
+                  "    pm.collectionVariables.set(\"bearer_token\", token);",
+                  "    pm.collectionVariables.set(\"token\", token);",
+                  "    if (pm.environment) {",
+                  "        pm.environment.set(\"bearer_token\", token);",
+                  "        pm.environment.set(\"token\", token);",
+                  "    }",
+                  "",
+                  "    // Simpan ke variabel spesifik peran (RBAC)",
+                  "    var roleVarMap = {",
+                  "        \"admin\": \"admin_token\",",
+                  "        \"doctor\": \"doctor_token\",",
+                  "        \"nurse\": \"nurse_token\",",
+                  "        \"registration\": \"reg_token\",",
+                  "        \"pharmacist\": \"pharma_token\",",
+                  "        \"pharmacy\": \"pharma_token\",",
+                  "        \"lab\": \"lab_token\",",
+                  "        \"cashier\": \"cashier_token\"",
+                  "    };",
+                  "",
+                  "    if (role && roleVarMap[role]) {",
+                  "        var roleVarName = roleVarMap[role];",
+                  "        pm.collectionVariables.set(roleVarName, token);",
+                  "        if (pm.environment) {",
+                  "            pm.environment.set(roleVarName, token);",
+                  "        }",
+                  "        console.log(\"[Auth Script] \" + roleVarName + \" disetel untuk peran: \" + role);",
+                  "    }",
+                  "",
+                  "    console.log(\"[Auth Script] Token Bearer otomatis aktif: \" + token);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Login Petugas Farmasi",
@@ -300,7 +490,62 @@
           "response": [],
           "createdAt": "2026-11-24T00:49:59.000Z",
           "updatedAt": "2026-11-24T00:49:59.000Z",
-          "uid": "12255985-12258925-1e3c-4467-881c-0b89a3ca4ba8"
+          "uid": "12255985-12258925-1e3c-4467-881c-0b89a3ca4ba8",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status response 200 OK - Login Berhasil\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token Bearer diekstrak dan disimpan otomatis ke variabel\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an(\"object\");",
+                  "    pm.expect(jsonData.data.token).to.be.a(\"string\");",
+                  "",
+                  "    var token = jsonData.data.token;",
+                  "    var user = jsonData.data.user || {};",
+                  "    var role = user.role || \"\";",
+                  "",
+                  "    // Simpan ke variabel umum untuk API yang membutuhkan bearer token",
+                  "    pm.collectionVariables.set(\"bearer_token\", token);",
+                  "    pm.collectionVariables.set(\"token\", token);",
+                  "    if (pm.environment) {",
+                  "        pm.environment.set(\"bearer_token\", token);",
+                  "        pm.environment.set(\"token\", token);",
+                  "    }",
+                  "",
+                  "    // Simpan ke variabel spesifik peran (RBAC)",
+                  "    var roleVarMap = {",
+                  "        \"admin\": \"admin_token\",",
+                  "        \"doctor\": \"doctor_token\",",
+                  "        \"nurse\": \"nurse_token\",",
+                  "        \"registration\": \"reg_token\",",
+                  "        \"pharmacist\": \"pharma_token\",",
+                  "        \"pharmacy\": \"pharma_token\",",
+                  "        \"lab\": \"lab_token\",",
+                  "        \"cashier\": \"cashier_token\"",
+                  "    };",
+                  "",
+                  "    if (role && roleVarMap[role]) {",
+                  "        var roleVarName = roleVarMap[role];",
+                  "        pm.collectionVariables.set(roleVarName, token);",
+                  "        if (pm.environment) {",
+                  "            pm.environment.set(roleVarName, token);",
+                  "        }",
+                  "        console.log(\"[Auth Script] \" + roleVarName + \" disetel untuk peran: \" + role);",
+                  "    }",
+                  "",
+                  "    console.log(\"[Auth Script] Token Bearer otomatis aktif: \" + token);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Login Analis Laboratorium",
@@ -337,7 +582,62 @@
           "response": [],
           "createdAt": "2026-11-24T00:49:59.000Z",
           "updatedAt": "2026-11-24T00:49:59.000Z",
-          "uid": "12255985-eeef45a2-0691-4e78-83b6-7913346d0426"
+          "uid": "12255985-eeef45a2-0691-4e78-83b6-7913346d0426",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status response 200 OK - Login Berhasil\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token Bearer diekstrak dan disimpan otomatis ke variabel\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an(\"object\");",
+                  "    pm.expect(jsonData.data.token).to.be.a(\"string\");",
+                  "",
+                  "    var token = jsonData.data.token;",
+                  "    var user = jsonData.data.user || {};",
+                  "    var role = user.role || \"\";",
+                  "",
+                  "    // Simpan ke variabel umum untuk API yang membutuhkan bearer token",
+                  "    pm.collectionVariables.set(\"bearer_token\", token);",
+                  "    pm.collectionVariables.set(\"token\", token);",
+                  "    if (pm.environment) {",
+                  "        pm.environment.set(\"bearer_token\", token);",
+                  "        pm.environment.set(\"token\", token);",
+                  "    }",
+                  "",
+                  "    // Simpan ke variabel spesifik peran (RBAC)",
+                  "    var roleVarMap = {",
+                  "        \"admin\": \"admin_token\",",
+                  "        \"doctor\": \"doctor_token\",",
+                  "        \"nurse\": \"nurse_token\",",
+                  "        \"registration\": \"reg_token\",",
+                  "        \"pharmacist\": \"pharma_token\",",
+                  "        \"pharmacy\": \"pharma_token\",",
+                  "        \"lab\": \"lab_token\",",
+                  "        \"cashier\": \"cashier_token\"",
+                  "    };",
+                  "",
+                  "    if (role && roleVarMap[role]) {",
+                  "        var roleVarName = roleVarMap[role];",
+                  "        pm.collectionVariables.set(roleVarName, token);",
+                  "        if (pm.environment) {",
+                  "            pm.environment.set(roleVarName, token);",
+                  "        }",
+                  "        console.log(\"[Auth Script] \" + roleVarName + \" disetel untuk peran: \" + role);",
+                  "    }",
+                  "",
+                  "    console.log(\"[Auth Script] Token Bearer otomatis aktif: \" + token);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Login Petugas Pendaftaran",
@@ -374,7 +674,62 @@
           "response": [],
           "createdAt": "2026-11-24T00:49:59.000Z",
           "updatedAt": "2026-11-24T00:49:59.000Z",
-          "uid": "12255985-0556f8f0-1c60-4ae1-948f-3da4468f766e"
+          "uid": "12255985-0556f8f0-1c60-4ae1-948f-3da4468f766e",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status response 200 OK - Login Berhasil\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token Bearer diekstrak dan disimpan otomatis ke variabel\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an(\"object\");",
+                  "    pm.expect(jsonData.data.token).to.be.a(\"string\");",
+                  "",
+                  "    var token = jsonData.data.token;",
+                  "    var user = jsonData.data.user || {};",
+                  "    var role = user.role || \"\";",
+                  "",
+                  "    // Simpan ke variabel umum untuk API yang membutuhkan bearer token",
+                  "    pm.collectionVariables.set(\"bearer_token\", token);",
+                  "    pm.collectionVariables.set(\"token\", token);",
+                  "    if (pm.environment) {",
+                  "        pm.environment.set(\"bearer_token\", token);",
+                  "        pm.environment.set(\"token\", token);",
+                  "    }",
+                  "",
+                  "    // Simpan ke variabel spesifik peran (RBAC)",
+                  "    var roleVarMap = {",
+                  "        \"admin\": \"admin_token\",",
+                  "        \"doctor\": \"doctor_token\",",
+                  "        \"nurse\": \"nurse_token\",",
+                  "        \"registration\": \"reg_token\",",
+                  "        \"pharmacist\": \"pharma_token\",",
+                  "        \"pharmacy\": \"pharma_token\",",
+                  "        \"lab\": \"lab_token\",",
+                  "        \"cashier\": \"cashier_token\"",
+                  "    };",
+                  "",
+                  "    if (role && roleVarMap[role]) {",
+                  "        var roleVarName = roleVarMap[role];",
+                  "        pm.collectionVariables.set(roleVarName, token);",
+                  "        if (pm.environment) {",
+                  "            pm.environment.set(roleVarName, token);",
+                  "        }",
+                  "        console.log(\"[Auth Script] \" + roleVarName + \" disetel untuk peran: \" + role);",
+                  "    }",
+                  "",
+                  "    console.log(\"[Auth Script] Token Bearer otomatis aktif: \" + token);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Login Validasi Gagal (422 Unprocessable Entity)",
@@ -2218,11 +2573,114 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8080"
+      "value": "http://localhost:8080",
+      "type": "string"
     },
     {
       "key": "token",
-      "value": ""
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bearer_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "access_token_admin_00000000000001",
+      "type": "string"
+    },
+    {
+      "key": "reg_token",
+      "value": "access_token_reg_000000000000002",
+      "type": "string"
+    },
+    {
+      "key": "nurse_token",
+      "value": "access_token_nurse_00000000000003",
+      "type": "string"
+    },
+    {
+      "key": "doctor_token",
+      "value": "access_token_doctor_0000000000004",
+      "type": "string"
+    },
+    {
+      "key": "pharma_token",
+      "value": "access_token_pharma_0000000000005",
+      "type": "string"
+    },
+    {
+      "key": "lab_token",
+      "value": "access_token_lab_000000000000006",
+      "type": "string"
+    },
+    {
+      "key": "cashier_token",
+      "value": "access_token_cashier_000000000007",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearer_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global Auto Bearer Token Capture",
+          "if (pm.request.url.getPath().indexOf('login') !== -1 && pm.response.code === 200) {",
+          "    try {",
+          "        var jsonRes = pm.response.json();",
+          "        if (jsonRes.success && jsonRes.data && jsonRes.data.token) {",
+          "            var accessToken = jsonRes.data.token;",
+          "            var userObj = jsonRes.data.user || {};",
+          "            var userRole = userObj.role || '';",
+          "",
+          "            pm.collectionVariables.set('bearer_token', accessToken);",
+          "            pm.collectionVariables.set('token', accessToken);",
+          "            if (pm.environment) {",
+          "                pm.environment.set('bearer_token', accessToken);",
+          "                pm.environment.set('token', accessToken);",
+          "            }",
+          "",
+          "            var roleVarMap = {",
+          "                'admin': 'admin_token',",
+          "                'doctor': 'doctor_token',",
+          "                'nurse': 'nurse_token',",
+          "                'registration': 'reg_token',",
+          "                'pharmacist': 'pharma_token',",
+          "                'pharmacy': 'pharma_token',",
+          "                'lab': 'lab_token',",
+          "                'cashier': 'cashier_token'",
+          "            };",
+          "",
+          "            if (userRole && roleVarMap[userRole]) {",
+          "                var roleKey = roleVarMap[userRole];",
+          "                pm.collectionVariables.set(roleKey, accessToken);",
+          "                if (pm.environment) {",
+          "                    pm.environment.set(roleKey, accessToken);",
+          "                }",
+          "                console.log('[Global Auto-Auth] ' + roleKey + ' disetel otomatis untuk peran: ' + userRole);",
+          "            }",
+          "            console.log('[Global Auto-Auth] bearer_token & token berhasil disetel otomatis: ' + accessToken);",
+          "        }",
+          "    } catch (err) {",
+          "        console.error('[Global Auto-Auth] Gagal memproses token login:', err);",
+          "    }",
+          "}"
+        ]
+      }
     }
   ]
 }

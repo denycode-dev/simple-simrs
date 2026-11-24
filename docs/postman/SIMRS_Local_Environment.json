@@ -3,6 +3,16 @@
   "name": "SIMRS Local Environment",
   "values": [
     {
+      "key": "token",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "bearer_token",
+      "value": "",
+      "enabled": true
+    },
+    {
       "key": "baseUrl",
       "value": "http://localhost:8080",
       "enabled": true
