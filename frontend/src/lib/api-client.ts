@@ -25,7 +25,9 @@ export async function apiClient<T>(
 ): Promise<T> {
   const { params, headers, ...customConfig } = options;
 
-  let url = endpoint.startsWith('http') ? endpoint : `${ENV.API_BASE_URL}${endpoint}`;
+  let url = endpoint.startsWith('http')
+    ? endpoint
+    : `${ENV.API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
   if (params) {
     const searchParams = new URLSearchParams();
@@ -40,11 +42,14 @@ export async function apiClient<T>(
     }
   }
 
+  const token = typeof window !== 'undefined' ? localStorage.getItem('simrs_token') : null;
+
   const config: RequestInit = {
     method: customConfig.method || 'GET',
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },
     ...customConfig,

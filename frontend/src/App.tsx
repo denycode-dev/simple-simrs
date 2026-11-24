@@ -8,6 +8,11 @@ import {
   PatientTable,
   type Patient,
 } from '@/features/patients';
+import {
+  MasterPatientsPage,
+  MasterMedicinesPage,
+  MasterDoctorsPage,
+} from '@/features/master';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components/ui';
 import type { MenuItem } from '@/config/dashboard-menu';
 
@@ -25,7 +30,7 @@ export function App() {
   const [activeMenuTitle, setActiveMenuTitle] = useState('Semua Pasien');
   const [breadcrumbTrail, setBreadcrumbTrail] = useState<BreadcrumbItem[]>([
     { label: 'Layanan Pasien' },
-    { label: 'Data Pasien & Antrean' },
+    { label: 'Pendaftaran & Antrean' },
     { label: 'Semua Pasien' },
   ]);
 
@@ -123,7 +128,13 @@ export function App() {
           user && <UserProfile user={user} onLogout={logout} isLoading={isAuthLoading} />
         }
       >
-        {isPatientDomain ? (
+        {activeMenuId === 'master-patients' ? (
+          <MasterPatientsPage />
+        ) : activeMenuId === 'master-medicines' || activeMenuId === 'master-medicines-alt' ? (
+          <MasterMedicinesPage />
+        ) : activeMenuId === 'master-doctors' ? (
+          <MasterDoctorsPage />
+        ) : isPatientDomain ? (
           <section aria-labelledby="dashboard-content-heading">
             {/* Page Header */}
             <div
@@ -324,7 +335,7 @@ export function App() {
               Modul: {activeMenuTitle}
             </h2>
             <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', maxWidth: '520px', margin: 'var(--space-2) auto' }}>
-              Menu ini terhubung secara dinamis dari <code>src/config/dashboard-menu.ts</code>. Modul fitur dapat dikembangkan di <code>src/features/{activeMenuId}</code> dengan menggunakan komponen <code>DataTable</code> yang sama.
+              Modul layanan terintegrasi SIMRS Rawat Jalan.
             </p>
             <div style={{ marginTop: 'var(--space-4)' }}>
               <Button
@@ -335,7 +346,7 @@ export function App() {
                   setActiveMenuTitle('Semua Pasien');
                   setBreadcrumbTrail([
                     { label: 'Layanan Pasien' },
-                    { label: 'Data Pasien & Antrean' },
+                    { label: 'Pendaftaran & Antrean' },
                     { label: 'Semua Pasien' },
                   ]);
                 }}

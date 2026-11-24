@@ -11,6 +11,7 @@ export interface MenuItem {
   path?: string;
   badge?: string;
   badgeVariant?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger';
+  roles?: string[]; // RBAC roles allowed
   children?: MenuItem[];
 }
 
@@ -24,26 +25,30 @@ export const DASHBOARD_MENU: MenuGroup[] = [
     groupTitle: 'Layanan Pasien',
     items: [
       {
-        id: 'patients',
-        title: 'Data Pasien & Antrean',
+        id: 'registration',
+        title: 'Pendaftaran & Antrean',
         icon: 'users',
         badge: 'Aktif',
         badgeVariant: 'primary',
         children: [
-          { id: 'patient-all', title: 'Semua Pasien', path: '/patients' },
-          { id: 'patient-outpatient', title: 'Rawat Jalan', path: '/patients/outpatient' },
-          { id: 'patient-inpatient', title: 'Rawat Inap', path: '/patients/inpatient' },
-          { id: 'patient-emergency', title: 'IGD (Gawat Darurat)', path: '/patients/emergency' },
+          { id: 'reg-new', title: 'Pendaftaran Kunjungan', path: '/registration/new' },
+          { id: 'reg-live-board', title: 'Live Board Antrean', path: '/registration/board' },
+          { id: 'patient-all', title: 'Data Pasien Rawat Jalan', path: '/patients' },
         ],
       },
       {
-        id: 'appointments',
-        title: 'Jadwal Dokter & Poliklinik',
-        icon: 'calendar',
-        children: [
-          { id: 'schedule-doctor', title: 'Jadwal Praktik DPJP', path: '/schedule/doctors' },
-          { id: 'schedule-rooms', title: 'Ketersediaan Bed & Kamar', path: '/schedule/rooms' },
-        ],
+        id: 'nurse-triage',
+        title: 'Skrining & Triage Nakes',
+        icon: 'activity',
+        path: '/nurse/triage',
+        roles: ['admin', 'nurse'],
+      },
+      {
+        id: 'doctor-consultation',
+        title: 'Konsultasi RME Dokter',
+        icon: 'file-text',
+        path: '/doctor/consultation',
+        roles: ['admin', 'doctor'],
       },
     ],
   },
@@ -51,45 +56,56 @@ export const DASHBOARD_MENU: MenuGroup[] = [
     groupTitle: 'Medis & Penunjang',
     items: [
       {
-        id: 'medical-records',
-        title: 'Rekam Medis Elektronik (RME)',
-        icon: 'file-text',
-        path: '/medical-records',
-      },
-      {
         id: 'pharmacy',
-        title: 'Farmasi & Resep Obat',
+        title: 'Farmasi & e-Resep',
         icon: 'pill',
         children: [
-          { id: 'pharmacy-prescriptions', title: 'Antrean Resep', path: '/pharmacy/prescriptions' },
-          { id: 'pharmacy-inventory', title: 'Stok Obat & Gudang', path: '/pharmacy/inventory' },
+          { id: 'pharmacy-prescriptions', title: 'Antrean e-Resep', path: '/pharmacy/prescriptions' },
+          { id: 'master-medicines', title: 'Master Obat & Stok', path: '/master/medicines' },
         ],
       },
       {
         id: 'laboratory',
-        title: 'Laboratorium & Radiologi',
+        title: 'Laboratorium Klinis',
         icon: 'activity',
         path: '/laboratory',
+        roles: ['admin', 'lab', 'doctor'],
       },
-    ],
-  },
-  {
-    groupTitle: 'Administrasi & Sistem',
-    items: [
       {
         id: 'billing',
         title: 'Kasir & Pembayaran',
         icon: 'credit-card',
         path: '/billing',
+        roles: ['admin', 'cashier'],
       },
+    ],
+  },
+  {
+    groupTitle: 'Master Data & Pengaturan',
+    items: [
       {
-        id: 'settings',
-        title: 'Pengaturan SIMRS',
+        id: 'master-data',
+        title: 'Pengelolaan Master Data',
         icon: 'settings',
         children: [
-          { id: 'settings-hospital', title: 'Profil Rumah Sakit', path: '/settings/hospital' },
-          { id: 'settings-users', title: 'Manajemen Pengguna & Hak Akses', path: '/settings/users' },
+          { id: 'master-patients', title: 'Master Pasien (NIK/RM)', path: '/master/patients' },
+          { id: 'master-doctors', title: 'Master Dokter & Jadwal', path: '/master/doctors' },
+          { id: 'master-medicines-alt', title: 'Master Obat & Mutasi', path: '/master/medicines' },
         ],
+      },
+      {
+        id: 'audit-trail',
+        title: 'Audit Trail UU PDP',
+        icon: 'shield',
+        path: '/audit-trail',
+        roles: ['admin'],
+      },
+      {
+        id: 'dashboard-analytics',
+        title: 'Dashboard & Laporan',
+        icon: 'trending-up',
+        path: '/dashboard',
+        roles: ['admin', 'doctor', 'cashier'],
       },
     ],
   },

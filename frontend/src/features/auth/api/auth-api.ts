@@ -1,49 +1,85 @@
-import type { AuthResponse, AuthUser, LoginCredentials } from '../types';
+import { apiClient } from '@/lib/api-client';
+import type { AuthResponse, AuthUser, LoginCredentials, UserRole } from '../types';
 
-const STORAGE_KEY = 'simrs_auth_user';
+const USER_STORAGE_KEY = 'simrs_auth_user';
+const TOKEN_STORAGE_KEY = 'simrs_token';
 
-/**
- * Simulasi request autentikasi login terstruktur.
- * Bila terhubung ke backend Yii2, gunakan apiClient<AuthResponse>('/auth/login', ...)
- */
+interface BackendLoginResponse {
+  success: boolean;
+  message: string;
+  data: {
+    token: string;
+    tokenType: string;
+    user: {
+      id: number;
+      username: string;
+      fullName?: string;
+      role: UserRole;
+    };
+  };
+}
+
 export async function loginApi(credentials: LoginCredentials): Promise<AuthResponse> {
-  // Simulasi latency jaringan
-  await new Promise((resolve) => setTimeout(resolve, 400));
-
   if (!credentials.username.trim() || !credentials.password.trim()) {
     throw new Error('Username dan kata sandi wajib diisi.');
   }
 
-  // Akun demo untuk verifikasi instan
-  if (credentials.username === 'admin' && credentials.password === 'admin123') {
-    const user: AuthUser = {
-      id: 'USR-001',
-      name: 'dr. Hendra Pratama, Sp.PD',
-      username: 'admin',
-      email: 'hendra.pratama@simplesimrs.org',
-      role: 'doctor',
-      unit: 'Poli Penyakit Dalam',
-    };
-    const response: AuthResponse = {
-      token: 'jwt-mock-token-simrs-2026',
-      user,
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-    return response;
-  }
+  const res = await apiClient<BackendLoginResponse>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(credentials),
+  });
 
-  throw new Error('Kombinasi username atau password salah. Coba: admin / admin123');
+  const backendUser = res.data.user;
+  const unitMap: Record<UserRole, string> = {
+    admin: 'Administrator Sistem',
+    registration: 'Loket Pendaftaran Rawat Jalan',
+    nurse: 'Keperawatan & Triage',
+    doctor: 'Poliklinik Rawat Jalan',
+    pharmacist: 'Instalasi Farmasi',
+    lab: 'Laboratorium Klinis',
+    cashier: 'Kasir & Pembayaran',
+  };
+
+  const user: AuthUser = {
+    id: String(backendUser.id),
+    name: backendUser.fullName || backendUser.username,
+    username: backendUser.username,
+    role: backendUser.role,
+    unit: unitMap[backendUser.role] || 'SIMRS Unit',
+  };
+
+  localStorage.setItem(TOKEN_STORAGE_KEY, res.data.token);
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+
+  return {
+    token: res.data.token,
+    user,
+  };
 }
 
 export async function logoutApi(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 150));
-  localStorage.removeItem(STORAGE_KEY);
+  try {
+    await apiClient('/auth/logout', { method: 'POST' });
+  } catch {
+    // Ignore error on logout
+  } finally {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
+  }
 }
 
 export function getStoredUser(): AuthUser | null {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(USER_STORAGE_KEY);
     return stored ? (JSON.parse(stored) as AuthUser) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function getStoredToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_STORAGE_KEY);
   } catch {
     return null;
   }

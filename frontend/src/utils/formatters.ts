@@ -1,5 +1,5 @@
 /**
- * Shared utility functions for formatting dates and text.
+ * Shared utility functions for formatting dates, numbers, and text.
  */
 export function formatDate(dateString: string): string {
   try {
@@ -16,4 +16,12 @@ export function formatDate(dateString: string): string {
 
 export function formatAge(age: number): string {
   return `${age} tahun`;
+}
+
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(amount);
 }

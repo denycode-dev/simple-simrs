@@ -5,7 +5,7 @@ export interface InputProps {
   label?: string;
   value?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  type?: 'text' | 'password' | 'email' | 'search' | 'tel' | 'url';
+  type?: 'text' | 'password' | 'email' | 'search' | 'tel' | 'url' | 'number' | 'date' | 'time' | 'datetime-local';
   placeholder?: string;
   error?: string;
   helperText?: string;
@@ -15,6 +15,9 @@ export interface InputProps {
   autoComplete?: string;
   className?: string;
   style?: React.CSSProperties;
+  maxLength?: number;
+  min?: number | string;
+  max?: number | string;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -42,7 +45,7 @@ export const Input: React.FC<InputProps> = ({
             onChange(e);
           }
         }}
-        type={type}
+        type={type as any}
         placeholder={placeholder}
         description={helperText}
         status={error ? { type: 'error', message: error } : undefined}
