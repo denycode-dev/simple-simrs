@@ -17,6 +17,7 @@ import { RegistrationForm, QueueStatusBoard } from '@/features/registration';
 import { NurseQueueList } from '@/features/nurse';
 import { DoctorExaminationForm } from '@/features/examination';
 import { PrescriptionQueueTable } from '@/features/pharmacy';
+import { LaboratoryPage } from '@/features/laboratory';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components/ui';
 import type { MenuItem } from '@/config/dashboard-menu';
 
@@ -132,7 +133,9 @@ export function App() {
           user && <UserProfile user={user} onLogout={logout} isLoading={isAuthLoading} />
         }
       >
-        {activeMenuId === 'pharmacy-prescriptions' ? (
+        {activeMenuId === 'laboratory' ? (
+          <LaboratoryPage />
+        ) : activeMenuId === 'pharmacy-prescriptions' ? (
           <PrescriptionQueueTable />
         ) : activeMenuId === 'doctor-consultation' ? (
           <DoctorExaminationForm />
