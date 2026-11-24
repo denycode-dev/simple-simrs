@@ -219,6 +219,15 @@ $config = [
                 'OPTIONS api/v1/nurse-assessments/<id:\d+>' => 'api/nurse-assessment/options',
                 'OPTIONS api/v1/nurse-assessments' => 'api/nurse-assessment/options',
 
+                // Doctor Examinations REST endpoints (Task 17)
+                'GET api/v1/examinations' => 'api/examination/index',
+                'POST api/v1/examinations' => 'api/examination/create',
+                'GET api/v1/examinations/<id:\d+>' => 'api/examination/view',
+                'PUT api/v1/examinations/<id:\d+>' => 'api/examination/update',
+                'PATCH api/v1/examinations/<id:\d+>' => 'api/examination/update',
+                'OPTIONS api/v1/examinations/<id:\d+>' => 'api/examination/options',
+                'OPTIONS api/v1/examinations' => 'api/examination/options',
+
                 // CORS Preflight routing for REST API
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>/<action:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
                 'OPTIONS api/v1/<controller:[a-zA-Z0-9-]+>' => 'api/<controller>/options',
