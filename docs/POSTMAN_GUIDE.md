@@ -5,8 +5,8 @@ Repositori ini menyediakan koleksi Postman lengkap v2.1.0 untuk seluruh siklus p
 ## 1. File Koleksi & Environment
 
 File-file berikut berada di dalam folder `docs/postman/`:
-1. **`SIMRS_Outpatient_Collection.json`**: Koleksi lengkap 11 folder modul REST API beserta skrip otomatisasi Bearer token.
-2. **`SIMRS_Local_Environment.json`**: Variabel environment (`baseUrl`, `token`, `bearer_token`, dan token peran RBAC).
+1. **`SIMRS_Outpatient_Collection.json`**: Koleksi lengkap 13 folder modul REST API (Yii2 Core `{{baseUrl}}` pada port `8080` & Node.js Fastify `{{servicesUrl}}` pada port `4000`) beserta skrip otomatisasi Bearer token dan *saved example responses*.
+2. **`SIMRS_Local_Environment.json`**: Variabel environment (`baseUrl`, `servicesUrl`, `token`, `bearer_token`, variabel helper `lab_order_id`, dan token 7 peran RBAC).
 
 > Koleksi dan Environment juga telah disinkronkan secara langsung ke Postman Cloud Workspace **`denycode-app`**:
 > - **Collection**: `Simple SIMRS` (UID: `12255985-6a9ce664-4f6b-4171-a1a5-b4b740152e8b`)
@@ -52,6 +52,8 @@ Koleksi Postman ini dilengkapi dengan fitur otomatisasi pengisian token Bearer (
 9. **`09. Farmasi & e-Resep`**: Pembuatan e-resep dokter dengan validasi ketersediaan stok real-time dan dispensing obat atomik (`FOR UPDATE`).
 10. **`10. Kasir & Billing Terpadu`**: Agregasi rincian biaya tagihan terpadu dan pembayaran kasir atomik (Cash dengan perhitungan kembalian atau Bebas Biaya Cover BPJS).
 11. **`11. Audit Trail & Log Keamanan (Admin Only)`**: Kueri jejak audit append-only dengan filter modul, aksi, dan penelusuran user ID.
+12. **`12. Pemeriksaan Penunjang Laboratorium (Fastify Service - Port 4000)`**: Health/readiness pool PostgreSQL 17, pembuatan order lab dokter secara bulk (`UNNEST`) & sinkronisasi billing atomik (`FOR UPDATE`), daftar antrean berpaginasi *cursor* dengan masking identitas pasien UU PDP, transisi status order, verifikasi hasil uji (`NORMAL`/`ABNORMAL`), serta uji proteksi RBAC (`403 Forbidden`).
+13. **`13. Dashboard & Laporan Analitik (Fastify Service - Port 4000)`**: Agregasi paralel (`Promise.all`) berindeks PostgreSQL 17 untuk ringkasan kunjungan Umum vs BPJS, komposisi pendapatan kas vs klaim BPJS, sebaran status antrean real-time, beban uji & abnormalitas laboratorium, serta analitik stok kritis farmasi.
 
 ---
 

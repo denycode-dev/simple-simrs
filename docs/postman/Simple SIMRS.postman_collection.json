@@ -1,0 +1,4879 @@
+{
+  "info": {
+    "_postman_id": "6a9ce664-4f6b-4171-a1a5-b4b740152e8b",
+    "name": "Simple SIMRS",
+    "description": "Dokumentasi REST API SIMRS Pelayanan Rawat Jalan Terintegrasi (PostgreSQL 17, Yii2 Core Port 8080, Node.js 22 Fastify Ancillary & Analytics Service Port 4000, RBAC 7 Peran, UU PDP Masking & Audit Trail).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "12255985",
+    "_collection_link": "https://go.postman.co/collection/12255985-6a9ce664-4f6b-4171-a1a5-b4b740152e8b?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01. Gateway & Health Check",
+      "item": [
+        {
+          "name": "",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ping",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ping"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ping",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ping"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"SIMRS API Gateway Aktif\",\"data\":{\"status\":\"online\"}}"
+            }
+          ]
+        },
+        {
+          "name": "",
+          "request": {
+            "method": "OPTIONS",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "http://localhost:5173"
+              },
+              {
+                "key": "Access-Control-Request-Method",
+                "value": "GET"
+              },
+              {
+                "key": "Access-Control-Request-Headers",
+                "value": "Authorization, Content-Type"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ping",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ping"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "OPTIONS",
+                "header": [
+                  {
+                    "key": "Origin",
+                    "value": "http://localhost:5173"
+                  },
+                  {
+                    "key": "Access-Control-Request-Method",
+                    "value": "GET"
+                  },
+                  {
+                    "key": "Access-Control-Request-Headers",
+                    "value": "Authorization, Content-Type"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ping",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ping"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Access-Control-Allow-Methods",
+                  "value": "GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Operasi berhasil.\",\"data\":null}"
+            }
+          ]
+        }
+      ],
+      "description": "Endpoint diagnostik status operasional API gateway dan validasi CORS."
+    },
+    {
+      "name": "02. Autentikasi & Manajemen Sesi (Auth)",
+      "item": [
+        {
+          "name": "Login Dokter (dr. Budi Santoso, Sp.PD)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status response 200 OK - Login Berhasil\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token Bearer diekstrak dan disimpan otomatis ke variabel\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an(\"object\");",
+                  "    pm.expect(jsonData.data.token).to.be.a(\"string\");",
+                  "",
+                  "    var token = jsonData.data.token;",
+                  "    var user = jsonData.data.user || {};",
+                  "    var role = user.role || \"\";",
+                  "",
+                  "    // Simpan ke variabel umum untuk API yang membutuhkan bearer token",
+                  "    pm.collectionVariables.set(\"bearer_token\", token);",
+                  "    pm.collectionVariables.set(\"token\", token);",
+                  "    if (pm.environment) {",
+                  "        pm.environment.set(\"bearer_token\", token);",
+                  "        pm.environment.set(\"token\", token);",
+                  "    }",
+                  "",
+                  "    // Simpan ke variabel spesifik peran (RBAC)",
+                  "    var roleVarMap = {",
+                  "        \"admin\": \"admin_token\",",
+                  "        \"doctor\": \"doctor_token\",",
+                  "        \"nurse\": \"nurse_token\",",
+                  "        \"registration\": \"reg_token\",",
+                  "        \"pharmacist\": \"pharma_token\",",
+                  "        \"pharmacy\": \"pharma_token\",",
+                  "        \"lab\": \"lab_token\",",
+                  "        \"cashier\": \"cashier_token\"",
+                  "    };",
+                  "",
+                  "    if (role && roleVarMap[role]) {",
+                  "        var roleVarName = roleVarMap[role];",
+                  "        pm.collectionVariables.set(roleVarName, token);",
+                  "        if (pm.environment) {",
+                  "            pm.environment.set(roleVarName, token);",
+                  "        }",
+                  "        console.log(\"[Auth Script] \" + roleVarName + \" disetel untuk peran: \" + role);",
+                  "    }",
+                  "",
+                  "    console.log(\"[Auth Script] Token Bearer otomatis aktif: \" + token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"dokter\",\"password\":\"admin123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"username\":\"dokter\",\"password\":\"admin123\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Autentikasi berhasil.\",\"data\":{\"token\":\"access_token_doctor_0000000000004\",\"tokenType\":\"Bearer\",\"user\":{\"id\":4,\"username\":\"dokter\",\"fullName\":\"dr. Budi Santoso, Sp.PD\",\"role\":\"doctor\"}}}"
+            }
+          ]
+        },
+        {
+          "name": "Login Administrator Sistem",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status response 200 OK - Login Berhasil\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Token Bearer diekstrak dan disimpan otomatis ke variabel\", function () {\n    var jsonData = pm.response.json();\n    pm.expect(jsonData.success).to.be.true;\n    pm.expect(jsonData.data).to.be.an(\"object\");\n    pm.expect(jsonData.data.token).to.be.a(\"string\");\n\n    var token = jsonData.data.token;\n    var user = jsonData.data.user || {};\n    var role = user.role || \"\";\n\n    // Simpan ke variabel umum untuk API yang membutuhkan bearer token\n    pm.collectionVariables.set(\"bearer_token\", token);\n    pm.collectionVariables.set(\"token\", token);\n    if (pm.environment) {\n        pm.environment.set(\"bearer_token\", token);\n        pm.environment.set(\"token\", token);\n    }\n\n    // Simpan ke variabel spesifik peran (RBAC)\n    var roleVarMap = {\n        \"admin\": \"admin_token\",\n        \"doctor\": \"doctor_token\",\n        \"nurse\": \"nurse_token\",\n        \"registration\": \"reg_token\",\n        \"pharmacist\": \"pharma_token\",\n        \"pharmacy\": \"pharma_token\",\n        \"lab\": \"lab_token\",\n        \"cashier\": \"cashier_token\"\n    };\n\n    if (role && roleVarMap[role]) {\n        var roleVarName = roleVarMap[role];\n        pm.collectionVariables.set(roleVarName, token);\n        if (pm.environment) {\n            pm.environment.set(roleVarName, token);\n        }\n        console.log(\"[Auth Script] \" + roleVarName + \" disetel untuk peran: \" + role);\n    }\n\n    console.log(\"[Auth Script] Token Bearer otomatis aktif: \" + token);\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"admin\",\"password\":\"admin123\"}",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"username\":\"admin\",\"password\":\"admin123\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Autentikasi berhasil.\",\"data\":{\"token\":\"U0tFG8umc7hgDmivm7cnUWLBQ9XsCFJ97Shet09XtuHic7NAKxNlptT8rSaw2rtx\",\"tokenType\":\"Bearer\",\"user\":{\"id\":1,\"username\":\"admin\",\"fullName\":\"Administrator Sistem\",\"role\":\"admin\"}}}"
+            }
+          ]
+        },
+        {
+          "name": "Login Perawat Rawat Jalan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status response 200 OK - Login Berhasil\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token Bearer diekstrak dan disimpan otomatis ke variabel\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an(\"object\");",
+                  "    pm.expect(jsonData.data.token).to.be.a(\"string\");",
+                  "",
+                  "    var token = jsonData.data.token;",
+                  "    var user = jsonData.data.user || {};",
+                  "    var role = user.role || \"\";",
+                  "",
+                  "    // Simpan ke variabel umum untuk API yang membutuhkan bearer token",
+                  "    pm.collectionVariables.set(\"bearer_token\", token);",
+                  "    pm.collectionVariables.set(\"token\", token);",
+                  "    if (pm.environment) {",
+                  "        pm.environment.set(\"bearer_token\", token);",
+                  "        pm.environment.set(\"token\", token);",
+                  "    }",
+                  "",
+                  "    // Simpan ke variabel spesifik peran (RBAC)",
+                  "    var roleVarMap = {",
+                  "        \"admin\": \"admin_token\",",
+                  "        \"doctor\": \"doctor_token\",",
+                  "        \"nurse\": \"nurse_token\",",
+                  "        \"registration\": \"reg_token\",",
+                  "        \"pharmacist\": \"pharma_token\",",
+                  "        \"pharmacy\": \"pharma_token\",",
+                  "        \"lab\": \"lab_token\",",
+                  "        \"cashier\": \"cashier_token\"",
+                  "    };",
+                  "",
+                  "    if (role && roleVarMap[role]) {",
+                  "        var roleVarName = roleVarMap[role];",
+                  "        pm.collectionVariables.set(roleVarName, token);",
+                  "        if (pm.environment) {",
+                  "            pm.environment.set(roleVarName, token);",
+                  "        }",
+                  "        console.log(\"[Auth Script] \" + roleVarName + \" disetel untuk peran: \" + role);",
+                  "    }",
+                  "",
+                  "    console.log(\"[Auth Script] Token Bearer otomatis aktif: \" + token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"perawat\",\"password\":\"admin123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"username\":\"perawat\",\"password\":\"admin123\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Autentikasi berhasil.\",\"data\":{\"token\":\"access_token_nurse_00000000000003\",\"tokenType\":\"Bearer\",\"user\":{\"id\":3,\"username\":\"perawat\",\"fullName\":\"Perawat Rawat Jalan\",\"role\":\"nurse\"}}}"
+            }
+          ]
+        },
+        {
+          "name": "Login Kasir Pembayaran",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status response 200 OK - Login Berhasil\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token Bearer diekstrak dan disimpan otomatis ke variabel\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an(\"object\");",
+                  "    pm.expect(jsonData.data.token).to.be.a(\"string\");",
+                  "",
+                  "    var token = jsonData.data.token;",
+                  "    var user = jsonData.data.user || {};",
+                  "    var role = user.role || \"\";",
+                  "",
+                  "    // Simpan ke variabel umum untuk API yang membutuhkan bearer token",
+                  "    pm.collectionVariables.set(\"bearer_token\", token);",
+                  "    pm.collectionVariables.set(\"token\", token);",
+                  "    if (pm.environment) {",
+                  "        pm.environment.set(\"bearer_token\", token);",
+                  "        pm.environment.set(\"token\", token);",
+                  "    }",
+                  "",
+                  "    // Simpan ke variabel spesifik peran (RBAC)",
+                  "    var roleVarMap = {",
+                  "        \"admin\": \"admin_token\",",
+                  "        \"doctor\": \"doctor_token\",",
+                  "        \"nurse\": \"nurse_token\",",
+                  "        \"registration\": \"reg_token\",",
+                  "        \"pharmacist\": \"pharma_token\",",
+                  "        \"pharmacy\": \"pharma_token\",",
+                  "        \"lab\": \"lab_token\",",
+                  "        \"cashier\": \"cashier_token\"",
+                  "    };",
+                  "",
+                  "    if (role && roleVarMap[role]) {",
+                  "        var roleVarName = roleVarMap[role];",
+                  "        pm.collectionVariables.set(roleVarName, token);",
+                  "        if (pm.environment) {",
+                  "            pm.environment.set(roleVarName, token);",
+                  "        }",
+                  "        console.log(\"[Auth Script] \" + roleVarName + \" disetel untuk peran: \" + role);",
+                  "    }",
+                  "",
+                  "    console.log(\"[Auth Script] Token Bearer otomatis aktif: \" + token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"kasir\",\"password\":\"admin123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"username\":\"kasir\",\"password\":\"admin123\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Autentikasi berhasil.\",\"data\":{\"token\":\"access_token_cashier_000000000007\",\"tokenType\":\"Bearer\",\"user\":{\"id\":7,\"username\":\"kasir\",\"fullName\":\"Petugas Kasir\",\"role\":\"cashier\"}}}"
+            }
+          ]
+        },
+        {
+          "name": "Login Petugas Farmasi",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status response 200 OK - Login Berhasil\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token Bearer diekstrak dan disimpan otomatis ke variabel\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an(\"object\");",
+                  "    pm.expect(jsonData.data.token).to.be.a(\"string\");",
+                  "",
+                  "    var token = jsonData.data.token;",
+                  "    var user = jsonData.data.user || {};",
+                  "    var role = user.role || \"\";",
+                  "",
+                  "    // Simpan ke variabel umum untuk API yang membutuhkan bearer token",
+                  "    pm.collectionVariables.set(\"bearer_token\", token);",
+                  "    pm.collectionVariables.set(\"token\", token);",
+                  "    if (pm.environment) {",
+                  "        pm.environment.set(\"bearer_token\", token);",
+                  "        pm.environment.set(\"token\", token);",
+                  "    }",
+                  "",
+                  "    // Simpan ke variabel spesifik peran (RBAC)",
+                  "    var roleVarMap = {",
+                  "        \"admin\": \"admin_token\",",
+                  "        \"doctor\": \"doctor_token\",",
+                  "        \"nurse\": \"nurse_token\",",
+                  "        \"registration\": \"reg_token\",",
+                  "        \"pharmacist\": \"pharma_token\",",
+                  "        \"pharmacy\": \"pharma_token\",",
+                  "        \"lab\": \"lab_token\",",
+                  "        \"cashier\": \"cashier_token\"",
+                  "    };",
+                  "",
+                  "    if (role && roleVarMap[role]) {",
+                  "        var roleVarName = roleVarMap[role];",
+                  "        pm.collectionVariables.set(roleVarName, token);",
+                  "        if (pm.environment) {",
+                  "            pm.environment.set(roleVarName, token);",
+                  "        }",
+                  "        console.log(\"[Auth Script] \" + roleVarName + \" disetel untuk peran: \" + role);",
+                  "    }",
+                  "",
+                  "    console.log(\"[Auth Script] Token Bearer otomatis aktif: \" + token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"apotek\",\"password\":\"admin123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"username\":\"apotek\",\"password\":\"admin123\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Autentikasi berhasil.\",\"data\":{\"token\":\"access_token_pharma_0000000000005\",\"tokenType\":\"Bearer\",\"user\":{\"id\":5,\"username\":\"apotek\",\"fullName\":\"Petugas Farmasi\",\"role\":\"pharmacist\"}}}"
+            }
+          ]
+        },
+        {
+          "name": "Login Analis Laboratorium",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status response 200 OK - Login Berhasil\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token Bearer diekstrak dan disimpan otomatis ke variabel\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an(\"object\");",
+                  "    pm.expect(jsonData.data.token).to.be.a(\"string\");",
+                  "",
+                  "    var token = jsonData.data.token;",
+                  "    var user = jsonData.data.user || {};",
+                  "    var role = user.role || \"\";",
+                  "",
+                  "    // Simpan ke variabel umum untuk API yang membutuhkan bearer token",
+                  "    pm.collectionVariables.set(\"bearer_token\", token);",
+                  "    pm.collectionVariables.set(\"token\", token);",
+                  "    if (pm.environment) {",
+                  "        pm.environment.set(\"bearer_token\", token);",
+                  "        pm.environment.set(\"token\", token);",
+                  "    }",
+                  "",
+                  "    // Simpan ke variabel spesifik peran (RBAC)",
+                  "    var roleVarMap = {",
+                  "        \"admin\": \"admin_token\",",
+                  "        \"doctor\": \"doctor_token\",",
+                  "        \"nurse\": \"nurse_token\",",
+                  "        \"registration\": \"reg_token\",",
+                  "        \"pharmacist\": \"pharma_token\",",
+                  "        \"pharmacy\": \"pharma_token\",",
+                  "        \"lab\": \"lab_token\",",
+                  "        \"cashier\": \"cashier_token\"",
+                  "    };",
+                  "",
+                  "    if (role && roleVarMap[role]) {",
+                  "        var roleVarName = roleVarMap[role];",
+                  "        pm.collectionVariables.set(roleVarName, token);",
+                  "        if (pm.environment) {",
+                  "            pm.environment.set(roleVarName, token);",
+                  "        }",
+                  "        console.log(\"[Auth Script] \" + roleVarName + \" disetel untuk peran: \" + role);",
+                  "    }",
+                  "",
+                  "    console.log(\"[Auth Script] Token Bearer otomatis aktif: \" + token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"lab\",\"password\":\"admin123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"username\":\"lab\",\"password\":\"admin123\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Autentikasi berhasil.\",\"data\":{\"token\":\"access_token_lab_000000000000006\",\"tokenType\":\"Bearer\",\"user\":{\"id\":6,\"username\":\"lab\",\"fullName\":\"Analis Laboratorium\",\"role\":\"lab\"}}}"
+            }
+          ]
+        },
+        {
+          "name": "Login Petugas Pendaftaran",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status response 200 OK - Login Berhasil\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token Bearer diekstrak dan disimpan otomatis ke variabel\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an(\"object\");",
+                  "    pm.expect(jsonData.data.token).to.be.a(\"string\");",
+                  "",
+                  "    var token = jsonData.data.token;",
+                  "    var user = jsonData.data.user || {};",
+                  "    var role = user.role || \"\";",
+                  "",
+                  "    // Simpan ke variabel umum untuk API yang membutuhkan bearer token",
+                  "    pm.collectionVariables.set(\"bearer_token\", token);",
+                  "    pm.collectionVariables.set(\"token\", token);",
+                  "    if (pm.environment) {",
+                  "        pm.environment.set(\"bearer_token\", token);",
+                  "        pm.environment.set(\"token\", token);",
+                  "    }",
+                  "",
+                  "    // Simpan ke variabel spesifik peran (RBAC)",
+                  "    var roleVarMap = {",
+                  "        \"admin\": \"admin_token\",",
+                  "        \"doctor\": \"doctor_token\",",
+                  "        \"nurse\": \"nurse_token\",",
+                  "        \"registration\": \"reg_token\",",
+                  "        \"pharmacist\": \"pharma_token\",",
+                  "        \"pharmacy\": \"pharma_token\",",
+                  "        \"lab\": \"lab_token\",",
+                  "        \"cashier\": \"cashier_token\"",
+                  "    };",
+                  "",
+                  "    if (role && roleVarMap[role]) {",
+                  "        var roleVarName = roleVarMap[role];",
+                  "        pm.collectionVariables.set(roleVarName, token);",
+                  "        if (pm.environment) {",
+                  "            pm.environment.set(roleVarName, token);",
+                  "        }",
+                  "        console.log(\"[Auth Script] \" + roleVarName + \" disetel untuk peran: \" + role);",
+                  "    }",
+                  "",
+                  "    console.log(\"[Auth Script] Token Bearer otomatis aktif: \" + token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"pendaftaran\",\"password\":\"admin123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"username\":\"pendaftaran\",\"password\":\"admin123\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Autentikasi berhasil.\",\"data\":{\"token\":\"access_token_reg_000000000000002\",\"tokenType\":\"Bearer\",\"user\":{\"id\":2,\"username\":\"pendaftaran\",\"fullName\":\"Petugas Pendaftaran\",\"role\":\"registration\"}}}"
+            }
+          ]
+        },
+        {
+          "name": "Login Validasi Gagal (422 Unprocessable Entity)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "422",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "Unprocessable entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":false,\"message\":\"Validasi input login gagal\",\"errors\":{\"username\":[\"Username wajib diisi.\"],\"password\":[\"Password wajib diisi.\"]},\"data\":null}"
+            }
+          ]
+        },
+        {
+          "name": "Login Kredensial Salah (401 Unauthorized)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"dokter\",\"password\":\"password_salah_123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "401",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"username\":\"dokter\",\"password\":\"password_salah_123\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":false,\"message\":\"Nama pengguna atau kata sandi tidak valid.\",\"errors\":null,\"data\":null}"
+            }
+          ]
+        },
+        {
+          "name": "Profil Pengguna",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "me"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Data profil pengguna berhasil dimuat.\",\"data\":{\"id\":7,\"username\":\"kasir\",\"fullName\":\"Petugas Kasir\",\"role\":\"cashier\",\"isActive\":true}}"
+            }
+          ]
+        },
+        {
+          "name": "Profil Pengguna Tanpa Token (401 Unauthorized)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "401",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "me"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":false,\"message\":\"Autentikasi gagal. Token Bearer diperlukan.\",\"errors\":null,\"data\":null}"
+            }
+          ]
+        },
+        {
+          "name": "Logout Sesi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/logout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "logout"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Sesi berhasil diakhiri.\",\"data\":null}"
+            }
+          ]
+        }
+      ],
+      "description": "Endpoint autentikasi RBAC 7 peran, penerbitan Bearer Token, dan pengelolaan sesi profil."
+    },
+    {
+      "name": "03. Master Data - Pasien",
+      "item": [
+        {
+          "name": "Daftar Master Pasien",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients?q=&page=1&per-page=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per-page",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/patients?q=&page=1&per-page=20",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "patients"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": ""
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "per-page",
+                      "value": "20"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Data pasien berhasil dimuat.\",\"data\":[{\"id\":5,\"medical_record_number\":\"RM-202611-00005\",\"nik\":\"320101**********\",\"name\":\"Hendra Setiawan\",\"birth_date\":\"1992-05-05\",\"gender\":\"L\",\"address\":\"Jl. Cihampelas No. 23, Bandung\",\"phone\":\"0812****0005\",\"bpjs_number\":null,\"created_at\":\"2026-11-24 01:37:09\",\"updated_at\":\"2026-11-24 01:37:09\",\"is_masked\":true},{\"id\":4,\"medical_record_number\":\"RM-202611-00004\",\"nik\":\"320101**********\",\"name\":\"Dewi Anggraeni\",\"birth_date\":\"1988-04-04\",\"gender\":\"P\",\"address\":\"Jl. Buah Batu No. 101, Bandung\",\"phone\":\"0812****0004\",\"bpjs_number\":\"0001234567894\",\"created_at\":\"2026-11-24 01:37:09\",\"updated_at\":\"2026-11-24 01:37:09\",\"is_masked\":true},{\"id\":3,\"medical_record_number\":\"RM-202611-00003\",\"nik\":\"320101**********\",\"name\":\"Bambang Sudarmono\",\"birth_date\":\"1995-03-03\",\"gender\":\"L\",\"address\":\"Jl. Dago No. 88, Bandung\",\"phone\":\"0812****0003\",\"bpjs_number\":null,\"created_at\":\"2026-11-24 01:37:09\",\"updated_at\":\"2026-11-24 01:37:09\",\"is_masked\":true},{\"id\":2,\"medical_record_number\":\"RM-202611-00002\",\"nik\":\"320101**********\",\"name\":\"Siti Nurhaliza\",\"birth_date\":\"1985-02-02\",\"gender\":\"P\",\"address\":\"Jl. Riau No. 45, Bandung\",\"phone\":\"0812****0002\",\"bpjs_number\":\"0001234567892\",\"created_at\":\"2026-11-24 01:37:09\",\"updated_at\":\"2026-11-24 01:37:09\",\"is_masked\":true},{\"id\":1,\"medical_record_number\":\"RM-202611-00001\",\"nik\":\"320101**********\",\"name\":\"Ahmad Pratama\",\"birth_date\":\"1990-01-01\",\"gender\":\"L\",\"address\":\"Jl. Asia Afrika No. 12, Bandung\",\"phone\":\"0812****0001\",\"bpjs_number\":\"0001234567891\",\"created_at\":\"2026-11-24 01:37:09\",\"updated_at\":\"2026-11-24 01:37:09\",\"is_masked\":true}]}"
+            }
+          ]
+        },
+        {
+          "name": "Pendaftaran Pasien Baru",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nik\":\"3201999901010001\",\"name\":\"Pasien Uji Coba\",\"birth_date\":\"1998-07-21\",\"gender\":\"L\",\"address\":\"Jl. Pengujian No. 99, Bandung\",\"phone\":\"081298765432\",\"bpjs_number\":\"0009876543210\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"nik\":\"3201999901010001\",\"name\":\"Pasien Uji Coba\",\"birth_date\":\"1998-07-21\",\"gender\":\"L\",\"address\":\"Jl. Pengujian No. 99, Bandung\",\"phone\":\"081298765432\",\"bpjs_number\":\"0009876543210\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/patients",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "patients"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Data pasien berhasil didaftarkan.\",\"data\":{\"nik\":\"3201999901010001\",\"name\":\"Pasien Uji Coba\",\"birth_date\":\"1998-07-21\",\"gender\":\"L\",\"address\":\"Jl. Pengujian No. 99, Bandung\",\"phone\":\"081298765432\",\"bpjs_number\":\"0009876543210\",\"medical_record_number\":\"RM-202611-00006\",\"created_at\":\"2026-11-24 02:39:00\",\"updated_at\":\"2026-11-24 02:39:00\",\"id\":20}}"
+            },
+            {
+              "name": "422",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer "
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"nik\":\"3201999901010001\",\"name\":\"Pasien Uji Coba\",\"birth_date\":\"1998-07-21\",\"gender\":\"L\",\"address\":\"Jl. Pengujian No. 99, Bandung\",\"phone\":\"081298765432\",\"bpjs_number\":\"0009876543210\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/patients",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "patients"
+                  ]
+                }
+              },
+              "status": "Unprocessable entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":false,\"message\":\"Validasi data pasien gagal.\",\"errors\":{\"nik\":[\"NIK sudah terdaftar dalam sistem.\"]},\"data\":null}"
+            }
+          ]
+        },
+        {
+          "name": "Detail Pasien",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "1"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/patients/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "patients",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Data pasien berhasil dimuat.\",\"data\":{\"id\":1,\"medical_record_number\":\"RM-202611-00001\",\"nik\":\"320101**********\",\"name\":\"Ahmad Pratama\",\"birth_date\":\"1990-01-01\",\"gender\":\"L\",\"address\":\"Jl. Asia Afrika No. 12, Bandung\",\"phone\":\"0812****0001\",\"bpjs_number\":\"0001234567891\",\"created_at\":\"2026-11-24 01:37:09\",\"updated_at\":\"2026-11-24 01:37:09\",\"is_masked\":true}}"
+            }
+          ]
+        },
+        {
+          "name": "Perbarui Data Pasien",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"address\":\"Jl. Asia Afrika No. 12B, Bandung\",\"phone\":\"081234567899\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "1"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"address\":\"Jl. Asia Afrika No. 12B, Bandung\",\"phone\":\"081234567899\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/patients/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "patients",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Data pasien berhasil diperbarui.\",\"data\":{\"id\":1,\"medical_record_number\":\"RM-202611-00001\",\"nik\":\"3201010101900001\",\"name\":\"Ahmad Pratama\",\"birth_date\":\"1990-01-01\",\"gender\":\"L\",\"address\":\"Jl. Asia Afrika No. 12B, Bandung\",\"phone\":\"081234567899\",\"bpjs_number\":\"0001234567891\",\"created_at\":\"2026-11-24 01:37:09\",\"updated_at\":\"2026-11-24 14:05:59\"}}"
+            }
+          ]
+        },
+        {
+          "name": "Hapus Data Pasien",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Buka Masking NIK & Kontak Pasien",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"reason\":\"Verifikasi identitas pasien untuk tindakan klinis\"}",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/1/unmask",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "1",
+                "unmask"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{doctor_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"reason\":\"Verifikasi identitas pasien untuk tindakan klinis\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/patients/1/unmask",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "patients",
+                    "1",
+                    "unmask"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Data NIK dan kontak pasien berhasil dibuka.\",\"data\":{\"id\":1,\"medical_record_number\":\"RM-202611-00001\",\"nik\":\"3201010101900001\",\"name\":\"Ahmad Pratama\",\"birth_date\":\"1990-01-01\",\"gender\":\"L\",\"address\":\"Jl. Asia Afrika No. 12B, Bandung\",\"phone\":\"081234567899\",\"bpjs_number\":\"0001234567891\",\"created_at\":\"2026-11-24 01:37:09\",\"updated_at\":\"2026-11-24 14:05:59\",\"is_masked\":false}}"
+            }
+          ]
+        }
+      ],
+      "description": "Endpoint pengelolaan data master pasien rawat jalan (NIK 16 digit, No RM unik, CRUD)."
+    },
+    {
+      "name": "04. Master Data - Dokter, Poli & Jadwal",
+      "item": [
+        {
+          "name": "Daftar Master Dokter",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors?q=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "doctors"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/doctors?q=",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "doctors"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Data dokter berhasil dimuat.\",\"data\":[{\"id\":1,\"user_id\":4,\"nip\":\"198501012010011001\",\"name\":\"dr. Budi Santoso, Sp.PD\",\"specialization\":\"Penyakit Dalam\",\"phone\":\"081234567801\",\"sip_number\":\"SIP/2026/001\",\"created_at\":\"2026-11-24 01:37:09\"}]}"
+            }
+          ]
+        },
+        {
+          "name": "Detail Dokter",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "doctors",
+                "1"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/doctors/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "doctors",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Data dokter berhasil dimuat.\",\"data\":{\"id\":1,\"user_id\":4,\"nip\":\"198501012010011001\",\"name\":\"dr. Budi Santoso, Sp.PD\",\"specialization\":\"Penyakit Dalam\",\"phone\":\"081234567801\",\"sip_number\":\"SIP/2026/001\",\"created_at\":\"2026-11-24 01:37:09\"}}"
+            }
+          ]
+        },
+        {
+          "name": "Daftar Poliklinik",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/polyclinics?active_only=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "polyclinics"
+              ],
+              "query": [
+                {
+                  "key": "active_only",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/polyclinics?active_only=true",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "polyclinics"
+                  ],
+                  "query": [
+                    {
+                      "key": "active_only",
+                      "value": "true"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Data poliklinik berhasil dimuat.\",\"data\":[{\"id\":3,\"code\":\"POL-ANAK\",\"name\":\"Poli Anak\",\"description\":\"Pelayanan kesehatan anak, tumbuh kembang, dan imunisasi pediatrik\",\"is_active\":true,\"created_at\":\"2026-11-24 01:37:09\"},{\"id\":2,\"code\":\"POL-DALAM\",\"name\":\"Poli Penyakit Dalam\",\"description\":\"Pelayanan subspesialis penyakit dalam, diabetes, hipertensi, dan metabolik\",\"is_active\":true,\"created_at\":\"2026-11-24 01:37:09\"},{\"id\":1,\"code\":\"POL-UMUM\",\"name\":\"Poli Umum\",\"description\":\"Pelayanan pemeriksaan kesehatan umum dan keluhan dasar pasien\",\"is_active\":true,\"created_at\":\"2026-11-24 01:37:09\"}]}"
+            }
+          ]
+        },
+        {
+          "name": "Daftar Jadwal Dokter",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctor-schedules?doctor_id=&polyclinic_id=&day_of_week=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "doctor-schedules"
+              ],
+              "query": [
+                {
+                  "key": "doctor_id",
+                  "value": ""
+                },
+                {
+                  "key": "polyclinic_id",
+                  "value": ""
+                },
+                {
+                  "key": "day_of_week",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/doctor-schedules?doctor_id=&polyclinic_id=&day_of_week=",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "doctor-schedules"
+                  ],
+                  "query": [
+                    {
+                      "key": "doctor_id",
+                      "value": ""
+                    },
+                    {
+                      "key": "polyclinic_id",
+                      "value": ""
+                    },
+                    {
+                      "key": "day_of_week",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Jadwal dokter berhasil dimuat.\",\"data\":[{\"id\":5,\"doctor_id\":1,\"polyclinic_id\":2,\"day_of_week\":\"Jumat\",\"start_time\":\"08:00:00\",\"end_time\":\"12:00:00\",\"quota\":30,\"is_active\":true},{\"id\":4,\"doctor_id\":1,\"polyclinic_id\":2,\"day_of_week\":\"Kamis\",\"start_time\":\"08:00:00\",\"end_time\":\"12:00:00\",\"quota\":30,\"is_active\":true},{\"id\":3,\"doctor_id\":1,\"polyclinic_id\":2,\"day_of_week\":\"Rabu\",\"start_time\":\"08:00:00\",\"end_time\":\"12:00:00\",\"quota\":30,\"is_active\":true},{\"id\":2,\"doctor_id\":1,\"polyclinic_id\":2,\"day_of_week\":\"Selasa\",\"start_time\":\"08:00:00\",\"end_time\":\"12:00:00\",\"quota\":30,\"is_active\":true},{\"id\":1,\"doctor_id\":1,\"polyclinic_id\":2,\"day_of_week\":\"Senin\",\"start_time\":\"08:00:00\",\"end_time\":\"12:00:00\",\"quota\":30,\"is_active\":true}]}"
+            }
+          ]
+        },
+        {
+          "name": "Tambah Jadwal Dokter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"doctor_id\":1,\"polyclinic_id\":1,\"day_of_week\":\"Kamis\",\"start_time\":\"13:00\",\"end_time\":\"16:00\",\"quota\":20}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctor-schedules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "doctor-schedules"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"doctor_id\":1,\"polyclinic_id\":1,\"day_of_week\":\"Kamis\",\"start_time\":\"13:00\",\"end_time\":\"16:00\",\"quota\":20}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/doctor-schedules",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "doctor-schedules"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Jadwal dokter berhasil ditambahkan.\",\"data\":{\"doctor_id\":1,\"polyclinic_id\":1,\"day_of_week\":\"Kamis\",\"start_time\":\"13:00\",\"end_time\":\"16:00\",\"quota\":20,\"is_active\":true,\"id\":11}}"
+            },
+            {
+              "name": "422",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"doctor_id\":null,\"polyclinic_id\":1,\"day_of_week\":\"Kamis\",\"start_time\":\"13:00\",\"end_time\":\"16:00\",\"quota\":20}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/doctor-schedules",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "doctor-schedules"
+                  ]
+                }
+              },
+              "status": "Unprocessable entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":false,\"message\":\"Validasi jadwal dokter gagal.\",\"errors\":{\"doctor_id\":[\"Doctor Id wajib diisi.\"]},\"data\":null}"
+            }
+          ]
+        }
+      ],
+      "description": "Endpoint pengelolaan data master dokter, unit poliklinik, dan jadwal praktik dokter dengan validasi pencegahan jadwal bentrok."
+    },
+    {
+      "name": "05. Master Data - Tindakan Medis & Obat",
+      "item": [
+        {
+          "name": "Daftar Tindakan Medis",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medical-actions?q=&active_only=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medical-actions"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": ""
+                },
+                {
+                  "key": "active_only",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/medical-actions?q=&active_only=true",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "medical-actions"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": ""
+                    },
+                    {
+                      "key": "active_only",
+                      "value": "true"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Data tindakan medis berhasil dimuat.\",\"data\":[{\"id\":5,\"code\":\"ACT-005\",\"name\":\"Injeksi Intramuskular / Intravena\",\"category\":\"Tindakan Medis\",\"tariff\":\"50000.00\",\"is_active\":true},{\"id\":1,\"code\":\"ACT-001\",\"name\":\"Konsultasi & Pemeriksaan Dokter Spesialis\",\"category\":\"Konsultasi\",\"tariff\":\"100000.00\",\"is_active\":true},{\"id\":3,\"code\":\"ACT-003\",\"name\":\"Pemberian Nebulisasi Inhalasi\",\"category\":\"Tindakan Keperawatan\",\"tariff\":\"75000.00\",\"is_active\":true},{\"id\":2,\"code\":\"ACT-002\",\"name\":\"Pemeriksaan Elektrokardiografi (EKG)\",\"category\":\"Diagnostik\",\"tariff\":\"125000.00\",\"is_active\":true},{\"id\":4,\"code\":\"ACT-004\",\"name\":\"Perawatan Luka Rawat Jalan (Sedang)\",\"category\":\"Tindakan Keperawatan\",\"tariff\":\"85000.00\",\"is_active\":true}]}"
+            }
+          ]
+        },
+        {
+          "name": "Daftar Master Obat",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicines?q=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicines"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/medicines?q=",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "medicines"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Data obat berhasil dimuat.\",\"data\":[{\"id\":4,\"code\":\"MED-004\",\"name\":\"Amlodipine 10mg\",\"category\":\"Antihipertensi\",\"unit\":\"Tablet\",\"stock\":350,\"min_stock\":35,\"unit_price\":\"10000.00\",\"is_active\":true},{\"id\":2,\"code\":\"MED-002\",\"name\":\"Amoxicillin 500mg\",\"category\":\"Antibiotik\",\"unit\":\"Kapsul\",\"stock\":300,\"min_stock\":30,\"unit_price\":\"12000.00\",\"is_active\":true},{\"id\":6,\"code\":\"MED-006\",\"name\":\"Cetirizine 10mg\",\"category\":\"Antihistamin\",\"unit\":\"Tablet\",\"stock\":300,\"min_stock\":30,\"unit_price\":\"7500.00\",\"is_active\":true},{\"id\":8,\"code\":\"MED-008\",\"name\":\"Ciprofloxacin 500mg\",\"category\":\"Antibiotik\",\"unit\":\"Tablet\",\"stock\":150,\"min_stock\":15,\"unit_price\":\"18000.00\",\"is_active\":true},{\"id\":7,\"code\":\"MED-007\",\"name\":\"Ibuprofen 400mg\",\"category\":\"Antiinflamasi Non-Steroid\",\"unit\":\"Tablet\",\"stock\":200,\"min_stock\":20,\"unit_price\":\"9000.00\",\"is_active\":true},{\"id\":3,\"code\":\"MED-003\",\"name\":\"Metformin 500mg\",\"category\":\"Antidiabetes Oral\",\"unit\":\"Tablet\",\"stock\":400,\"min_stock\":40,\"unit_price\":\"8000.00\",\"is_active\":true},{\"id\":5,\"code\":\"MED-005\",\"name\":\"Omeprazole 20mg\",\"category\":\"Antasida & Antiulkus\",\"unit\":\"Kapsul\",\"stock\":250,\"min_stock\":25,\"unit_price\":\"15000.00\",\"is_active\":true},{\"id\":1,\"code\":\"MED-001\",\"name\":\"Paracetamol 500mg\",\"category\":\"Analgesik & Antipiretik\",\"unit\":\"Tablet\",\"stock\":500,\"min_stock\":50,\"unit_price\":\"5000.00\",\"is_active\":true},{\"id\":9,\"code\":\"MED-009\",\"name\":\"Salbutamol Inhaler 100mcg\",\"category\":\"Bronkodilator\",\"unit\":\"Botol\",\"stock\":100,\"min_stock\":10,\"unit_price\":\"65000.00\",\"is_active\":true},{\"id\":10,\"code\":\"MED-010\",\"name\":\"Vitamin B Complex\",\"category\":\"Suplemen & Vitamin\",\"unit\":\"Tablet\",\"stock\":600,\"min_stock\":60,\"unit_price\":\"4000.00\",\"is_active\":true}]}"
+            }
+          ]
+        },
+        {
+          "name": "Detail Obat & Mutasi Stok",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicines/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicines",
+                "1"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/medicines/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "medicines",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Data obat berhasil dimuat.\",\"data\":{\"id\":1,\"code\":\"MED-001\",\"name\":\"Paracetamol 500mg\",\"category\":\"Analgesik & Antipiretik\",\"unit\":\"Tablet\",\"stock\":500,\"min_stock\":50,\"unit_price\":\"5000.00\",\"is_active\":true}}"
+            }
+          ]
+        },
+        {
+          "name": "Penyesuaian Stok Obat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"transaction_type\":\"IN\",\"quantity\":50,\"notes\":\"Penerimaan stok tambahan dari gudang farmasi\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicines/1/adjust-stock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicines",
+                "1",
+                "adjust-stock"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"transaction_type\":\"IN\",\"quantity\":50,\"notes\":\"Penerimaan stok tambahan dari gudang farmasi\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/medicines/1/adjust-stock",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "medicines",
+                    "1",
+                    "adjust-stock"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Penyesuaian stok obat berhasil disimpan.\",\"data\":{\"medicine\":{\"id\":1,\"code\":\"MED-001\",\"name\":\"Paracetamol 500mg\",\"category\":\"Analgesik & Antipiretik\",\"unit\":\"Tablet\",\"stock\":550,\"min_stock\":50,\"unit_price\":\"5000.00\",\"is_active\":true},\"log\":{\"medicine_id\":1,\"transaction_type\":\"IN\",\"quantity\":50,\"balance_after\":550,\"reference_type\":\"STOCK_ADJUSTMENT\",\"reference_id\":null,\"notes\":\"Penerimaan stok tambahan dari gudang farmasi\",\"created_at\":\"2026-11-25 00:46:55\",\"id\":29}}}"
+            },
+            {
+              "name": "422",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"transaction_type\":\"IN\",\"quantity\":0,\"notes\":\"Penerimaan stok tambahan dari gudang farmasi\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/medicines/1/adjust-stock",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "medicines",
+                    "1",
+                    "adjust-stock"
+                  ]
+                }
+              },
+              "status": "Unprocessable entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":false,\"message\":\"Validasi penyesuaian stok gagal.\",\"errors\":{\"quantity\":[\"Jumlah kuantitas harus lebih besar dari 0.\"]},\"data\":null}"
+            }
+          ]
+        }
+      ],
+      "description": "Endpoint master tindakan medis, tarif, dan master obat beserta mutasi penyesuaian stok audit log."
+    },
+    {
+      "name": "06. Pendaftaran & Antrean Pasien",
+      "item": [
+        {
+          "name": "Daftar Registrasi Antrean",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/registrations?date=&polyclinic_id=&status=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "registrations"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": ""
+                },
+                {
+                  "key": "polyclinic_id",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/registrations?date=&polyclinic_id=&status=",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "registrations"
+                  ],
+                  "query": [
+                    {
+                      "key": "date",
+                      "value": ""
+                    },
+                    {
+                      "key": "polyclinic_id",
+                      "value": ""
+                    },
+                    {
+                      "key": "status",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Data pendaftaran berhasil dimuat.\",\"data\":[{\"id\":139,\"registration_number\":\"REG-20261124-0005\",\"patient_id\":5,\"polyclinic_id\":2,\"doctor_id\":1,\"schedule_id\":4,\"insurance_type\":\"GENERAL\",\"registration_date\":\"2026-11-24\",\"queue_number\":\"POL-DALAM-005\",\"queue_sequence\":5,\"status\":\"PHARMACY\",\"registration_fee\":\"25000.00\",\"created_at\":\"2026-11-24 08:33:53\",\"updated_at\":\"2026-11-24 08:37:12\"},{\"id\":138,\"registration_number\":\"REG-20261124-0004\",\"patient_id\":5,\"polyclinic_id\":2,\"doctor_id\":1,\"schedule_id\":4,\"insurance_type\":\"GENERAL\",\"registration_date\":\"2026-11-24\",\"queue_number\":\"POL-DALAM-004\",\"queue_sequence\":4,\"status\":\"PHARMACY\",\"registration_fee\":\"25000.00\",\"created_at\":\"2026-11-24 08:29:56\",\"updated_at\":\"2026-11-24 08:57:14\"},{\"id\":137,\"registration_number\":\"REG-20261124-0003\",\"patient_id\":4,\"polyclinic_id\":2,\"doctor_id\":1,\"schedule_id\":5,\"insurance_type\":\"BPJS\",\"registration_date\":\"2026-11-24\",\"queue_number\":\"POL-DALAM-003\",\"queue_sequence\":3,\"status\":\"IN_NURSE\",\"registration_fee\":\"25000.00\",\"created_at\":\"2026-11-24 08:00:51\",\"updated_at\":\"2026-11-24 08:53:40\"},{\"id\":136,\"registration_number\":\"REG-20261124-0002\",\"patient_id\":4,\"polyclinic_id\":2,\"doctor_id\":1,\"schedule_id\":5,\"insurance_type\":\"BPJS\",\"registration_date\":\"2026-11-24\",\"queue_number\":\"POL-DALAM-002\",\"queue_sequence\":2,\"status\":\"COMPLETED\",\"registration_fee\":\"25000.00\",\"created_at\":\"2026-11-24 07:34:42\",\"updated_at\":\"2026-11-24 07:53:18\"},{\"id\":135,\"registration_number\":\"REG-20261124-0001\",\"patient_id\":5,\"polyclinic_id\":2,\"doctor_id\":1,\"schedule_id\":5,\"insurance_type\":\"GENERAL\",\"registration_date\":\"2026-11-24\",\"queue_number\":\"POL-DALAM-001\",\"queue_sequence\":1,\"status\":\"PHARMACY\",\"registration_fee\":\"25000.00\",\"created_at\":\"2026-11-24 07:32:59\",\"updated_at\":\"2026-11-24 07:38:25\"}]}"
+            }
+          ]
+        },
+        {
+          "name": "Pendaftaran Kunjungan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"patient_id\":1,\"polyclinic_id\":1,\"doctor_id\":1,\"schedule_id\":1,\"insurance_type\":\"GENERAL\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "registrations"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"patient_id\":1,\"polyclinic_id\":1,\"doctor_id\":1,\"schedule_id\":1,\"insurance_type\":\"GENERAL\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/registrations",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "registrations"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Pendaftaran kunjungan berhasil dibuat.\",\"data\":{\"patient_id\":1,\"polyclinic_id\":1,\"doctor_id\":1,\"schedule_id\":1,\"insurance_type\":\"GENERAL\",\"registration_fee\":25000,\"status\":\"WAITING_NURSE\",\"registration_date\":\"2026-11-25\",\"registration_number\":\"REG-20261125-0001\",\"queue_sequence\":1,\"queue_number\":\"POL-UMUM-001\",\"created_at\":\"2026-11-25 00:52:16\",\"updated_at\":\"2026-11-25 00:52:16\",\"id\":163}}"
+            },
+            {
+              "name": "422",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"patient_id\":22,\"polyclinic_id\":1,\"doctor_id\":1,\"schedule_id\":1,\"insurance_type\":\"GENERAL\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/registrations",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "registrations"
+                  ]
+                }
+              },
+              "status": "Unprocessable entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":false,\"message\":\"Validasi data pendaftaran gagal.\",\"errors\":{\"patient_id\":[\"Patient Id is invalid.\"]},\"data\":null}"
+            }
+          ]
+        },
+        {
+          "name": "Detail Registrasi Kunjungan",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/registrations/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "registrations",
+                "1"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "404",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/registrations/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "registrations",
+                    "1"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":false,\"message\":\"Data pendaftaran kunjungan tidak ditemukan.\",\"errors\":null,\"data\":null}"
+            },
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/registrations/163",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "registrations",
+                    "163"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Data pendaftaran berhasil dimuat.\",\"data\":{\"id\":163,\"registration_number\":\"REG-20261125-0001\",\"patient_id\":1,\"polyclinic_id\":1,\"doctor_id\":1,\"schedule_id\":1,\"insurance_type\":\"GENERAL\",\"registration_date\":\"2026-11-25\",\"queue_number\":\"POL-UMUM-001\",\"queue_sequence\":1,\"status\":\"WAITING_NURSE\",\"registration_fee\":\"25000.00\",\"created_at\":\"2026-11-25 00:52:16\",\"updated_at\":\"2026-11-25 00:52:16\"}}"
+            }
+          ]
+        },
+        {
+          "name": "Transisi Status Antrean",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"IN_NURSE\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/registrations/1/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "registrations",
+                "1",
+                "status"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "404",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"status\":\"IN_NURSE\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/registrations/1/status",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "registrations",
+                    "1",
+                    "status"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":false,\"message\":\"Data pendaftaran tidak ditemukan.\",\"errors\":null,\"data\":null}"
+            },
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"status\":\"IN_NURSE\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/registrations/163/status",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "registrations",
+                    "163",
+                    "status"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Status antrean pasien berhasil diperbarui.\",\"data\":{\"id\":163,\"registration_number\":\"REG-20261125-0001\",\"patient_id\":1,\"polyclinic_id\":1,\"doctor_id\":1,\"schedule_id\":1,\"insurance_type\":\"GENERAL\",\"registration_date\":\"2026-11-25\",\"queue_number\":\"POL-UMUM-001\",\"queue_sequence\":1,\"status\":\"IN_NURSE\",\"registration_fee\":\"25000.00\",\"created_at\":\"2026-11-25 00:52:16\",\"updated_at\":\"2026-11-25 00:55:05\"}}"
+            }
+          ]
+        }
+      ],
+      "description": "Endpoint pendaftaran kunjungan rawat jalan (Umum & BPJS), penerbitan nomor antrean harian per poli, dan manajemen transisi status antrean."
+    },
+    {
+      "name": "07. Skrining & Asesmen Awal Nakes",
+      "item": [
+        {
+          "name": "Daftar Asesmen Nakes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nurse-assessments?registration_id=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nurse-assessments"
+              ],
+              "query": [
+                {
+                  "key": "registration_id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/nurse-assessments?registration_id=",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "nurse-assessments"
+                  ],
+                  "query": [
+                    {
+                      "key": "registration_id",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":true,\"message\":\"Data asesmen nakes berhasil dimuat.\",\"data\":[{\"id\":25,\"registration_id\":138,\"nurse_id\":1,\"age_years\":30,\"gender\":\"L\",\"weight_kg\":\"65.00\",\"height_cm\":\"161.00\",\"systolic\":120,\"diastolic\":78,\"pulse_rate\":80,\"body_temp\":\"36.6\",\"respiratory_rate\":18,\"chief_complaint\":\"m\",\"allergy_history\":\"Tidak ada riwayat alergi obat/makanan\",\"disease_history\":\"\",\"notes\":\"\",\"created_at\":\"2026-11-24 08:56:36\"},{\"id\":24,\"registration_id\":139,\"nurse_id\":1,\"age_years\":30,\"gender\":\"L\",\"weight_kg\":\"65.00\",\"height_cm\":\"165.00\",\"systolic\":120,\"diastolic\":80,\"pulse_rate\":80,\"body_temp\":\"36.5\",\"respiratory_rate\":18,\"chief_complaint\":\"test\",\"allergy_history\":\"Tidak ada riwayat alergi obat/makanan\",\"disease_history\":\"\",\"notes\":\"\",\"created_at\":\"2026-11-24 08:36:50\"},{\"id\":23,\"registration_id\":136,\"nurse_id\":1,\"age_years\":30,\"gender\":\"L\",\"weight_kg\":\"65.00\",\"height_cm\":\"165.00\",\"systolic\":120,\"diastolic\":80,\"pulse_rate\":80,\"body_temp\":\"36.5\",\"respiratory_rate\":18,\"chief_complaint\":\"sakit punggung\",\"allergy_history\":\"Tidak ada riwayat alergi obat/makanan\",\"disease_history\":\"\",\"notes\":\"\",\"created_at\":\"2026-11-24 07:40:57\"},{\"id\":22,\"registration_id\":135,\"nurse_id\":1,\"age_years\":30,\"gender\":\"L\",\"weight_kg\":\"55.00\",\"height_cm\":\"160.00\",\"systolic\":120,\"diastolic\":80,\"pulse_rate\":80,\"body_temp\":\"36.5\",\"respiratory_rate\":18,\"chief_complaint\":\"sakit kepala sudah 1 minggu\",\"allergy_history\":\"tidak ada\",\"disease_history\":\"\",\"notes\":\"\",\"created_at\":\"2026-11-24 07:36:09\"}]}"
+            }
+          ]
+        },
+        {
+          "name": "Input Asesmen Keperawatan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"registration_id\":1,\"nurse_id\":1,\"age_years\":34,\"gender\":\"L\",\"weight_kg\":70.5,\"height_cm\":172,\"systolic\":120,\"diastolic\":80,\"pulse_rate\":80,\"body_temp\":36.6,\"respiratory_rate\":18,\"chief_complaint\":\"Demam dan pusing sejak 2 hari yang lalu\",\"allergy_history\":\"Alergi obat Amoxicillin\",\"disease_history\":\"Riwayat maag/gastritis\",\"notes\":\"Pasien tampak lemas\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nurse-assessments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nurse-assessments"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "403",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"registration_id\":1,\"nurse_id\":1,\"age_years\":34,\"gender\":\"L\",\"weight_kg\":70.5,\"height_cm\":172,\"systolic\":120,\"diastolic\":80,\"pulse_rate\":80,\"body_temp\":36.6,\"respiratory_rate\":18,\"chief_complaint\":\"Demam dan pusing sejak 2 hari yang lalu\",\"allergy_history\":\"Alergi obat Amoxicillin\",\"disease_history\":\"Riwayat maag/gastritis\",\"notes\":\"Pasien tampak lemas\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/nurse-assessments",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "nurse-assessments"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":false,\"message\":\"Akses ditolak. Anda tidak memiliki izin untuk tindakan ini.\",\"errors\":null,\"data\":null}"
+            },
+            {
+              "name": "422",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"registration_id\":1,\"nurse_id\":1,\"age_years\":34,\"gender\":\"L\",\"weight_kg\":70.5,\"height_cm\":172,\"systolic\":120,\"diastolic\":80,\"pulse_rate\":80,\"body_temp\":36.6,\"respiratory_rate\":18,\"chief_complaint\":\"Demam dan pusing sejak 2 hari yang lalu\",\"allergy_history\":\"Alergi obat Amoxicillin\",\"disease_history\":\"Riwayat maag/gastritis\",\"notes\":\"Pasien tampak lemas\"}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/nurse-assessments",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "nurse-assessments"
+                  ]
+                }
+              },
+              "status": "Unprocessable entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\":false,\"message\":\"Validasi asesmen nakes gagal.\",\"errors\":{\"registration_id\":[\"Registration Id is invalid.\"]},\"data\":null}"
+            }
+          ]
+        },
+        {
+          "name": "Detail Asesmen Keperawatan",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nurse-assessments/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nurse-assessments",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoint asesmen awal keperawatan (triage): tanda-tanda vital (TTV), antropometri, riwayat alergi, dan riwayat penyakit."
+    },
+    {
+      "name": "08. Pemeriksaan RME Dokter",
+      "item": [
+        {
+          "name": "List Pemeriksaan RME Dokter",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/examinations?registration_id=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "examinations"
+              ],
+              "query": [
+                {
+                  "key": "registration_id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Input Pemeriksaan RME Dokter (SOAP, Tindakan & e-Resep Atomik)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"registration_id\":1,\"doctor_id\":1,\"physical_exam\":\"Faring hiperemis (+), tonsil T1/T1\",\"primary_diagnosis_code\":\"J06.9\",\"primary_diagnosis_desc\":\"Infeksi saluran pernapasan akut atas, tidak spesifik (ISPA)\",\"secondary_diagnosis\":\"Faringitis akut\",\"doctor_notes\":\"Istirahat cukup, minum air hangat, dan konsumsi obat sesuai aturan pakai\",\"next_status\":\"PHARMACY\",\"actions\":[{\"action_id\":1,\"notes\":\"Konsultasi dan pemeriksaan dokter umum\"}],\"prescription_items\":[{\"medicine_id\":1,\"quantity\":6,\"dosage\":\"500 mg\",\"frequency\":\"3x1 tablet sesudah makan\",\"instructions\":\"Bila demam atau nyeri\"}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/examinations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "examinations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Detail Pemeriksaan RME & Riwayat Nakes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/examinations/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "examinations",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Pemeriksaan RME Dokter",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"secondary_diagnosis\":\"Faringitis akut dan rhinitis\",\"doctor_notes\":\"Kontrol ulang 3 hari jika demam menetap\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/examinations/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "examinations",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tambah Tindakan Medis (Kunci Tarif & Rekalkulasi Billing)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action_id\":1,\"notes\":\"Pemeriksaan fisik dan konsultasi standar\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/examinations/1/actions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "examinations",
+                "1",
+                "actions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Daftar Tindakan Medis Pemeriksaan",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/examinations/1/actions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "examinations",
+                "1",
+                "actions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hapus Tindakan Medis Pemeriksaan",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/examinations/1/actions/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "examinations",
+                "1",
+                "actions",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09. Farmasi & e-Resep",
+      "item": [
+        {
+          "name": "Daftar Antrean Resep Farmasi",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pharma_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pharmacy/prescriptions?status=PENDING",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pharmacy",
+                "prescriptions"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Pembuatan e-Resep Dokter (Validasi Stok Real-time)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"examination_id\":1,\"items\":[{\"medicine_id\":1,\"quantity\":10,\"dosage\":\"500 mg\",\"frequency\":\"3x1 tablet sesudah makan\",\"instructions\":\"Habiskan obat bila radang\"}]}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pharmacy/prescriptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pharmacy",
+                "prescriptions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Detail e-Resep & Rincian Obat",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pharma_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pharmacy/prescriptions/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pharmacy",
+                "prescriptions",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Penyerahan Obat (Dispensing) & Mutasi Stok Atomik",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pharma_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pharmacy/prescriptions/1/dispense",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pharmacy",
+                "prescriptions",
+                "1",
+                "dispense"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "10. Kasir & Billing Terpadu",
+      "item": [
+        {
+          "name": "Daftar Tagihan Pasien (Billing)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cashier_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/billings?payment_status=UNPAID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "billings"
+              ],
+              "query": [
+                {
+                  "key": "payment_status",
+                  "value": "UNPAID"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Detail Tagihan Billing",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cashier_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/billings/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "billings",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ringkasan Rincian Tagihan Terpadu (Cost Aggregator)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cashier_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/billings/1/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "billings",
+                "1",
+                "summary"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Proses Pembayaran Kasir (Cash / Cover BPJS)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cashier_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"payment_method\":\"CASH\",\"amount_received\":100000,\"notes\":\"Pembayaran lunas uang pas / kembalian dihitung sistem\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/billings/1/pay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "billings",
+                "1",
+                "pay"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "11. Audit Trail & Log Keamanan (Admin Only)",
+      "item": [
+        {
+          "name": "Kueri Riwayat Audit Trail Administrator",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit-logs?module=PATIENTS",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "module",
+                  "value": "PATIENTS"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Detail Log Audit",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit-logs/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit-logs",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "12. Pemeriksaan Penunjang Laboratorium (Fastify Service)",
+      "item": [
+        {
+          "name": "Health Check Liveness Service Node.js",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK - Layanan Fastify Aktif\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().status).to.eql(\"ok\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{servicesUrl}}/health",
+              "host": [
+                "{{servicesUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Readiness & Koneksi Pool PostgreSQL 17",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK - Database Pool Terhubung\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().database).to.eql(\"connected\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{servicesUrl}}/health/ready",
+              "host": [
+                "{{servicesUrl}}"
+              ],
+              "path": [
+                "health",
+                "ready"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Buat Order Uji Laboratorium Dokter (Bulk & Sync Billing)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 Created - Order Lab Berhasil Dibuat\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var d = pm.response.json().data;",
+                  "    pm.collectionVariables.set('lab_order_id', String(d.id));",
+                  "    if (d.items && d.items.length >= 2) {",
+                  "        pm.collectionVariables.set('lab_item_1_id', String(d.items[0].id));",
+                  "        pm.collectionVariables.set('lab_item_2_id', String(d.items[1].id));",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"registration_id\":135,\"examination_id\":69,\"clinical_notes\":\"Evaluasi profil hematologi dan glukosa darah puasa rawat jalan\",\"items\":[{\"test_name\":\"Hemoglobin (Hb)\",\"test_code\":\"HB01\",\"reference_range\":\"13.0 - 17.0\",\"unit\":\"g/dL\",\"tariff\":45000,\"notes\":\"Darah EDTA\"},{\"test_name\":\"Glukosa Puasa\",\"test_code\":\"GLU01\",\"reference_range\":\"70 - 100\",\"unit\":\"mg/dL\",\"tariff\":35000,\"notes\":\"Puasa minimal 8 jam\"}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{servicesUrl}}/api/v1/laboratory/orders",
+              "host": [
+                "{{servicesUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "laboratory",
+                "orders"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Daftar Permintaan Uji Laboratorium (Cursor & Filter)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK & Identitas Pasien Ter-masking\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{lab_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{servicesUrl}}/api/v1/laboratory/orders?status=REQUESTED&limit=20",
+              "host": [
+                "{{servicesUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "laboratory",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "REQUESTED"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Detail Pemeriksaan Laboratorium (Masked PII UU PDP)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK - Detail Order Lab Dimuat\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().data.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{lab_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{servicesUrl}}/api/v1/laboratory/orders/{{lab_order_id}}",
+              "host": [
+                "{{servicesUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "laboratory",
+                "orders",
+                "{{lab_order_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Transisi Status Order Laboratorium (Sedang Diuji)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK - Transisi Status Berhasil\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().data.status).to.eql(\"IN_PROGRESS\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{lab_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"IN_PROGRESS\",\"notes\":\"Sampel darah vena telah diambil dan sedang dianalisis di instrumen\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{servicesUrl}}/api/v1/laboratory/orders/{{lab_order_id}}/status",
+              "host": [
+                "{{servicesUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "laboratory",
+                "orders",
+                "{{lab_order_id}}",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Input & Verifikasi Hasil Uji Laboratorium (Normal / Abnormal)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK - Hasil Uji Diverifikasi\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().data.status).to.eql(\"COMPLETED\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{lab_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"completed_by\":6,\"items\":[{\"id\":1,\"result_value\":\"14.6\",\"reference_range\":\"13.0 - 17.0\",\"unit\":\"g/dL\",\"status_flag\":\"NORMAL\",\"notes\":\"Dalam batas rujukan normal\"},{\"id\":2,\"result_value\":\"238\",\"reference_range\":\"70 - 100\",\"unit\":\"mg/dL\",\"status_flag\":\"ABNORMAL\",\"notes\":\"Hiperglikemia puasa, konfirmasi klinis DPJP\"}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{servicesUrl}}/api/v1/laboratory/orders/{{lab_order_id}}/results",
+              "host": [
+                "{{servicesUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "laboratory",
+                "orders",
+                "{{lab_order_id}}",
+                "results"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Uji Proteksi RBAC Laboratorium (403 Forbidden - Kasir Ditolak)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403 Forbidden - RBAC Menolak Kasir\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cashier_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"id\":1,\"result_value\":\"14.2\",\"status_flag\":\"NORMAL\"}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{servicesUrl}}/api/v1/laboratory/orders/{{lab_order_id}}/results",
+              "host": [
+                "{{servicesUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "laboratory",
+                "orders",
+                "{{lab_order_id}}",
+                "results"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Layanan mikro Node.js 22 Fastify (port 4000): order uji laboratorium dokter, bulk insert/update PostgreSQL 17 (UNNEST), sinkronisasi billing atomik (FOR UPDATE), masking data pasien UU PDP, jejak audit LABORATORY, dan verifikasi hasil Normal/Abnormal."
+    },
+    {
+      "name": "13. Dashboard & Laporan Analitik (Fastify Service)",
+      "item": [
+        {
+          "name": "Ringkasan Analitik Eksekutif & Operasional (Filter Periode)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK - Ringkasan KPI Analitik Lengkap\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().data).to.have.all.keys('period', 'visits', 'revenue', 'polyclinics', 'top_medicines');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{servicesUrl}}/api/v1/analytics/summary?start_date=2026-11-01&end_date=2026-11-30",
+              "host": [
+                "{{servicesUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analytics",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2026-11-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-11-30"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Distribusi Status Antrean Rawat Jalan Real-time",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK - Sebaran Antrean Dimuat\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().data.statuses).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{servicesUrl}}/api/v1/analytics/queue-status?start_date=2026-11-01&end_date=2026-11-30",
+              "host": [
+                "{{servicesUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analytics",
+                "queue-status"
+              ],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2026-11-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-11-30"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Analitik Beban Uji & Tingkat Abnormalitas Laboratorium",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK - Analitik Laboratorium Dimuat\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().data).to.have.property('abnormal_items');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{lab_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{servicesUrl}}/api/v1/analytics/laboratory?start_date=2026-11-01&end_date=2026-11-30",
+              "host": [
+                "{{servicesUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analytics",
+                "laboratory"
+              ],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2026-11-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-11-30"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Analitik Stok Kritis & Peresepan Farmasi",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK - Analitik Farmasi Dimuat\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().data).to.have.property('low_stock_medicines');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pharma_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{servicesUrl}}/api/v1/analytics/pharmacy?start_date=2026-11-01&end_date=2026-11-30",
+              "host": [
+                "{{servicesUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analytics",
+                "pharmacy"
+              ],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2026-11-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-11-30"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Uji Validasi Rentang Tanggal Analitik (422 Unprocessable Entity)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422 Unprocessable Entity - Rentang Tanggal Terbalik Ditolak\", function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{servicesUrl}}/api/v1/analytics/summary?start_date=2026-11-30&end_date=2026-11-01",
+              "host": [
+                "{{servicesUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analytics",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2026-11-30"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-11-01"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoint agregasi performa tinggi Fastify & PostgreSQL 17 (Promise.all paralel, composite & partial covering index INCLUDE) untuk Dashboard Eksekutif dan Operasional SIMRS."
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearer_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global Auto Bearer Token Capture",
+          "if (pm.request.url.getPath().indexOf('login') !== -1 && pm.response.code === 200) {",
+          "    try {",
+          "        var jsonRes = pm.response.json();",
+          "        if (jsonRes.success && jsonRes.data && jsonRes.data.token) {",
+          "            var accessToken = jsonRes.data.token;",
+          "            var userObj = jsonRes.data.user || {};",
+          "            var userRole = userObj.role || '';",
+          "",
+          "            pm.collectionVariables.set('bearer_token', accessToken);",
+          "            pm.collectionVariables.set('token', accessToken);",
+          "            if (pm.environment) {",
+          "                pm.environment.set('bearer_token', accessToken);",
+          "                pm.environment.set('token', accessToken);",
+          "            }",
+          "",
+          "            var roleVarMap = {",
+          "                'admin': 'admin_token',",
+          "                'doctor': 'doctor_token',",
+          "                'nurse': 'nurse_token',",
+          "                'registration': 'reg_token',",
+          "                'pharmacist': 'pharma_token',",
+          "                'pharmacy': 'pharma_token',",
+          "                'lab': 'lab_token',",
+          "                'cashier': 'cashier_token'",
+          "            };",
+          "",
+          "            if (userRole && roleVarMap[userRole]) {",
+          "                var roleKey = roleVarMap[userRole];",
+          "                pm.collectionVariables.set(roleKey, accessToken);",
+          "                if (pm.environment) {",
+          "                    pm.environment.set(roleKey, accessToken);",
+          "                }",
+          "                console.log('[Global Auto-Auth] ' + roleKey + ' disetel otomatis untuk peran: ' + userRole);",
+          "            }",
+          "            console.log('[Global Auto-Auth] bearer_token & token berhasil disetel otomatis: ' + accessToken);",
+          "        }",
+          "    } catch (err) {",
+          "        console.error('[Global Auto-Auth] Gagal memproses token login:', err);",
+          "    }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "bearer_token",
+      "value": ""
+    },
+    {
+      "key": "admin_token",
+      "value": "access_token_admin_00000000000001"
+    },
+    {
+      "key": "reg_token",
+      "value": "access_token_reg_000000000000002"
+    },
+    {
+      "key": "nurse_token",
+      "value": "access_token_nurse_00000000000003"
+    },
+    {
+      "key": "doctor_token",
+      "value": "access_token_doctor_0000000000004"
+    },
+    {
+      "key": "pharma_token",
+      "value": "access_token_pharma_0000000000005"
+    },
+    {
+      "key": "lab_token",
+      "value": "access_token_lab_000000000000006"
+    },
+    {
+      "key": "cashier_token",
+      "value": "access_token_cashier_000000000007"
+    },
+    {
+      "key": "servicesUrl",
+      "value": "http://localhost:4000"
+    },
+    {
+      "key": "lab_order_id",
+      "value": "1"
+    },
+    {
+      "key": "lab_item_1_id",
+      "value": "1"
+    },
+    {
+      "key": "lab_item_2_id",
+      "value": "2"
+    }
+  ]
+}
