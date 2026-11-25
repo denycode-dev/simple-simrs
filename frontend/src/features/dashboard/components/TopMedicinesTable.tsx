@@ -1,9 +1,21 @@
 import React from 'react';
 import { Card } from '@astryxdesign/core/Card';
-import { Table, TableHeader, TableBody, TableRow, TableCell, TableHeaderCell } from '@astryxdesign/core/Table';
-import { Spinner } from '@astryxdesign/core/Spinner';
+import { Section } from '@astryxdesign/core/Section';
+import { Heading } from '@astryxdesign/core/Heading';
+import { Text } from '@astryxdesign/core/Text';
+import { Code } from '@astryxdesign/core/Code';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableHeaderCell,
+} from '@astryxdesign/core/Table';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
-import { VStack } from '@astryxdesign/core/VStack';
+import { Skeleton } from '@astryxdesign/core/Skeleton';
+import { VStack, HStack } from '@astryxdesign/core/Stack';
+import { Icon } from '@astryxdesign/core/Icon';
 
 export interface TopMedicineItem {
   medicine_name: string;
@@ -16,63 +28,65 @@ export interface TopMedicinesTableProps {
   isLoading: boolean;
 }
 
-export const TopMedicinesTable: React.FC<TopMedicinesTableProps> = ({ data, isLoading }) => {
+export const TopMedicinesTable: React.FC<TopMedicinesTableProps> = ({
+  data,
+  isLoading,
+}) => {
   return (
-    <Card elevation="low" padding={4}>
-      <VStack gap={3}>
-        <div className="border-b border-slate-200 pb-3">
-          <h3 className="text-base font-bold text-slate-900">
-            5 Obat Paling Banyak Diresepkan
-          </h3>
-          <p className="text-xs text-slate-500">
-            Monitoring penggunaan perbekalan farmasi rawat jalan
-          </p>
-        </div>
+    <Card elevation="low" padding={0}>
+      <Section variant="transparent" padding={4} dividers={['bottom']}>
+        <VStack gap={0.5}>
+          <Heading level={3}>5 Obat Paling Banyak Diresepkan</Heading>
+          <Text color="secondary">Monitoring pemakaian obat rawat jalan</Text>
+        </VStack>
+      </Section>
 
-        {isLoading ? (
-          <div className="py-8 flex flex-col items-center justify-center gap-2">
-            <Spinner size="sm" />
-            <span className="text-xs text-slate-500">Memuat data obat...</span>
-          </div>
-        ) : data.length === 0 ? (
+      {isLoading ? (
+        <VStack gap={2} padding={4}>
+          <Skeleton height={32} radius={2} index={0} />
+          <Skeleton height={36} radius={2} index={1} />
+          <Skeleton height={36} radius={2} index={2} />
+        </VStack>
+      ) : data.length === 0 ? (
+        <Section variant="transparent" padding={5}>
           <EmptyState
+            headingLevel={4}
+            icon={<Icon icon="info" size="md" color="teal" />}
             title="Belum Ada Resep Obat"
             description="Tidak ada resep obat farmasi yang tercatat pada periode ini."
             isCompact
           />
-        ) : (
-          <div className="border border-slate-200 rounded-lg overflow-hidden">
-            <Table density="balanced" dividers="rows" hasHover>
-              <TableHeader>
-                <TableRow>
-                  <TableHeaderCell>Nama Obat</TableHeaderCell>
-                  <TableHeaderCell>Satuan</TableHeaderCell>
-                  <TableHeaderCell style={{ textAlign: 'right' }}>Total Diresepkan</TableHeaderCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map((med, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell>
-                      <span className="font-semibold text-slate-900 text-sm">
-                        {med.medicine_name}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-xs text-slate-500">{med.unit}</span>
-                    </TableCell>
-                    <TableCell style={{ textAlign: 'right' }}>
-                      <span className="font-mono font-bold text-teal-700 text-sm">
-                        {med.total_prescribed}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </VStack>
+        </Section>
+      ) : (
+        <Table density="balanced" dividers="rows" hasHover>
+          <TableHeader>
+            <TableRow>
+              <TableHeaderCell>Nama Obat</TableHeaderCell>
+              <TableHeaderCell>Satuan</TableHeaderCell>
+              <TableHeaderCell style={{ textAlign: 'right' }}>
+                Total Diresepkan
+              </TableHeaderCell>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((med, idx) => (
+              <TableRow key={`${med.medicine_name}-${idx}`}>
+                <TableCell>
+                  <Text weight="semibold">{med.medicine_name}</Text>
+                </TableCell>
+                <TableCell>
+                  <Text color="secondary">{med.unit}</Text>
+                </TableCell>
+                <TableCell>
+                  <HStack justify="end">
+                    <Code>{med.total_prescribed}</Code>
+                  </HStack>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </Card>
   );
 };

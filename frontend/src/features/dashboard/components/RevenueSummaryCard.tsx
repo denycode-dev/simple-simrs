@@ -1,6 +1,12 @@
 import React from 'react';
-import { Card, CardHeader, CardContent } from '../../../components/ui';
-import { formatCurrency } from '../../../utils/formatters';
+import { Card } from '@astryxdesign/core/Card';
+import { Section } from '@astryxdesign/core/Section';
+import { Heading } from '@astryxdesign/core/Heading';
+import { Text } from '@astryxdesign/core/Text';
+import { ProgressBar } from '@astryxdesign/core/ProgressBar';
+import { Skeleton } from '@astryxdesign/core/Skeleton';
+import { VStack, HStack } from '@astryxdesign/core/Stack';
+import { formatCurrency } from '@/utils/formatters';
 
 export interface RevenueData {
   total_revenue: number | string;
@@ -13,7 +19,10 @@ export interface RevenueSummaryCardProps {
   isLoading: boolean;
 }
 
-export const RevenueSummaryCard: React.FC<RevenueSummaryCardProps> = ({ data, isLoading }) => {
+export const RevenueSummaryCard: React.FC<RevenueSummaryCardProps> = ({
+  data,
+  isLoading,
+}) => {
   const total = Number(data?.total_revenue) || 0;
   const general = Number(data?.general_revenue) || 0;
   const bpjs = Number(data?.bpjs_covered_revenue) || 0;
@@ -22,57 +31,70 @@ export const RevenueSummaryCard: React.FC<RevenueSummaryCardProps> = ({ data, is
   const bpjsPct = total > 0 ? Math.round((bpjs / total) * 100) : 0;
 
   return (
-    <Card className="w-full bg-white border border-border-default shadow-sm">
-      <CardHeader className="border-b border-border-default pb-3">
-        <h3 className="text-base font-bold text-text-main">
-          Komposisi Sumber Pendapatan
-        </h3>
-        <p className="text-xs text-text-muted">
-          Penerimaan tunai (out-of-pocket) vs Klaim penjamin BPJS
-        </p>
-      </CardHeader>
-      <CardContent className="p-4 space-y-4">
+    <Card padding={0} elevation="low">
+      <Section variant="transparent" padding={4} dividers={['bottom']}>
+        <VStack gap={0.5}>
+          <Heading level={3}>Komposisi Sumber Pendapatan</Heading>
+          <Text color="secondary">Penerimaan tunai pasien umum vs klaim BPJS</Text>
+        </VStack>
+      </Section>
+
+      <Section variant="transparent" padding={4}>
         {isLoading ? (
-          <div className="py-8 text-center text-xs text-text-muted">Memuat data pendapatan...</div>
+          <VStack gap={3}>
+            <Skeleton height={56} radius={2} index={0} />
+            <Skeleton height={28} radius={2} index={1} />
+            <Skeleton height={28} radius={2} index={2} />
+          </VStack>
         ) : (
-          <>
-            <div className="p-3 bg-slate-50 border border-border-light rounded-lg">
-              <span className="text-xs text-text-muted font-medium">Total Akumulasi Tagihan:</span>
-              <div className="text-xl font-bold font-mono text-primary mt-0.5">
-                {formatCurrency(total)}
-              </div>
-            </div>
+          <VStack gap={4}>
+            <Section variant="muted" padding={3}>
+              <VStack gap={0.5}>
+                <Text type="supporting" weight="medium">
+                  Total Akumulasi Tagihan Lunas
+                </Text>
+                <Text type="large" weight="bold" hasTabularNumbers>
+                  {formatCurrency(total)}
+                </Text>
+              </VStack>
+            </Section>
 
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="font-semibold text-slate-800">Kas Tunai Pasien Umum</span>
-                  <span className="font-mono text-slate-700">{formatCurrency(general)} ({generalPct}%)</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="bg-primary h-full rounded-full"
-                    style={{ width: `${generalPct}%` }}
-                  ></div>
-                </div>
-              </div>
+            <VStack gap={3}>
+              <VStack gap={1}>
+                <HStack justify="between" align="center" gap={2}>
+                  <Text weight="medium">Kas Tunai Pasien Umum</Text>
+                  <Text color="secondary" hasTabularNumbers>
+                    {formatCurrency(general)} ({generalPct}%)
+                  </Text>
+                </HStack>
+                <ProgressBar
+                  label="Kas Tunai Pasien Umum"
+                  isLabelHidden
+                  value={general}
+                  max={Math.max(1, total)}
+                  variant="accent"
+                />
+              </VStack>
 
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="font-semibold text-emerald-800">Kover Klaim BPJS Kesehatan</span>
-                  <span className="font-mono text-emerald-700">{formatCurrency(bpjs)} ({bpjsPct}%)</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="bg-emerald-500 h-full rounded-full"
-                    style={{ width: `${bpjsPct}%` }}
-                  ></div>
-                </div>
-              </div>
-            </div>
-          </>
+              <VStack gap={1}>
+                <HStack justify="between" align="center" gap={2}>
+                  <Text weight="medium">Klaim BPJS Kesehatan</Text>
+                  <Text color="secondary" hasTabularNumbers>
+                    {formatCurrency(bpjs)} ({bpjsPct}%)
+                  </Text>
+                </HStack>
+                <ProgressBar
+                  label="Klaim BPJS Kesehatan"
+                  isLabelHidden
+                  value={bpjs}
+                  max={Math.max(1, total)}
+                  variant="success"
+                />
+              </VStack>
+            </VStack>
+          </VStack>
         )}
-      </CardContent>
+      </Section>
     </Card>
   );
 };

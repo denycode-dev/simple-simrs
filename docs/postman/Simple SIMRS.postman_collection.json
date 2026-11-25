@@ -4111,6 +4111,9 @@
               "path": [
                 "health"
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "response": []
@@ -4148,6 +4151,9 @@
                 "health",
                 "ready"
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "response": []
@@ -4163,10 +4169,13 @@
                   "pm.test(\"Status 201 Created - Order Lab Berhasil Dibuat\", function () {",
                   "    pm.response.to.have.status(201);",
                   "    var d = pm.response.json().data;",
-                  "    pm.collectionVariables.set('lab_order_id', String(d.id));",
+                  "    pm.collectionVariables.set(\"lab_order_id\", String(d.id));",
+                  "    pm.environment.set(\"lab_order_id\", String(d.id));",
                   "    if (d.items && d.items.length >= 2) {",
-                  "        pm.collectionVariables.set('lab_item_1_id', String(d.items[0].id));",
-                  "        pm.collectionVariables.set('lab_item_2_id', String(d.items[1].id));",
+                  "        pm.collectionVariables.set(\"lab_item_1_id\", String(d.items[0].id));",
+                  "        pm.collectionVariables.set(\"lab_item_2_id\", String(d.items[1].id));",
+                  "        pm.environment.set(\"lab_item_1_id\", String(d.items[0].id));",
+                  "        pm.environment.set(\"lab_item_2_id\", String(d.items[1].id));",
                   "    }",
                   "});"
                 ]
@@ -4209,6 +4218,9 @@
                 "laboratory",
                 "orders"
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "response": []
@@ -4262,6 +4274,9 @@
                   "value": "20"
                 }
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "response": []
@@ -4306,6 +4321,9 @@
                 "orders",
                 "{{lab_order_id}}"
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "response": []
@@ -4364,6 +4382,9 @@
                 "{{lab_order_id}}",
                 "status"
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "response": []
@@ -4402,7 +4423,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"completed_by\":6,\"items\":[{\"id\":1,\"result_value\":\"14.6\",\"reference_range\":\"13.0 - 17.0\",\"unit\":\"g/dL\",\"status_flag\":\"NORMAL\",\"notes\":\"Dalam batas rujukan normal\"},{\"id\":2,\"result_value\":\"238\",\"reference_range\":\"70 - 100\",\"unit\":\"mg/dL\",\"status_flag\":\"ABNORMAL\",\"notes\":\"Hiperglikemia puasa, konfirmasi klinis DPJP\"}]}",
+              "raw": "{\n  \"completed_by\": 6,\n  \"items\": [\n    {\n      \"id\": {{lab_item_1_id}},\n      \"result_value\": \"14.6\",\n      \"reference_range\": \"13.0 - 17.0\",\n      \"unit\": \"g/dL\",\n      \"status_flag\": \"NORMAL\",\n      \"notes\": \"Dalam batas rujukan normal\"\n    },\n    {\n      \"id\": {{lab_item_2_id}},\n      \"result_value\": \"238\",\n      \"reference_range\": \"70 - 100\",\n      \"unit\": \"mg/dL\",\n      \"status_flag\": \"ABNORMAL\",\n      \"notes\": \"Hiperglikemia puasa, konfirmasi klinis DPJP\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -4422,6 +4443,9 @@
                 "{{lab_order_id}}",
                 "results"
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "response": []
@@ -4459,7 +4483,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"items\":[{\"id\":1,\"result_value\":\"14.2\",\"status_flag\":\"NORMAL\"}]}",
+              "raw": "{\n  \"items\": [\n    {\n      \"id\": {{lab_item_1_id}},\n      \"result_value\": \"14.2\",\n      \"status_flag\": \"NORMAL\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -4479,6 +4503,9 @@
                 "{{lab_order_id}}",
                 "results"
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "response": []
@@ -4538,6 +4565,9 @@
                   "value": "2026-11-30"
                 }
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "response": []
@@ -4591,6 +4621,9 @@
                   "value": "2026-11-30"
                 }
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "response": []
@@ -4644,6 +4677,9 @@
                   "value": "2026-11-30"
                 }
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "response": []
@@ -4697,6 +4733,9 @@
                   "value": "2026-11-30"
                 }
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "response": []
@@ -4749,6 +4788,9 @@
                   "value": "2026-11-01"
                 }
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "response": []

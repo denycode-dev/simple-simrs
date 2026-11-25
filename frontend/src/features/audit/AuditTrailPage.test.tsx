@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { AuditTrailTable } from './components/AuditTrailTable';
 
 const mockLogs = [
@@ -45,23 +45,25 @@ describe('AuditTrailTable', () => {
   it('renders audit trail table with action, module, username, ip address, and timestamp', () => {
     render(<AuditTrailTable logs={mockLogs} isLoading={false} />);
 
-    // Columns & Actions
     expect(screen.getAllByText('UNMASK_DATA').length).toBeGreaterThan(0);
     expect(screen.getAllByText('DISPENSE').length).toBeGreaterThan(0);
-
-    // Module badges
     expect(screen.getAllByText('PATIENT').length).toBeGreaterThan(0);
     expect(screen.getAllByText('PHARMACY').length).toBeGreaterThan(0);
-
-    // Users
     expect(screen.getByText('Administrator RS')).toBeDefined();
     expect(screen.getByText('Apt. Rina Marlina')).toBeDefined();
-
-    // IP address
     expect(screen.getByText('192.168.1.105')).toBeDefined();
     expect(screen.getByText('192.168.1.110')).toBeDefined();
-
-    // Timestamp
     expect(screen.getByText('2026-11-24 09:30:15')).toBeDefined();
+  });
+
+  it('opens scrollable detail dialog showing old_values and new_values', () => {
+    render(<AuditTrailTable logs={mockLogs} isLoading={false} />);
+
+    const detailButtons = screen.getAllByRole('button', { name: /Lihat Detail/i });
+    fireEvent.click(detailButtons[0]);
+
+    expect(screen.getByText(/Detail Jejak Audit #1/i)).toBeDefined();
+    expect(screen.getByText(/Nilai Sebelum \(Old Values\)/i)).toBeDefined();
+    expect(screen.getByText(/Nilai Sesudah \(New Values\)/i)).toBeDefined();
   });
 });

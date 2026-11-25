@@ -1,6 +1,13 @@
 import React from 'react';
-import { Card, CardContent } from '../../../components/ui';
-import { formatCurrency } from '../../../utils/formatters';
+import { Card } from '@astryxdesign/core/Card';
+import { Grid } from '@astryxdesign/core/Grid';
+import { VStack, HStack } from '@astryxdesign/core/Stack';
+import { Text } from '@astryxdesign/core/Text';
+import { Token } from '@astryxdesign/core/Token';
+import { ProgressBar } from '@astryxdesign/core/ProgressBar';
+import { Divider } from '@astryxdesign/core/Divider';
+import { Skeleton } from '@astryxdesign/core/Skeleton';
+import { formatCurrency } from '@/utils/formatters';
 
 export interface KpiData {
   visits: {
@@ -24,16 +31,17 @@ export interface KpiMetricsRowProps {
 export const KpiMetricsRow: React.FC<KpiMetricsRowProps> = ({ data, isLoading }) => {
   if (isLoading || !data) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="animate-pulse bg-white border border-border-default p-4 h-28">
-            <CardContent className="space-y-2">
-              <div className="h-4 bg-slate-200 rounded w-1/2"></div>
-              <div className="h-8 bg-slate-200 rounded w-3/4"></div>
-            </CardContent>
+      <Grid columns={{ minWidth: 210, max: 4 }} gap={4}>
+        {[0, 1, 2, 3].map((idx) => (
+          <Card key={idx} padding={4} elevation="low">
+            <VStack gap={2}>
+              <Skeleton height={16} width="55%" radius={2} index={idx} />
+              <Skeleton height={32} width="75%" radius={2} index={idx} />
+              <Skeleton height={14} width="90%" radius={2} index={idx} />
+            </VStack>
           </Card>
         ))}
-      </div>
+      </Grid>
     );
   }
 
@@ -59,87 +67,85 @@ export const KpiMetricsRow: React.FC<KpiMetricsRowProps> = ({ data, isLoading })
       ? Math.round((visits.completed_visits / visits.total_visits) * 100)
       : 0;
 
+  const bpjsPct =
+    visits.total_visits > 0
+      ? Math.round((visits.bpjs_visits / visits.total_visits) * 100)
+      : 0;
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {/* 1. Total Kunjungan */}
-      <Card className="bg-white border border-border-default shadow-sm hover:border-primary/50 transition-colors">
-        <CardContent className="p-4 space-y-1.5">
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-            Total Kunjungan Pasien
-          </p>
-          <div className="text-3xl font-extrabold text-text-main font-mono">
+    <Grid columns={{ minWidth: 210, max: 4 }} gap={4}>
+      <Card padding={4} elevation="low">
+        <VStack gap={2}>
+          <Text type="supporting" weight="semibold">
+            Total Kunjungan
+          </Text>
+          <Text type="large" weight="bold" hasTabularNumbers>
             {visits.total_visits}
-          </div>
-          <div className="text-xs text-text-muted flex items-center justify-between pt-1 border-t border-border-light">
-            <span className="text-emerald-700 font-medium">{visits.bpjs_visits} Pasien BPJS</span>
-            <span className="text-slate-600 font-medium">{visits.general_visits} Pasien Umum</span>
-          </div>
-        </CardContent>
+          </Text>
+          <Divider />
+          <HStack justify="between" align="center" wrap="wrap" gap={2}>
+            <Text color="secondary">{visits.bpjs_visits} Pasien BPJS</Text>
+            <Text color="secondary">{visits.general_visits} Pasien Umum</Text>
+          </HStack>
+        </VStack>
       </Card>
 
-      {/* 2. Total Pendapatan Pelayanan */}
-      <Card className="bg-white border border-border-default shadow-sm hover:border-primary/50 transition-colors">
-        <CardContent className="p-4 space-y-1.5">
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+      <Card padding={4} elevation="low">
+        <VStack gap={2}>
+          <Text type="supporting" weight="semibold">
             Total Pendapatan RS
-          </p>
-          <div className="text-2xl font-extrabold text-primary font-mono truncate">
+          </Text>
+          <Text type="large" weight="bold" hasTabularNumbers>
             {formatCurrency(totalRev)}
-          </div>
-          <div className="text-xs text-text-muted flex items-center justify-between pt-1 border-t border-border-light">
-            <span className="truncate">Tunai: {formatCurrency(generalRev)}</span>
-            <span className="text-emerald-700 font-medium truncate">Klaim: {formatCurrency(bpjsRev)}</span>
-          </div>
-        </CardContent>
+          </Text>
+          <Divider />
+          <HStack justify="between" align="center" wrap="wrap" gap={2}>
+            <Text color="secondary">Tunai: {formatCurrency(generalRev)}</Text>
+            <Text color="secondary">Klaim: {formatCurrency(bpjsRev)}</Text>
+          </HStack>
+        </VStack>
       </Card>
 
-      {/* 3. Tingkat Penyelesaian Layanan */}
-      <Card className="bg-white border border-border-default shadow-sm hover:border-primary/50 transition-colors">
-        <CardContent className="p-4 space-y-1.5">
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-            Layanan Diselesaikan
-          </p>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-text-main font-mono">
+      <Card padding={4} elevation="low">
+        <VStack gap={2}>
+          <Text type="supporting" weight="semibold">
+            Layanan Selesai
+          </Text>
+          <HStack gap={2} align="center">
+            <Text type="large" weight="bold" hasTabularNumbers>
               {visits.completed_visits}
-            </span>
-            <span className="text-sm font-semibold text-emerald-600">
-              ({completionRate}%)
-            </span>
-          </div>
-          <div className="text-xs text-text-muted pt-1 border-t border-border-light">
-            Dari total {visits.total_visits} kunjungan rawat jalan
-          </div>
-        </CardContent>
+            </Text>
+            <Token
+              size="sm"
+              color={completionRate >= 70 ? 'green' : 'teal'}
+              label={`${completionRate}%`}
+            />
+          </HStack>
+          <Divider />
+          <Text color="secondary">
+            Dari {visits.total_visits} kunjungan rawat jalan
+          </Text>
+        </VStack>
       </Card>
 
-      {/* 4. Rasio Penjamin Pasien */}
-      <Card className="bg-white border border-border-default shadow-sm hover:border-primary/50 transition-colors">
-        <CardContent className="p-4 space-y-1.5">
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+      <Card padding={4} elevation="low">
+        <VStack gap={2}>
+          <Text type="supporting" weight="semibold">
             Dominasi Penjamin
-          </p>
-          <div className="text-xl font-bold text-text-main truncate">
+          </Text>
+          <Text type="large" weight="bold">
             {visits.bpjs_visits >= visits.general_visits ? 'Peserta BPJS' : 'Pasien Umum'}
-          </div>
-          <div className="w-full bg-slate-100 rounded-full h-2 mt-2 overflow-hidden flex">
-            <div
-              className="bg-emerald-500 h-full"
-              style={{
-                width: visits.total_visits > 0 ? `${(visits.bpjs_visits / visits.total_visits) * 100}%` : '50%',
-              }}
-              title="Porsi BPJS"
-            ></div>
-            <div
-              className="bg-primary h-full"
-              style={{
-                width: visits.total_visits > 0 ? `${(visits.general_visits / visits.total_visits) * 100}%` : '50%',
-              }}
-              title="Porsi Umum"
-            ></div>
-          </div>
-        </CardContent>
+          </Text>
+          <ProgressBar
+            label="Porsi BPJS"
+            value={visits.bpjs_visits}
+            max={Math.max(1, visits.total_visits)}
+            variant="success"
+            hasValueLabel
+            formatValueLabel={() => `${bpjsPct}% BPJS`}
+          />
+        </VStack>
       </Card>
-    </div>
+    </Grid>
   );
 };
