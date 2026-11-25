@@ -96,7 +96,7 @@ export const DASHBOARD_MENU: MenuGroup[] = [
       },
       {
         id: 'audit-trail',
-        title: 'Audit Trail UU PDP',
+        title: 'Audit Trail',
         icon: 'shield',
         path: '/audit-trail',
         roles: ['admin'],

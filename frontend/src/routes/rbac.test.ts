@@ -120,7 +120,7 @@ describe('RBAC Route Security & Mapping Suite', () => {
       expect(info.activeMenuId).toBe('audit-trail');
       expect(info.breadcrumbTrail).toEqual([
         { label: 'Master Data & Pengaturan' },
-        { label: 'Audit Trail UU PDP' },
+        { label: 'Audit Trail' },
       ]);
     });
 

@@ -186,13 +186,13 @@ export const AppRouter: React.FC = () => {
                 }
               />
 
-              {/* Audit Trail UU PDP */}
+              {/* Audit Trail */}
               <Route
                 path={ROUTES.AUDIT_TRAIL}
                 element={
                   <RoleRoute
                     allowedRoles={['admin']}
-                    moduleTitle="Audit Trail UU PDP"
+                    moduleTitle="Audit Trail"
                   >
                     <AuditTrailPage />
                   </RoleRoute>

@@ -121,7 +121,7 @@ export const APP_ROUTES: RouteDefinition[] = [
   {
     id: 'audit-trail',
     path: '/audit-trail',
-    title: 'Audit Trail UU PDP',
+    title: 'Audit Trail',
     allowedRoles: ['admin'],
     parentGroupTitle: 'Master Data & Pengaturan',
   },

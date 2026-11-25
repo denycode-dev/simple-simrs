@@ -37,7 +37,7 @@ export const AuditTrailPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-text-main tracking-tight">
-            Log Jejak Audit & Kepatuhan UU PDP
+            Log Jejak Audit
           </h1>
           <p className="text-sm text-text-muted mt-1">
             Pencatatan riwayat transaksi sensitif, pembukaan masking data pribadi, dan mutasi rekam medis secara permanen
