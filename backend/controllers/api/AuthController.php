@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\controllers\api;
 
 use Yii;
+use app\models\AuditLog;
 use app\models\User;
 use yii\filters\auth\HttpBearerAuth;
 
@@ -66,6 +67,24 @@ class AuthController extends BaseApiController
             $user->generateAccessToken();
         }
 
+        $overrideUserId = (!$user->isNewRecord && $user->id !== null) ? (int)$user->id : null;
+        AuditLog::log(
+            'AUTH',
+            'LOGIN',
+            $user->id !== null ? (string)$user->id : null,
+            [
+                'username' => $user->username,
+                'role' => $user->role,
+            ],
+            null,
+            [
+                'username' => $user->username,
+                'full_name' => $user->full_name,
+                'role' => $user->role,
+            ],
+            $overrideUserId
+        );
+
         return $this->asSuccess([
             'token' => $user->access_token,
             'tokenType' => 'Bearer',
@@ -112,6 +131,7 @@ class AuthController extends BaseApiController
         /** @var User|null $user */
         $user = Yii::$app->user->identity;
         if ($user !== null) {
+            $overrideUserId = (!$user->isNewRecord && $user->id !== null) ? (int)$user->id : null;
             $user->access_token = null;
             if (!$user->isNewRecord) {
                 $user->updateAttributes([
@@ -119,6 +139,22 @@ class AuthController extends BaseApiController
                     'updated_at' => date('Y-m-d H:i:s'),
                 ]);
             }
+
+            AuditLog::log(
+                'AUTH',
+                'LOGOUT',
+                $user->id !== null ? (string)$user->id : null,
+                [
+                    'username' => $user->username,
+                    'role' => $user->role,
+                ],
+                null,
+                [
+                    'username' => $user->username,
+                    'role' => $user->role,
+                ],
+                $overrideUserId
+            );
         }
 
         return $this->asSuccess(null, 'Sesi berhasil diakhiri.');

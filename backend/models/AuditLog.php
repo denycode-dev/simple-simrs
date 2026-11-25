@@ -80,18 +80,33 @@ class AuditLog extends ActiveRecord
         return false;
     }
 
-    public static function sanitizeData(?array $data): ?array
+    public static function sanitizeData(?array $data, ?array $redactedKeys = null): ?array
     {
         if ($data === null) {
             return null;
         }
 
+        $keysToRedact = self::REDACTED_KEYS;
+        if ($redactedKeys !== null) {
+            $keysToRedact = array_unique(array_merge($keysToRedact, $redactedKeys));
+        }
+
+        $normalizedKeys = array_map(
+            static fn($key): string => strtolower((string)$key),
+            $keysToRedact
+        );
+
+        return self::sanitizeArray($data, $normalizedKeys);
+    }
+
+    private static function sanitizeArray(array $data, array $normalizedKeys): array
+    {
         $sanitized = [];
         foreach ($data as $key => $val) {
-            if (in_array(strtolower((string)$key), self::REDACTED_KEYS, true)) {
+            if (in_array(strtolower((string)$key), $normalizedKeys, true)) {
                 $sanitized[$key] = '[REDACTED]';
             } elseif (is_array($val)) {
-                $sanitized[$key] = self::sanitizeData($val);
+                $sanitized[$key] = self::sanitizeArray($val, $normalizedKeys);
             } else {
                 $sanitized[$key] = $val;
             }
@@ -106,34 +121,79 @@ class AuditLog extends ActiveRecord
         ?string $recordId = null,
         $details = null,
         ?array $oldValues = null,
-        ?array $newValues = null
+        ?array $newValues = null,
+        ?int $overrideUserId = null,
+        ?array $redactedKeys = null
     ): self {
         $log = new self();
-        $log->module = $module;
-        $log->action = $action;
-        $log->record_id = $recordId !== null ? (string)$recordId : null;
+        $log->module = mb_substr($module, 0, 50);
+        $log->action = mb_substr($action, 0, 50);
+        $log->record_id = $recordId !== null ? mb_substr((string)$recordId, 0, 50) : null;
 
-        $userId = null;
+        $userId = $overrideUserId;
         $ip = '127.0.0.1';
         $ua = 'CLI';
 
         if (Yii::$app instanceof \yii\web\Application) {
-            if (!Yii::$app->user->isGuest) {
+            if ($userId === null && !Yii::$app->user->isGuest) {
                 $userId = Yii::$app->user->id;
             }
             $ip = Yii::$app->request->userIP ?: '127.0.0.1';
-            $ua = substr((string)Yii::$app->request->userAgent, 0, 255);
+            $ua = (string)Yii::$app->request->userAgent;
         }
 
-        $log->user_id = $userId ? (int)$userId : null;
-        $log->ip_address = $ip;
-        $log->user_agent = $ua;
+        $log->user_id = $userId !== null ? (int)$userId : null;
+        $log->ip_address = mb_substr($ip, 0, 45);
+        $log->user_agent = mb_substr($ua, 0, 255);
 
-        $log->old_values = $oldValues !== null ? json_encode(self::sanitizeData($oldValues)) : null;
-        $log->new_values = $newValues !== null ? json_encode(self::sanitizeData($newValues)) : null;
-        $log->details = is_array($details) ? json_encode(self::sanitizeData($details)) : ($details !== null ? (string)$details : null);
+        $log->old_values = $oldValues !== null ? json_encode(self::sanitizeData($oldValues, $redactedKeys)) : null;
+        $log->new_values = $newValues !== null ? json_encode(self::sanitizeData($newValues, $redactedKeys)) : null;
+        $log->details = is_array($details)
+            ? json_encode(self::sanitizeData($details, $redactedKeys))
+            : ($details !== null ? (string)$details : null);
 
         $log->save(false);
         return $log;
+    }
+
+    /**
+     * Formats the audit log record for API responses with decoded JSON payloads
+     * and safe user relation summary.
+     */
+    public function toApiArray(): array
+    {
+        return [
+            'id' => (int)$this->id,
+            'user_id' => $this->user_id !== null ? (int)$this->user_id : null,
+            'action' => $this->action,
+            'module' => $this->module,
+            'record_id' => $this->record_id,
+            'old_values' => self::decodeJsonField($this->old_values),
+            'new_values' => self::decodeJsonField($this->new_values),
+            'details' => self::decodeJsonField($this->details),
+            'ip_address' => $this->ip_address,
+            'user_agent' => $this->user_agent,
+            'created_at' => $this->created_at,
+            'user' => $this->user !== null ? [
+                'id' => (int)$this->user->id,
+                'username' => $this->user->username,
+                'name' => $this->user->full_name,
+                'role' => $this->user->role,
+            ] : null,
+        ];
+    }
+
+    private static function decodeJsonField(?string $value): mixed
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $decoded = json_decode($value, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $decoded;
+        }
+
+        return $value;
     }
 }

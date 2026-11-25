@@ -67,7 +67,12 @@ class AuditLogController extends BaseApiController
             'pagination' => ['pageSize' => 50],
         ]);
 
-        return $this->successResponse($dataProvider->getModels(), 'Data audit log berhasil dimuat.');
+        $items = array_map(
+            static fn(AuditLog $log): array => $log->toApiArray(),
+            $dataProvider->getModels()
+        );
+
+        return $this->successResponse($items, 'Data audit log berhasil dimuat.');
     }
 
     public function actionView(int $id): array
@@ -77,6 +82,6 @@ class AuditLogController extends BaseApiController
             return $this->notFoundResponse('Data audit log tidak ditemukan.');
         }
 
-        return $this->successResponse($log, 'Detail audit log berhasil dimuat.');
+        return $this->successResponse($log->toApiArray(), 'Detail audit log berhasil dimuat.');
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\models;
 
 use Yii;
+use app\behaviors\AuditTrailBehavior;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 
@@ -31,6 +32,16 @@ class ExaminationAction extends ActiveRecord
     public static function tableName(): string
     {
         return '{{%examination_actions}}';
+    }
+
+    public function behaviors(): array
+    {
+        return [
+            'auditTrail' => [
+                'class' => AuditTrailBehavior::class,
+                'module' => 'EXAMINATION',
+            ],
+        ];
     }
 
     public function rules(): array

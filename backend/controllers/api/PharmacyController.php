@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\controllers\api;
 
 use Yii;
+use app\models\AuditLog;
 use app\models\Billing;
 use app\models\MedicalExamination;
 use app\models\Medicine;
@@ -255,6 +256,7 @@ class PharmacyController extends BaseApiController
                 );
             }
 
+            $oldStatus = $prescription->status;
             $prescription->status = 'DISPENSED';
             $prescription->dispensed_at = date('Y-m-d H:i:s');
             $prescription->dispensed_by = $userId ? (int)$userId : null;
@@ -271,6 +273,26 @@ class PharmacyController extends BaseApiController
                 $reg->status = 'BILLING';
                 $reg->save(false);
             }
+
+            AuditLog::log(
+                'PHARMACY',
+                'DISPENSE',
+                (string)$prescription->id,
+                [
+                    'prescription_number' => $prescription->prescription_number,
+                    'registration_id' => (int)$prescription->registration_id,
+                    'items_count' => count($items),
+                ],
+                [
+                    'status' => $oldStatus,
+                ],
+                [
+                    'status' => $prescription->status,
+                    'prescription_number' => $prescription->prescription_number,
+                    'dispensed_at' => $prescription->dispensed_at,
+                    'dispensed_by' => $prescription->dispensed_by,
+                ]
+            );
 
             $transaction->commit();
 

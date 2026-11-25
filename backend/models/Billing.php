@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\models;
 
 use Yii;
+use app\behaviors\AuditTrailBehavior;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 
@@ -34,6 +35,16 @@ class Billing extends ActiveRecord
     public static function tableName(): string
     {
         return '{{%billings}}';
+    }
+
+    public function behaviors(): array
+    {
+        return [
+            'auditTrail' => [
+                'class' => AuditTrailBehavior::class,
+                'module' => 'BILLING',
+            ],
+        ];
     }
 
     public function rules(): array

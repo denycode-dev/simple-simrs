@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\models;
 
 use Yii;
+use app\behaviors\AuditTrailBehavior;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 use yii\web\UnprocessableEntityHttpException;
@@ -29,6 +30,16 @@ class Medicine extends ActiveRecord
     public static function tableName(): string
     {
         return '{{%medicines}}';
+    }
+
+    public function behaviors(): array
+    {
+        return [
+            'auditTrail' => [
+                'class' => AuditTrailBehavior::class,
+                'module' => 'PHARMACY',
+            ],
+        ];
     }
 
     public function rules(): array

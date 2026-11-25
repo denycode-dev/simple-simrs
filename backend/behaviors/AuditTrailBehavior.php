@@ -38,7 +38,9 @@ class AuditTrailBehavior extends Behavior
             $recordId,
             ['event' => 'insert'],
             null,
-            $owner->getAttributes()
+            $owner->getAttributes(),
+            null,
+            $this->sensitiveAttributes
         );
     }
 
@@ -62,7 +64,9 @@ class AuditTrailBehavior extends Behavior
             $recordId,
             ['event' => 'update', 'fields' => array_keys($changed)],
             $changed,
-            $newValues
+            $newValues,
+            null,
+            $this->sensitiveAttributes
         );
     }
 
@@ -79,7 +83,9 @@ class AuditTrailBehavior extends Behavior
             $recordId,
             ['event' => 'delete'],
             $owner->getAttributes(),
-            null
+            null,
+            null,
+            $this->sensitiveAttributes
         );
     }
 }

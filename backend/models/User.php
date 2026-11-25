@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\models;
 
 use Yii;
+use app\behaviors\AuditTrailBehavior;
 use yii\db\ActiveRecord;
 use yii\web\IdentityInterface;
 
@@ -56,6 +57,16 @@ class User extends ActiveRecord implements IdentityInterface
     public static function tableName(): string
     {
         return "{{%users}}";
+    }
+
+    public function behaviors(): array
+    {
+        return [
+            'auditTrail' => [
+                'class' => AuditTrailBehavior::class,
+                'module' => 'AUTH',
+            ],
+        ];
     }
 
     /**

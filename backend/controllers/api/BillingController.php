@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\controllers\api;
 
 use Yii;
+use app\models\AuditLog;
 use app\models\Billing;
 use app\models\BillingPayment;
 use app\models\Registration;
@@ -293,6 +294,7 @@ class BillingController extends BaseApiController
             }
 
             // Mark billing as PAID
+            $oldPaymentStatus = $billing->payment_status;
             $billing->payment_status = 'PAID';
             $billing->updated_at = date('Y-m-d H:i:s');
             $billing->save(false);
@@ -303,6 +305,30 @@ class BillingController extends BaseApiController
                 $reg->status = 'COMPLETED';
                 $reg->save(false);
             }
+
+            AuditLog::log(
+                'BILLING',
+                'PAYMENT',
+                (string)$billing->id,
+                [
+                    'invoice_number' => $billing->invoice_number,
+                    'payment_id' => (int)$payment->id,
+                    'payment_number' => $payment->payment_number,
+                    'payment_method' => $payment->payment_method,
+                ],
+                [
+                    'payment_status' => $oldPaymentStatus,
+                ],
+                [
+                    'payment_status' => $billing->payment_status,
+                    'payment_number' => $payment->payment_number,
+                    'payment_method' => $payment->payment_method,
+                    'amount' => (float)$payment->amount,
+                    'amount_received' => (float)$payment->amount_received,
+                    'change_amount' => (float)$payment->change_amount,
+                    'cashier_id' => (int)$payment->cashier_id,
+                ]
+            );
 
             $transaction->commit();
 
