@@ -1,10 +1,38 @@
-import React, { useState } from 'react';
-import { Card, Button, Input, Alert, Badge } from '@/components/ui';
-import { apiClient } from '@/lib/api-client';
+import React, { useState, useMemo, useRef } from 'react';
+import { Layout } from '@astryxdesign/core/Layout';
+import { VStack, HStack } from '@astryxdesign/core/Stack';
+import { Card } from '@astryxdesign/core/Card';
+import { Section } from '@astryxdesign/core/Section';
+import { Grid } from '@astryxdesign/core/Grid';
+import { Heading } from '@astryxdesign/core/Heading';
+import { Text } from '@astryxdesign/core/Text';
+import { Code } from '@astryxdesign/core/Code';
+import { Token } from '@astryxdesign/core/Token';
+import { FormLayout } from '@astryxdesign/core/FormLayout';
+import { NumberInput } from '@astryxdesign/core/NumberInput';
+import { TextArea } from '@astryxdesign/core/TextArea';
+import { TextInput } from '@astryxdesign/core/TextInput';
+import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl';
+import { Collapsible } from '@astryxdesign/core/Collapsible';
+import { Banner } from '@astryxdesign/core/Banner';
+import { Button } from '@astryxdesign/core/Button';
+import { Icon } from '@astryxdesign/core/Icon';
+import { AlertDialog } from '@astryxdesign/core/AlertDialog';
+import { useToast } from '@astryxdesign/core/Toast';
+import { apiClient, ApiClientError } from '@/lib/api-client';
+import {
+  DEFAULT_NO_ALLERGY_TEXT,
+  calculatePatientAge,
+  detectActiveAllergy,
+  evaluateBmi,
+  evaluateVitalSign,
+  validateTriageForm,
+} from '../utils/triage-helpers';
 
 export interface NurseAssessmentRegistration {
   id: number;
   queue_number: string;
+  insurance_type?: 'GENERAL' | 'BPJS';
   patient?: {
     id: number;
     name: string;
@@ -33,49 +61,128 @@ export const NurseAssessmentForm: React.FC<NurseAssessmentFormProps> = ({
   onComplete,
   onCancel,
 }) => {
-  // Antropometri
-  const [weightKg, setWeightKg] = useState<string>('65');
-  const [heightCm, setHeightCm] = useState<string>('165');
+  const showToast = useToast();
+  const complaintRef = useRef<HTMLTextAreaElement>(null);
 
-  // Tanda-tanda Vital (TTV)
-  const [systolic, setSystolic] = useState<string>('120');
-  const [diastolic, setDiastolic] = useState<string>('80');
-  const [pulseRate, setPulseRate] = useState<string>('80');
-  const [bodyTemp, setBodyTemp] = useState<string>('36.5');
-  const [respiratoryRate, setRespiratoryRate] = useState<string>('18');
+  // Nilai awal rentang fisiologis dewasa normal
+  const [weightKg, setWeightKg] = useState<number | null>(65);
+  const [heightCm, setHeightCm] = useState<number | null>(165);
+  const [systolic, setSystolic] = useState<number | null>(120);
+  const [diastolic, setDiastolic] = useState<number | null>(80);
+  const [pulseRate, setPulseRate] = useState<number | null>(80);
+  const [bodyTemp, setBodyTemp] = useState<number | null>(36.6);
+  const [respiratoryRate, setRespiratoryRate] = useState<number | null>(18);
 
-  // Anamnesis Awal Keperawatan
+  // Keluhan & Alergi
   const [chiefComplaint, setChiefComplaint] = useState<string>('');
-  const [allergyHistory, setAllergyHistory] = useState<string>('Tidak ada riwayat alergi obat/makanan');
+  const [allergyMode, setAllergyMode] = useState<'none' | 'has_allergy'>('none');
+  const [allergyHistory, setAllergyHistory] = useState<string>(DEFAULT_NO_ALLERGY_TEXT);
+
+  // Catatan Opsional
   const [diseaseHistory, setDiseaseHistory] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
 
+  // Status Validasi & Interaksi
+  const [complaintTouched, setComplaintTouched] = useState<boolean>(false);
+  const [allergyTouched, setAllergyTouched] = useState<boolean>(false);
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
-  // Kalkulasi Indeks Massa Tubuh (BMI)
-  const weight = parseFloat(weightKg) || 0;
-  const height = parseFloat(heightCm) || 0;
-  const bmi = height > 0 ? (weight / Math.pow(height / 100, 2)).toFixed(1) : '-';
+  const ageYears = useMemo(
+    () => calculatePatientAge(registration.patient?.birth_date),
+    [registration.patient?.birth_date]
+  );
 
-  // Usia estimasi jika ada tanggal lahir
-  let ageYears = 30;
-  if (registration.patient?.birth_date) {
-    const birthYear = new Date(registration.patient.birth_date).getFullYear();
-    const currentYear = new Date().getFullYear();
-    if (!isNaN(birthYear)) {
-      ageYears = Math.max(1, currentYear - birthYear);
-    }
-  }
+  const bmiResult = evaluateBmi(weightKg, heightCm);
+  const systolicEval = evaluateVitalSign('systolic', systolic);
+  const diastolicEval = evaluateVitalSign('diastolic', diastolic);
+  const pulseEval = evaluateVitalSign('pulse', pulseRate);
+  const tempEval = evaluateVitalSign('temp', bodyTemp);
+  const respEval = evaluateVitalSign('respiratory', respiratoryRate);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const abnormalVitalsCount = [
+    systolicEval,
+    diastolicEval,
+    pulseEval,
+    tempEval,
+    respEval,
+  ].filter((v) => v.severity !== 'normal').length;
+
+  const effectiveAllergyText =
+    allergyMode === 'none' ? DEFAULT_NO_ALLERGY_TEXT : allergyHistory;
+
+  const allergyDetailError =
+    allergyMode === 'has_allergy' && !detectActiveAllergy(allergyHistory)
+      ? 'Sebutkan obat atau makanan pemicu alergi.'
+      : undefined;
+
+  const validation = validateTriageForm({
+    weightKg,
+    heightCm,
+    systolic,
+    diastolic,
+    pulseRate,
+    bodyTemp,
+    respiratoryRate,
+    chiefComplaint,
+    allergyHistory: effectiveAllergyText,
+  });
+
+  const isFormDirty =
+    chiefComplaint.trim().length > 0 ||
+    diseaseHistory.trim().length > 0 ||
+    notes.trim().length > 0 ||
+    allergyMode === 'has_allergy';
+
+  const handleAllergyModeChange = (mode: string) => {
+    const nextMode = mode === 'has_allergy' ? 'has_allergy' : 'none';
+    setAllergyMode(nextMode);
     setError(null);
-    setSuccess(null);
+    if (nextMode === 'none') {
+      setAllergyHistory(DEFAULT_NO_ALLERGY_TEXT);
+      setAllergyTouched(false);
+    } else if (!detectActiveAllergy(allergyHistory)) {
+      setAllergyHistory('');
+    }
+  };
 
-    if (!chiefComplaint.trim()) {
-      setError('Keluhan utama pasien wajib diisi.');
+  const handleResetVitalsDefault = () => {
+    setSystolic(120);
+    setDiastolic(80);
+    setPulseRate(80);
+    setBodyTemp(36.6);
+    setRespiratoryRate(18);
+    showToast({
+      body: 'Tanda vital dikembalikan ke rentang normal.',
+      uniqueID: 'triage-reset-vitals',
+    });
+  };
+
+  const handleRequestCancel = () => {
+    if (isFormDirty) {
+      setIsCancelConfirmOpen(true);
+      return;
+    }
+    onCancel();
+  };
+
+  const handleSubmit = async () => {
+    setComplaintTouched(true);
+    setAllergyTouched(true);
+    setError(null);
+
+    if (validation.complaintError) {
+      complaintRef.current?.focus();
+      return;
+    }
+
+    if (allergyDetailError || validation.allergyError) {
+      return;
+    }
+
+    if (!validation.isValid) {
+      setError(validation.firstErrorMessage);
       return;
     }
 
@@ -85,7 +192,7 @@ export const NurseAssessmentForm: React.FC<NurseAssessmentFormProps> = ({
         method: 'POST',
         body: JSON.stringify({
           registration_id: registration.id,
-          nurse_id: 1, // ID perawat yang terotentikasi di poli
+          nurse_id: 1,
           weight_kg: Number(weightKg),
           height_cm: Number(heightCm),
           systolic: Number(systolic),
@@ -96,362 +203,424 @@ export const NurseAssessmentForm: React.FC<NurseAssessmentFormProps> = ({
           age_years: ageYears,
           gender: registration.patient?.gender || 'L',
           chief_complaint: chiefComplaint.trim(),
-          allergy_history: allergyHistory.trim(),
+          allergy_history: effectiveAllergyText.trim(),
           disease_history: diseaseHistory.trim(),
           notes: notes.trim(),
         }),
       });
 
-      setSuccess('Asesmen awal berhasil disimpan. Status kunjungan diteruskan ke antrean dokter.');
-      setTimeout(() => {
-        onComplete();
-      }, 1000);
+      showToast({
+        body: `Skrining ${registration.patient?.name || registration.queue_number} berhasil disimpan.`,
+        uniqueID: 'triage-save-success',
+      });
+      onComplete();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal menyimpan data asesmen keperawatan.');
+      if (err instanceof ApiClientError && err.errors) {
+        const firstFieldMsg = Object.values(err.errors).flat()[0];
+        setError(firstFieldMsg || err.message);
+      } else {
+        setError(err instanceof Error ? err.message : 'Gagal menyimpan data skrining.');
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const secondaryFilledCount =
+    (diseaseHistory.trim() ? 1 : 0) + (notes.trim() ? 1 : 0);
+
+  const genderLabel = registration.patient?.gender === 'P' ? 'P' : 'L';
+  const polyclinicInfo = [registration.polyclinic?.name, registration.doctor?.name]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
-    <Card elevation="med" padding={6} style={{ backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)' }}>
-      {/* Header Banner Pasien */}
-      <div
-        style={{
-          padding: 'var(--space-4)',
-          backgroundColor: 'var(--color-primary-light)',
-          border: '1px solid var(--color-primary-border)',
-          borderRadius: 'var(--radius-md)',
-          marginBottom: 'var(--space-5)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 'var(--space-3)',
-        }}
-      >
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-            <span
-              style={{
-                fontFamily: 'monospace',
-                fontWeight: 800,
-                fontSize: '1rem',
-                color: 'var(--color-primary)',
-                backgroundColor: 'var(--color-surface)',
-                padding: '2px 8px',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--color-primary-border)',
-              }}
-            >
-              {registration.queue_number}
-            </span>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)', margin: 0 }}>
-              {registration.patient?.name}
-            </h3>
-          </div>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-            No. RM: <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{registration.patient?.medical_record_number}</span> • {registration.patient?.gender === 'L' ? 'Laki-laki' : 'Perempuan'} • Usia: ~{ageYears} tahun
-          </div>
-        </div>
+    <Layout height="auto" contentWidth={760} padding={0}>
+      <VStack gap={3}>
+        {/* Navigasi Kembali & Judul Ringkas */}
+        <HStack justify="between" align="center" wrap="wrap" gap={2}>
+          <HStack gap={2} align="center">
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<Icon icon="chevronLeft" />}
+              label="Antrean"
+              onClick={handleRequestCancel}
+              isDisabled={isSubmitting}
+            />
+            <Heading level={1}>Skrining Triage</Heading>
+          </HStack>
+        </HStack>
 
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontWeight: 600, color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
-            {registration.polyclinic?.name}
-          </div>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>
-            {registration.doctor?.name}
-          </div>
-        </div>
-      </div>
+        {error ? (
+          <Banner
+            status="error"
+            title="Belum Dapat Disimpan"
+            description={error}
+            collapsible={false}
+            isDismissable
+            onDismiss={() => setError(null)}
+          />
+        ) : null}
 
-      <div style={{ marginBottom: 'var(--space-4)' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
-          Skrining Awal Keperawatan (Triage)
-        </h2>
-        <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-          Input pemeriksaan tanda-tanda vital, antropometri, keluhan utama, dan identifikasi riwayat alergi.
-        </p>
-      </div>
+        <Card padding={0} elevation="low">
+          {/* Strip Identitas Pasien Ringkas */}
+          <Section variant="muted" padding={4} dividers={['bottom']}>
+            <VStack gap={1}>
+              <HStack justify="between" align="center" wrap="wrap" gap={2}>
+                <HStack gap={2} align="center" wrap="wrap">
+                  <Code>{registration.queue_number}</Code>
+                  <Heading level={2}>
+                    {registration.patient?.name || 'Pasien Tanpa Nama'}
+                  </Heading>
+                </HStack>
 
-      {error && <div style={{ marginBottom: 'var(--space-4)' }}><Alert variant="danger">{error}</Alert></div>}
-      {success && <div style={{ marginBottom: 'var(--space-4)' }}><Alert variant="success">{success}</Alert></div>}
-
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
-        {/* Antropometri & BMI */}
-        <div>
-          <h4 style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: 'var(--space-3)' }}>
-            1. Data Fisik Antropometri
-          </h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 'var(--space-3)' }}>
-            <div>
-              <Input
-                id="weight_kg"
-                label="Berat Badan (kg) *"
-                type="number"
-                value={weightKg}
-                onChange={(e) => setWeightKg(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Input
-                id="height_cm"
-                label="Tinggi Badan (cm) *"
-                type="number"
-                value={heightCm}
-                onChange={(e) => setHeightCm(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: 'var(--color-text-main)',
-                  marginBottom: 'var(--space-1)',
-                }}
-              >
-                Indeks Massa Tubuh (BMI)
-              </label>
-              <div
-                style={{
-                  height: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0 var(--space-3)',
-                  backgroundColor: 'var(--color-surface-hover)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-md)',
-                  fontWeight: 700,
-                  color: 'var(--color-primary)',
-                  fontSize: '0.9375rem',
-                }}
-              >
-                {bmi} kg/m²
-                <span style={{ marginLeft: 'var(--space-2)' }}>
-                  <Badge
-                    variant={Number(bmi) < 18.5 ? 'warning' : Number(bmi) <= 24.9 ? 'success' : 'danger'}
-                    label={Number(bmi) < 18.5 ? 'Underweight' : Number(bmi) <= 24.9 ? 'Normal' : 'Overweight'}
+                {registration.insurance_type ? (
+                  <Token
+                    size="sm"
+                    color={registration.insurance_type === 'BPJS' ? 'green' : 'gray'}
+                    label={registration.insurance_type === 'BPJS' ? 'BPJS' : 'Umum'}
                   />
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+                ) : null}
+              </HStack>
 
-        {/* Tanda-tanda Vital (TTV) */}
-        <div style={{ paddingTop: 'var(--space-4)', borderTop: '1px solid var(--color-border-subtle)' }}>
-          <h4 style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: 'var(--space-3)' }}>
-            2. Tanda-Tanda Vital (TTV)
-          </h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 'var(--space-3)' }}>
-            <div>
-              <Input
-                id="systolic"
-                label="Tekanan Darah Sistolik (mmHg) *"
-                type="number"
-                value={systolic}
-                onChange={(e) => setSystolic(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Input
-                id="diastolic"
-                label="Tekanan Darah Diastolik (mmHg) *"
-                type="number"
-                value={diastolic}
-                onChange={(e) => setDiastolic(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Input
-                id="pulse_rate"
-                label="Frekuensi Nadi (x/mnt) *"
-                type="number"
-                value={pulseRate}
-                onChange={(e) => setPulseRate(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Input
-                id="body_temp"
-                label="Suhu Tubuh (°C) *"
-                type="text"
-                value={bodyTemp}
-                onChange={(e) => setBodyTemp(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Input
-                id="respiratory_rate"
-                label="Laju Pernapasan / RR (x/mnt) *"
-                type="number"
-                value={respiratoryRate}
-                onChange={(e) => setRespiratoryRate(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-        </div>
+              <HStack gap={1.5} align="center" wrap="wrap">
+                <Code color="secondary">
+                  {registration.patient?.medical_record_number || '-'}
+                </Code>
+                <Text color="secondary">
+                  · {genderLabel}, {ageYears} thn
+                  {polyclinicInfo ? ` · ${polyclinicInfo}` : ''}
+                </Text>
+              </HStack>
+            </VStack>
+          </Section>
 
-        {/* Anamnesis Awal & Alergi */}
-        <div style={{ paddingTop: 'var(--space-4)', borderTop: '1px solid var(--color-border-subtle)' }}>
-          <h4 style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: 'var(--space-3)' }}>
-            3. Keluhan & Skrining Riwayat Pasien
-          </h4>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-            <div>
-              <label
-                htmlFor="chief_complaint"
-                style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: 'var(--color-text-main)',
-                  marginBottom: 'var(--space-1)',
-                }}
-              >
-                Keluhan Utama Pasien *
-              </label>
-              <textarea
-                id="chief_complaint"
-                rows={3}
-                value={chiefComplaint}
-                onChange={(e) => setChiefComplaint(e.target.value)}
-                placeholder="misal: Pasien mengeluh pusing berputar sejak 2 hari yang lalu disertai mual..."
-                style={{
-                  width: '100%',
-                  padding: 'var(--space-2) var(--space-3)',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-surface)',
-                  color: 'var(--color-text-main)',
-                  fontSize: '0.875rem',
-                  fontFamily: 'inherit',
-                }}
-                required
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
-              <div>
-                <label
-                  htmlFor="allergy_history"
-                  style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    color: 'var(--color-danger-text)',
-                    marginBottom: 'var(--space-1)',
+          {/* Bagian 1: Keluhan Utama & Alergi */}
+          <Section variant="transparent" padding={5} dividers={['bottom']}>
+            <VStack gap={4}>
+              <FormLayout defaultEntryErrorBehavior="blur-or-enter">
+                <TextArea
+                  ref={complaintRef}
+                  label="Keluhan Utama"
+                  value={chiefComplaint}
+                  onChange={(val) => {
+                    setChiefComplaint(val);
+                    if (error) setError(null);
                   }}
-                >
-                  ⚠️ Riwayat Alergi (Obat / Makanan) *
-                </label>
-                <textarea
-                  id="allergy_history"
+                  onBlur={() => setComplaintTouched(true)}
+                  isRequired
+                  hasAutoFocus
                   rows={2}
-                  value={allergyHistory}
-                  onChange={(e) => setAllergyHistory(e.target.value)}
-                  placeholder="Ketik 'Tidak Ada' atau sebutkan nama obat yang menimbulkan alergi..."
-                  style={{
-                    width: '100%',
-                    padding: 'var(--space-2) var(--space-3)',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--color-danger-border)',
-                    backgroundColor: 'var(--color-surface)',
-                    color: 'var(--color-text-main)',
-                    fontSize: '0.875rem',
-                    fontFamily: 'inherit',
-                  }}
-                  required
+                  width="100%"
+                  placeholder="Contoh: Demam dan batuk berdahak sejak 3 hari lalu..."
+                  status={
+                    complaintTouched && validation.complaintError
+                      ? { type: 'error', message: validation.complaintError }
+                      : undefined
+                  }
+                  statusVariant="detached"
                 />
-              </div>
+              </FormLayout>
 
-              <div>
-                <label
-                  htmlFor="disease_history"
-                  style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    color: 'var(--color-text-main)',
-                    marginBottom: 'var(--space-1)',
-                  }}
-                >
-                  Riwayat Penyakit Terdahulu
-                </label>
-                <textarea
-                  id="disease_history"
-                  rows={2}
-                  value={diseaseHistory}
-                  onChange={(e) => setDiseaseHistory(e.target.value)}
-                  placeholder="misal: Hipertensi terkontrol, Asma saat anak-anak..."
-                  style={{
-                    width: '100%',
-                    padding: 'var(--space-2) var(--space-3)',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--color-border)',
-                    backgroundColor: 'var(--color-surface)',
-                    color: 'var(--color-text-main)',
-                    fontSize: '0.875rem',
-                    fontFamily: 'inherit',
-                  }}
-                />
-              </div>
-            </div>
+              <VStack gap={2}>
+                <HStack justify="between" align="center" wrap="wrap" gap={2}>
+                  <Text weight="medium">Riwayat Alergi</Text>
+                  <SegmentedControl
+                    label="Riwayat Alergi"
+                    value={allergyMode}
+                    onChange={handleAllergyModeChange}
+                    size="sm"
+                  >
+                    <SegmentedControlItem value="none" label="Tidak Ada" />
+                    <SegmentedControlItem
+                      value="has_allergy"
+                      label="Ada Alergi"
+                      icon={<Icon icon="warning" />}
+                    />
+                  </SegmentedControl>
+                </HStack>
 
-            <div>
-              <Input
-                id="notes"
-                label="Catatan Khusus Perawat"
-                placeholder="Catatan tambahan untuk dokter pemeriksa..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                {allergyMode === 'has_allergy' ? (
+                  <FormLayout>
+                    <TextInput
+                      label="Detail Alergi Obat / Makanan"
+                      value={allergyHistory}
+                      onChange={(val) => setAllergyHistory(val)}
+                      onBlur={() => setAllergyTouched(true)}
+                      isRequired
+                      hasAutoFocus
+                      width="100%"
+                      placeholder="Contoh: Amoksisilin (ruam kulit), Udang"
+                      status={
+                        allergyTouched && (allergyDetailError || validation.allergyError)
+                          ? {
+                              type: 'error',
+                              message: allergyDetailError || validation.allergyError,
+                            }
+                          : undefined
+                      }
+                      statusVariant="detached"
+                    />
+                  </FormLayout>
+                ) : null}
+              </VStack>
+            </VStack>
+          </Section>
+
+          {/* Bagian 2: Tanda Vital & Pengukuran Fisik */}
+          <Section variant="transparent" padding={5} dividers={['bottom']}>
+            <VStack gap={3}>
+              <HStack justify="between" align="center" wrap="wrap" gap={2}>
+                <Heading level={3}>Tanda Vital & Fisik</Heading>
+
+                <HStack gap={2} align="center" wrap="wrap">
+                  {abnormalVitalsCount > 0 ? (
+                    <Token
+                      size="sm"
+                      color="orange"
+                      icon={<Icon icon="warning" size="xsm" />}
+                      label={`${abnormalVitalsCount} Di Luar Normal`}
+                    />
+                  ) : null}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    label="Reset Normal"
+                    onClick={handleResetVitalsDefault}
+                    isDisabled={isSubmitting}
+                  />
+                </HStack>
+              </HStack>
+
+              <FormLayout defaultEntryErrorBehavior="blur-or-enter">
+                <Grid columns={{ minWidth: 200, max: 2 }} gap={3}>
+                  <NumberInput
+                    label="Tekanan Darah Sistolik"
+                    value={systolic}
+                    onChange={(val) => setSystolic(val)}
+                    min={50}
+                    max={260}
+                    step={1}
+                    isIntegerOnly
+                    units="mmHg"
+                    isRequired
+                    width="100%"
+                    status={
+                      validation.bpOrderError
+                        ? { type: 'error', message: validation.bpOrderError }
+                        : systolicEval.severity !== 'normal'
+                          ? { type: 'warning', message: systolicEval.shortLabel }
+                          : undefined
+                    }
+                    statusVariant="detached"
+                  />
+
+                  <NumberInput
+                    label="Tekanan Darah Diastolik"
+                    value={diastolic}
+                    onChange={(val) => setDiastolic(val)}
+                    min={30}
+                    max={160}
+                    step={1}
+                    isIntegerOnly
+                    units="mmHg"
+                    isRequired
+                    width="100%"
+                    status={
+                      validation.bpOrderError
+                        ? { type: 'error', message: validation.bpOrderError }
+                        : diastolicEval.severity !== 'normal'
+                          ? { type: 'warning', message: diastolicEval.shortLabel }
+                          : undefined
+                    }
+                    statusVariant="detached"
+                  />
+                </Grid>
+
+                <Grid columns={{ minWidth: 160, max: 3 }} gap={3}>
+                  <NumberInput
+                    label="Frekuensi Nadi"
+                    value={pulseRate}
+                    onChange={(val) => setPulseRate(val)}
+                    min={30}
+                    max={220}
+                    step={1}
+                    isIntegerOnly
+                    units="x/mnt"
+                    isRequired
+                    width="100%"
+                    status={
+                      pulseEval.severity !== 'normal'
+                        ? { type: 'warning', message: pulseEval.shortLabel }
+                        : undefined
+                    }
+                    statusVariant="detached"
+                  />
+
+                  <NumberInput
+                    label="Suhu Tubuh"
+                    value={bodyTemp}
+                    onChange={(val) => setBodyTemp(val)}
+                    min={34}
+                    max={43}
+                    step={0.1}
+                    units="°C"
+                    isRequired
+                    width="100%"
+                    status={
+                      tempEval.severity !== 'normal'
+                        ? { type: 'warning', message: tempEval.shortLabel }
+                        : undefined
+                    }
+                    statusVariant="detached"
+                  />
+
+                  <NumberInput
+                    label="Laju Pernapasan"
+                    value={respiratoryRate}
+                    onChange={(val) => setRespiratoryRate(val)}
+                    min={8}
+                    max={60}
+                    step={1}
+                    isIntegerOnly
+                    units="x/mnt"
+                    isRequired
+                    width="100%"
+                    status={
+                      respEval.severity !== 'normal'
+                        ? { type: 'warning', message: respEval.shortLabel }
+                        : undefined
+                    }
+                    statusVariant="detached"
+                  />
+                </Grid>
+
+                <Grid columns={{ minWidth: 160, max: 3 }} gap={3} align="end">
+                  <NumberInput
+                    label="Berat Badan"
+                    value={weightKg}
+                    onChange={(val) => setWeightKg(val)}
+                    min={1}
+                    max={300}
+                    step={0.5}
+                    units="kg"
+                    isRequired
+                    width="100%"
+                  />
+
+                  <NumberInput
+                    label="Tinggi Badan"
+                    value={heightCm}
+                    onChange={(val) => setHeightCm(val)}
+                    min={30}
+                    max={250}
+                    step={1}
+                    units="cm"
+                    isRequired
+                    width="100%"
+                  />
+
+                  <Section variant="muted" padding={2}>
+                    <VStack gap={0.5}>
+                      <Text type="supporting">IMT Otomatis</Text>
+                      <HStack gap={1.5} align="center" wrap="wrap">
+                        <Text weight="semibold" hasTabularNumbers>
+                          {bmiResult.bmiFormatted} kg/m²
+                        </Text>
+                        <Token
+                          size="sm"
+                          color={bmiResult.evaluation.tokenColor}
+                          label={bmiResult.evaluation.shortLabel}
+                        />
+                      </HStack>
+                    </VStack>
+                  </Section>
+                </Grid>
+              </FormLayout>
+            </VStack>
+          </Section>
+
+          {/* Bagian 3: Catatan Tambahan Opsional */}
+          <Section variant="transparent" padding={4} dividers={['bottom']}>
+            <Collapsible
+              defaultIsOpen={false}
+              trigger={
+                <HStack gap={2} align="center" wrap="wrap">
+                  <Text weight="medium">Riwayat Penyakit & Catatan Tambahan</Text>
+                  <Token
+                    size="sm"
+                    color={secondaryFilledCount > 0 ? 'teal' : 'gray'}
+                    label={
+                      secondaryFilledCount > 0
+                        ? `${secondaryFilledCount} Terisi`
+                        : 'Opsional'
+                    }
+                  />
+                </HStack>
+              }
+            >
+              <VStack gap={3} paddingBlockStart={3}>
+                <FormLayout defaultOptionality="optional">
+                  <TextInput
+                    label="Riwayat Penyakit Terdahulu"
+                    value={diseaseHistory}
+                    onChange={(val) => setDiseaseHistory(val)}
+                    isOptional
+                    width="100%"
+                    placeholder="Contoh: Hipertensi, Diabetes Melitus, Asma..."
+                  />
+
+                  <TextInput
+                    label="Catatan Khusus Perawat"
+                    value={notes}
+                    onChange={(val) => setNotes(val)}
+                    isOptional
+                    width="100%"
+                    placeholder="Contoh: Risiko jatuh, memakai kursi roda..."
+                  />
+                </FormLayout>
+              </VStack>
+            </Collapsible>
+          </Section>
+
+          {/* Bar Aksi Bawah */}
+          <Section variant="muted" padding={4}>
+            <HStack justify="end" align="center" wrap="wrap" gap={2}>
+              <Button
+                variant="secondary"
+                size="md"
+                label="Batal"
+                onClick={handleRequestCancel}
+                isDisabled={isSubmitting}
               />
-            </div>
-          </div>
-        </div>
+              <Button
+                variant="primary"
+                size="md"
+                icon={<Icon icon="check" />}
+                label="Simpan & Teruskan ke Dokter"
+                isLoading={isSubmitting}
+                isDisabled={isSubmitting}
+                onClick={handleSubmit}
+              />
+            </HStack>
+          </Section>
+        </Card>
 
-        {/* Action Buttons */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: 'var(--space-3)',
-            marginTop: 'var(--space-2)',
-            paddingTop: 'var(--space-4)',
-            borderTop: '1px solid var(--color-border-subtle)',
+        <AlertDialog
+          isOpen={isCancelConfirmOpen}
+          onOpenChange={setIsCancelConfirmOpen}
+          title="Batalkan Pengisian Skrining?"
+          description="Perubahan skrining pasien ini belum disimpan dan akan hilang jika Anda kembali ke antrean."
+          cancelLabel="Lanjutkan Mengisi"
+          actionLabel="Ya, Kembali"
+          actionVariant="destructive"
+          onAction={() => {
+            setIsCancelConfirmOpen(false);
+            onCancel();
           }}
-        >
-          <Button
-            type="button"
-            variant="secondary"
-            size="md"
-            label="Batal / Kembali"
-            onClick={onCancel}
-            disabled={isSubmitting}
-          >
-            Batal / Kembali
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            label="Simpan & Teruskan ke Dokter Poli"
-            isLoading={isSubmitting}
-          >
-            Simpan & Teruskan ke Dokter Poli
-          </Button>
-        </div>
-      </form>
-    </Card>
+        />
+      </VStack>
+    </Layout>
   );
 };

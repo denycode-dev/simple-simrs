@@ -2,8 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { DASHBOARD_MENU, filterMenuByRole, type MenuItem } from '@/config/dashboard-menu';
 import { Badge } from '@/components/ui';
 
+export const SIDEBAR_WIDTH = 260;
+
 export interface SidebarProps {
+  id?: string;
   isOpen: boolean;
+  isDesktop?: boolean;
   onClose: () => void;
   activeMenuId: string;
   onSelectMenu: (item: MenuItem, parentGroupTitle?: string) => void;
@@ -11,7 +15,9 @@ export interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
+  id = 'dashboard-sidebar',
   isOpen,
+  isDesktop = true,
   onClose,
   activeMenuId,
   onSelectMenu,
@@ -22,6 +28,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
     registration: true,
   });
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   // Auto-expand parent menu when child menu item is active
   useEffect(() => {
@@ -37,6 +44,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
     });
   }, [activeMenuId, visibleMenuGroups]);
 
+  // Tutup sidebar dengan tombol Escape pada mode drawer (mobile/tablet)
+  useEffect(() => {
+    if (isDesktop || !isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDesktop, isOpen, onClose]);
+
+  // Kunci scroll halaman utama saat drawer terbuka di mobile/tablet
+  useEffect(() => {
+    if (isDesktop || !isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isDesktop, isOpen]);
+
   const toggleSubmenu = (menuId: string) => {
     setExpandedMenus((prev) => ({
       ...prev,
@@ -46,27 +79,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Mobile Backdrop Overlay */}
-      {isOpen && (
+      {/* Transparent Click-Outside Catcher (khusus mobile/tablet, tanpa backdrop hitam/blur) */}
+      {!isDesktop && isOpen && (
         <div
+          data-testid="sidebar-click-outside"
           role="presentation"
           onClick={onClose}
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.4)',
-            backdropFilter: 'blur(2px)',
+            backgroundColor: 'transparent',
             zIndex: 40,
-            transition: 'opacity 200ms ease',
           }}
         />
       )}
 
       {/* Sidebar Container */}
       <aside
+        id={id}
         aria-label="Sidebar Menu"
+        aria-hidden={!isOpen}
+        inert={!isOpen}
         style={{
-          width: '260px',
+          width: isDesktop ? `${SIDEBAR_WIDTH}px` : `min(${SIDEBAR_WIDTH}px, 85vw)`,
           backgroundColor: 'var(--color-surface)',
           borderRight: '1px solid var(--color-border)',
           display: 'flex',
@@ -77,14 +112,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           left: 0,
           zIndex: 50,
           transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
-          transition: 'transform 250ms cubic-bezier(0.4, 0, 0.2, 1)',
-          boxShadow: isOpen ? 'var(--shadow-lg)' : 'none',
+          visibility: isOpen ? 'visible' : 'hidden',
+          transition: isOpen
+            ? 'transform 220ms cubic-bezier(0.4, 0, 0.2, 1), visibility 0ms linear 0ms'
+            : 'transform 220ms cubic-bezier(0.4, 0, 0.2, 1), visibility 0ms linear 220ms',
+          boxShadow: !isDesktop && isOpen ? 'var(--shadow-lg)' : 'none',
         }}
       >
         {/* Sidebar Header Brand */}
         <div
           style={{
             height: '64px',
+            flexShrink: 0,
             padding: '0 var(--space-5)',
             display: 'flex',
             alignItems: 'center',
@@ -106,6 +145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 justifyContent: 'center',
                 fontWeight: 700,
                 fontSize: '1.125rem',
+                flexShrink: 0,
               }}
               aria-hidden="true"
             >
@@ -121,33 +161,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          {/* Mobile close button */}
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Tutup Sidebar"
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: 'var(--space-1)',
-              color: 'var(--color-text-muted)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          {/* Mobile / Tablet close button */}
+          {!isDesktop && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Tutup Sidebar"
+              style={{
+                background: 'none',
+                border: 'none',
+                minWidth: '40px',
+                minHeight: '40px',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--color-text-muted)',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Dynamic Menu Groups List */}
-        <div
+        <nav
+          aria-label="Navigasi Utama"
           style={{
             flex: 1,
             overflowY: 'auto',
+            overscrollBehavior: 'contain',
             padding: 'var(--space-4) var(--space-3)',
             display: 'flex',
             flexDirection: 'column',
@@ -155,7 +202,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }}
         >
           {visibleMenuGroups.map((group, groupIdx) => (
-            <div key={groupIdx}>
+            <div key={group.groupTitle || groupIdx}>
               {group.groupTitle && (
                 <div
                   style={{
@@ -175,15 +222,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {group.items.map((item) => {
                   const hasChildren = Boolean(item.children && item.children.length > 0);
                   const isExpanded = Boolean(expandedMenus[item.id]);
+                  const isActiveLeaf = activeMenuId === item.id && !hasChildren;
                   const isParentActive =
                     activeMenuId === item.id ||
-                    (item.children && item.children.some((child) => child.id === activeMenuId));
+                    Boolean(item.children && item.children.some((child) => child.id === activeMenuId));
+                  const isHovered = hoveredId === item.id;
 
                   return (
                     <div key={item.id}>
                       {/* Menu Item Button */}
                       <button
                         type="button"
+                        aria-expanded={hasChildren ? isExpanded : undefined}
+                        aria-current={isActiveLeaf ? 'page' : undefined}
+                        onMouseEnter={() => setHoveredId(item.id)}
+                        onMouseLeave={() => setHoveredId((prev) => (prev === item.id ? null : prev))}
                         onClick={() => {
                           if (hasChildren) {
                             toggleSubmenu(item.id);
@@ -193,20 +246,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         }}
                         style={{
                           width: '100%',
+                          minHeight: '40px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          padding: '0.5625rem 0.75rem',
+                          padding: '0.5rem 0.75rem',
                           borderRadius: 'var(--radius-md)',
                           border: 'none',
-                          backgroundColor:
-                            isParentActive && !hasChildren
-                              ? 'var(--color-primary-light)'
+                          backgroundColor: isActiveLeaf
+                            ? 'var(--color-primary-light)'
+                            : isHovered
+                              ? 'var(--color-surface-hover)'
                               : 'transparent',
-                          color:
-                            isParentActive && !hasChildren
-                              ? 'var(--color-primary)'
-                              : 'var(--color-text-secondary)',
+                          color: isActiveLeaf
+                            ? 'var(--color-primary)'
+                            : 'var(--color-text-secondary)',
                           fontSize: '0.875rem',
                           fontWeight: isParentActive ? 600 : 500,
                           cursor: 'pointer',
@@ -221,6 +275,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               width: '6px',
                               height: '6px',
                               borderRadius: '50%',
+                              flexShrink: 0,
                               backgroundColor: isParentActive ? 'var(--color-primary)' : 'var(--color-border)',
                             }}
                             aria-hidden="true"
@@ -261,20 +316,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         >
                           {item.children?.map((subItem) => {
                             const isChildActive = activeMenuId === subItem.id;
+                            const isChildHovered = hoveredId === subItem.id;
 
                             return (
                               <button
                                 key={subItem.id}
                                 type="button"
+                                aria-current={isChildActive ? 'page' : undefined}
+                                onMouseEnter={() => setHoveredId(subItem.id)}
+                                onMouseLeave={() => setHoveredId((prev) => (prev === subItem.id ? null : prev))}
                                 onClick={() => onSelectMenu(subItem, group.groupTitle)}
                                 style={{
                                   width: '100%',
+                                  minHeight: '36px',
                                   padding: '0.4375rem 0.625rem',
                                   borderRadius: 'var(--radius-sm)',
                                   border: 'none',
                                   backgroundColor: isChildActive
                                     ? 'var(--color-primary-light)'
-                                    : 'transparent',
+                                    : isChildHovered
+                                      ? 'var(--color-surface-hover)'
+                                      : 'transparent',
                                   color: isChildActive
                                     ? 'var(--color-primary)'
                                     : 'var(--color-text-muted)',
@@ -297,11 +359,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </div>
           ))}
-        </div>
+        </nav>
 
         {/* Sidebar Footer */}
         <div
           style={{
+            flexShrink: 0,
             padding: 'var(--space-4)',
             borderTop: '1px solid var(--color-border)',
             backgroundColor: 'var(--color-surface)',

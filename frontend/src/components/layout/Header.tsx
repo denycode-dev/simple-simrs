@@ -1,12 +1,16 @@
 import React from 'react';
-import { Badge } from '@/components/ui';
 
 export interface HeaderProps {
   onToggleSidebar: () => void;
+  isSidebarOpen?: boolean;
   userSlot?: React.ReactNode;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, userSlot }) => {
+export const Header: React.FC<HeaderProps> = ({
+  onToggleSidebar,
+  isSidebarOpen,
+  userSlot,
+}) => {
   return (
     <header
       style={{
@@ -29,12 +33,14 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, userSlot }) => 
           type="button"
           onClick={onToggleSidebar}
           aria-label="Toggle Sidebar Menu"
+          aria-expanded={isSidebarOpen}
+          aria-controls="dashboard-sidebar"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '38px',
-            height: '38px',
+            width: '40px',
+            height: '40px',
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--color-border)',
             backgroundColor: 'var(--color-surface)',
@@ -43,7 +49,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, userSlot }) => 
           }}
         >
           {/* Hamburger Icon */}
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <line x1="3" y1="12" x2="21" y2="12" />
             <line x1="3" y1="6" x2="21" y2="6" />
             <line x1="3" y1="18" x2="21" y2="18" />
@@ -55,11 +61,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, userSlot }) => 
             <span style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
               Simple SIMRS
             </span>
-            <Badge variant="primary" label="Pusat" />
           </div>
-          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-            Instalasi Rawat Jalan & IGD
-          </span>
         </div>
       </div>
 

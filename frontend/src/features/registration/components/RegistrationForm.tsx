@@ -176,6 +176,26 @@ export const RegistrationForm: React.FC = () => {
     return doctors;
   }, [doctors, schedules, selectedPoliId]);
 
+  // SMART DEFAULT 1: Auto-select schedule jika hanya ada 1 jadwal praktik yang tersedia
+  useEffect(() => {
+    if (selectedDoctorId && availableSchedules.length === 1) {
+      const singleSchedule = availableSchedules[0];
+      if (singleSchedule.quota > 0 && selectedScheduleId !== String(singleSchedule.id)) {
+        setSelectedScheduleId(String(singleSchedule.id));
+      }
+    }
+  }, [selectedDoctorId, availableSchedules, selectedScheduleId]);
+
+  // SMART DEFAULT 2: Jika pasien memiliki nomor BPJS, otomatis berikan default BPJS
+  const handleSelectPatient = (item: PatientSearchItem | null) => {
+    setSelectedPatient(item);
+    if (item?.auxiliaryData.bpjs_number) {
+      setInsuranceType('BPJS');
+    } else if (item) {
+      setInsuranceType('GENERAL');
+    }
+  };
+
   // Entity lookups for summary
   const selectedPoli = useMemo(
     () => polyclinics.find((p) => String(p.id) === selectedPoliId),
@@ -190,13 +210,14 @@ export const RegistrationForm: React.FC = () => {
     [schedules, selectedScheduleId]
   );
 
-  // Validation
-  const isSubmitDisabled =
-    !selectedPatient ||
-    !selectedPoliId ||
-    !selectedDoctorId ||
-    !selectedScheduleId ||
-    isSubmitting;
+  // Checklist Kesiapan (Pencegahan Error Sebelum Terjadi)
+  const isPatientReady = Boolean(selectedPatient);
+  const isPoliReady = Boolean(selectedPoliId);
+  const isDoctorReady = Boolean(selectedDoctorId);
+  const isScheduleReady = Boolean(selectedScheduleId);
+  const isFormComplete = isPatientReady && isPoliReady && isDoctorReady && isScheduleReady;
+
+  const isSubmitDisabled = !isFormComplete || isSubmitting;
 
   const handleReset = () => {
     setSelectedPatient(null);
@@ -281,7 +302,7 @@ export const RegistrationForm: React.FC = () => {
     <Section
       variant="transparent"
       style={{
-        maxWidth: '1200px',
+        maxWidth: '1240px',
         margin: '0 auto',
         padding: '0 0 var(--space-8) 0',
       }}
@@ -305,7 +326,7 @@ export const RegistrationForm: React.FC = () => {
 
           <HStack gap={2} align="center">
             <Badge variant="teal" label={todayFormatted} />
-            <Badge variant="neutral" label="Unit: Pusat" />
+            <Badge variant="neutral" label="Unit: Loket Utama" />
           </HStack>
         </HStack>
       </VStack>
@@ -342,7 +363,7 @@ export const RegistrationForm: React.FC = () => {
             <VStack gap={4}>
               <HStack justify="between" align="center">
                 <HStack gap={2} align="center">
-                  <Badge variant="teal" label="Langkah 1" />
+                  <Badge variant={isPatientReady ? 'success' : 'teal'} label={isPatientReady ? '✓ Langkah 1 Selesai' : 'Langkah 1'} />
                   <Heading level={3}>Identitas Pasien</Heading>
                 </HStack>
 
@@ -351,7 +372,7 @@ export const RegistrationForm: React.FC = () => {
                     variant="secondary"
                     size="sm"
                     label="Ganti Pasien"
-                    onClick={() => setSelectedPatient(null)}
+                    onClick={() => handleSelectPatient(null)}
                   />
                 )}
               </HStack>
@@ -376,13 +397,14 @@ export const RegistrationForm: React.FC = () => {
                   <VStack gap={3}>
                     <HStack justify="between" align="center" wrap="wrap" gap={2}>
                       <HStack gap={2} align="center">
+                        <span aria-hidden="true" style={{ fontSize: '1.25rem' }}>👤</span>
                         <Heading level={4}>{selectedPatient.auxiliaryData.name}</Heading>
                         <Badge
                           variant={selectedPatient.auxiliaryData.bpjs_number ? 'success' : 'teal'}
                           label={
                             selectedPatient.auxiliaryData.bpjs_number
-                              ? 'BPJS Aktif'
-                              : 'Pasien Umum / Mandiri'
+                              ? '🛡️ BPJS Terdaftar'
+                              : '💵 Pasien Umum / Mandiri'
                           }
                         />
                       </HStack>
@@ -394,7 +416,7 @@ export const RegistrationForm: React.FC = () => {
                           fontSize: '0.9375rem',
                         }}
                       >
-                        {selectedPatient.auxiliaryData.medical_record_number}
+                        RM: {selectedPatient.auxiliaryData.medical_record_number}
                       </Text>
                     </HStack>
 
@@ -402,7 +424,7 @@ export const RegistrationForm: React.FC = () => {
 
                     <MetadataList columns="multi">
                       <MetadataListItem label="No. Rekam Medis">
-                        <Text type="code" style={{ fontWeight: 600 }}>
+                        <Text type="code" style={{ fontWeight: 700, color: 'var(--color-primary)' }}>
                           {selectedPatient.auxiliaryData.medical_record_number}
                         </Text>
                       </MetadataListItem>
@@ -432,6 +454,25 @@ export const RegistrationForm: React.FC = () => {
                         </Text>
                       </MetadataListItem>
                     </MetadataList>
+
+                    {selectedPatient.auxiliaryData.bpjs_number && (
+                      <div
+                        style={{
+                          backgroundColor: 'var(--color-success-bg)',
+                          border: '1px solid var(--color-success-border)',
+                          borderRadius: 'var(--radius-sm)',
+                          padding: '6px 10px',
+                          fontSize: '0.75rem',
+                          color: 'var(--color-success-text)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <span aria-hidden="true">💡</span>
+                        <span>Nomor kartu BPJS terdeteksi. Jenis penjamin telah disesuaikan ke <strong>BPJS Kesehatan (Bebas Biaya)</strong>.</span>
+                      </div>
+                    )}
                   </VStack>
                 </Card>
               ) : (
@@ -442,7 +483,7 @@ export const RegistrationForm: React.FC = () => {
                     placeholder="Ketik nama pasien, nomor RM, atau NIK kependudukan..."
                     searchSource={patientSource}
                     value={selectedPatient}
-                    onChange={(item) => setSelectedPatient(item)}
+                    onChange={(item) => handleSelectPatient(item)}
                     isRequired
                     width="100%"
                     description="Pencarian terpadu data rekam medis pasien secara langsung."
@@ -480,7 +521,10 @@ export const RegistrationForm: React.FC = () => {
           <Card elevation="low" padding={6}>
             <VStack gap={4}>
               <HStack gap={2} align="center">
-                <Badge variant="teal" label="Langkah 2" />
+                <Badge
+                  variant={isPoliReady && isDoctorReady && isScheduleReady ? 'success' : 'teal'}
+                  label={isPoliReady && isDoctorReady && isScheduleReady ? '✓ Langkah 2 Selesai' : 'Langkah 2'}
+                />
                 <Heading level={3}>Tujuan Poliklinik & Dokter DPJP</Heading>
               </HStack>
 
@@ -558,6 +602,8 @@ export const RegistrationForm: React.FC = () => {
                     description={
                       !selectedDoctorId
                         ? 'Pilih dokter terlebih dahulu untuk melihat jadwal'
+                        : availableSchedules.length === 1
+                        ? 'Jadwal otomatis dipilih (hanya 1 sesi praktik hari ini)'
                         : 'Pilih sesi praktik aktif dokter'
                     }
                     options={[
@@ -572,7 +618,7 @@ export const RegistrationForm: React.FC = () => {
                       ...availableSchedules.map((s) => ({
                         value: String(s.id),
                         label: `Hari ${s.day_of_week} (${s.start_time} - ${s.end_time} WIB) • ${
-                          s.quota <= 0 ? '[Penuh / Kuota 0]' : `Sisa Kuota: ${s.quota} pasien`
+                          s.quota <= 0 ? '[Kuota Habis]' : `Sisa Kuota: ${s.quota} pasien`
                         }`,
                         disabled: s.quota <= 0,
                       })),
@@ -584,7 +630,7 @@ export const RegistrationForm: React.FC = () => {
                     <Banner
                       status="info"
                       title="Tidak Ada Jadwal Praktik Hari Ini"
-                      description="Dokter spesialis yang dipilih belum memiliki sesi praktik pada poliklinik ini untuk hari ini. Silakan pilih dokter atau hari praktik lain."
+                      description="Dokter spesialis yang dipilih belum memiliki sesi praktik pada poliklinik ini untuk hari ini. Silakan pilih dokter lain."
                     />
                   )}
                 </VStack>
@@ -615,10 +661,13 @@ export const RegistrationForm: React.FC = () => {
                 >
                   <VStack gap={2}>
                     <HStack justify="between" align="center">
-                      <Heading level={4}>Umum / Mandiri (Cash)</Heading>
+                      <HStack gap={2} align="center">
+                        <span aria-hidden="true">💵</span>
+                        <Heading level={4}>Umum / Mandiri (Cash)</Heading>
+                      </HStack>
                       <Badge
                         variant={insuranceType === 'GENERAL' ? 'teal' : 'neutral'}
-                        label="Rp 25.000"
+                        label={insuranceType === 'GENERAL' ? '✓ Terpilih: Rp 25.000' : 'Rp 25.000'}
                       />
                     </HStack>
                     <Text type="body" style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>
@@ -639,10 +688,13 @@ export const RegistrationForm: React.FC = () => {
                 >
                   <VStack gap={2}>
                     <HStack justify="between" align="center">
-                      <Heading level={4}>BPJS Kesehatan</Heading>
+                      <HStack gap={2} align="center">
+                        <span aria-hidden="true">🛡️</span>
+                        <Heading level={4}>BPJS Kesehatan</Heading>
+                      </HStack>
                       <Badge
                         variant={insuranceType === 'BPJS' ? 'success' : 'neutral'}
-                        label="Bebas Biaya"
+                        label={insuranceType === 'BPJS' ? '✓ Terpilih: Bebas Biaya' : 'Bebas Biaya'}
                       />
                     </HStack>
                     <Text type="body" style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>
@@ -669,6 +721,7 @@ export const RegistrationForm: React.FC = () => {
               position: 'sticky',
               top: '80px',
               borderTop: '4px solid var(--color-primary)',
+              backgroundColor: 'var(--color-surface)',
             }}
           >
             <VStack gap={4}>
@@ -687,25 +740,27 @@ export const RegistrationForm: React.FC = () => {
                     color: 'var(--color-text-muted)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
                   }}
                 >
                   Identitas Pasien:
                 </Text>
                 {selectedPatient ? (
                   <VStack gap={0}>
-                    <Text type="body" style={{ fontWeight: 700, color: 'var(--color-text-main)' }}>
+                    <Text type="body" style={{ fontWeight: 800, color: 'var(--color-text-main)' }}>
                       {selectedPatient.auxiliaryData.name}
                     </Text>
                     <Text
                       type="code"
-                      style={{ color: 'var(--color-primary)', fontSize: '0.8125rem' }}
+                      style={{ color: 'var(--color-primary)', fontSize: '0.8125rem', fontWeight: 700 }}
                     >
                       RM: {selectedPatient.auxiliaryData.medical_record_number}
                     </Text>
                   </VStack>
                 ) : (
-                  <Text type="body" style={{ color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-                    Belum dipilih
+                  <Text type="body" style={{ color: 'var(--color-text-muted)', fontStyle: 'italic', fontSize: '0.8125rem' }}>
+                    Belum memilih pasien
                   </Text>
                 )}
               </VStack>
@@ -721,6 +776,8 @@ export const RegistrationForm: React.FC = () => {
                       color: 'var(--color-text-muted)',
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
                     }}
                   >
                     Poliklinik Tujuan:
@@ -737,6 +794,8 @@ export const RegistrationForm: React.FC = () => {
                       color: 'var(--color-text-muted)',
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
                     }}
                   >
                     Dokter DPJP:
@@ -753,6 +812,8 @@ export const RegistrationForm: React.FC = () => {
                       color: 'var(--color-text-muted)',
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
                     }}
                   >
                     Jadwal Praktik:
@@ -770,7 +831,7 @@ export const RegistrationForm: React.FC = () => {
               {/* Biaya & Penjamin */}
               <VStack gap={2}>
                 <HStack justify="between" align="center">
-                  <Text type="body" style={{ color: 'var(--color-text-secondary)' }}>
+                  <Text type="body" style={{ color: 'var(--color-text-secondary)', fontSize: '0.8125rem' }}>
                     Jenis Penjamin:
                   </Text>
                   <Badge
@@ -788,8 +849,9 @@ export const RegistrationForm: React.FC = () => {
                     style={{
                       color:
                         insuranceType === 'BPJS'
-                          ? 'var(--color-success)'
+                          ? 'var(--color-success-text)'
                           : 'var(--color-primary)',
+                      fontWeight: 800,
                     }}
                   >
                     {insuranceType === 'BPJS' ? 'Rp 0' : 'Rp 25.000'}
@@ -798,6 +860,35 @@ export const RegistrationForm: React.FC = () => {
               </VStack>
 
               <Divider orientation="horizontal" />
+
+              {/* Checklist Kesiapan (Pencegahan Error Sebelum Terjadi) */}
+              <div
+                style={{
+                  backgroundColor: isFormComplete ? 'var(--color-success-bg)' : 'var(--color-surface-subtle)',
+                  border: `1px solid ${isFormComplete ? 'var(--color-success-border)' : 'var(--color-border)'}`,
+                  borderRadius: 'var(--radius-md)',
+                  padding: 'var(--space-3)',
+                  fontSize: '0.75rem',
+                }}
+              >
+                <div style={{ fontWeight: 700, marginBottom: '6px', color: isFormComplete ? 'var(--color-success-text)' : 'var(--color-text-secondary)' }}>
+                  {isFormComplete ? '✓ Data Pendaftaran Siap' : 'Kelengkapan Formulir:'}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', color: 'var(--color-text-muted)' }}>
+                  <div style={{ color: isPatientReady ? 'var(--color-success-text)' : 'inherit' }}>
+                    {isPatientReady ? '✓' : '○'} Pasien Terpilih
+                  </div>
+                  <div style={{ color: isPoliReady ? 'var(--color-success-text)' : 'inherit' }}>
+                    {isPoliReady ? '✓' : '○'} Poliklinik Terpilih
+                  </div>
+                  <div style={{ color: isDoctorReady ? 'var(--color-success-text)' : 'inherit' }}>
+                    {isDoctorReady ? '✓' : '○'} Dokter DPJP Terpilih
+                  </div>
+                  <div style={{ color: isScheduleReady ? 'var(--color-success-text)' : 'inherit' }}>
+                    {isScheduleReady ? '✓' : '○'} Jadwal Praktik Terpilih
+                  </div>
+                </div>
+              </div>
 
               {/* Aksi Pendaftaran */}
               <VStack gap={2}>

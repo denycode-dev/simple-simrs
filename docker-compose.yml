@@ -23,8 +23,9 @@ services:
 
   services:
     build:
-      context: ./services/ancillary-service
+      context: ./services
       dockerfile: Dockerfile
+      target: development
     container_name: nodejs-service
     restart: unless-stopped
     ports:
@@ -41,6 +42,14 @@ services:
       DB_NAME: ${POSTGRES_DB}
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -qO- http://127.0.0.1:4000/health || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
     depends_on:
       postgres:
         condition: service_healthy

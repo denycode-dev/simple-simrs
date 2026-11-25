@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge, Button } from '@/components/ui';
+import { Button } from '@/components/ui';
 import type { AuthUser } from '../types';
 
 export interface UserProfileProps {
@@ -17,7 +17,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, onLogout, isLoad
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
           <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{user.unit}</span>
-          <Badge variant="primary" label={user.role} />
         </div>
       </div>
       <Button

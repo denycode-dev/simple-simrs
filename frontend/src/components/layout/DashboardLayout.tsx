@@ -1,11 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Outlet } from 'react-router-dom';
-import { Sidebar } from './Sidebar';
+import { Sidebar, SIDEBAR_WIDTH } from './Sidebar';
 import { Header } from './Header';
 import { Breadcrumb, type BreadcrumbItem } from './Breadcrumb';
 import { useAuth, UserProfile } from '@/features/auth';
 import { getMenuInfoFromPath } from '@/routes/routes.config';
 import type { MenuItem } from '@/config/dashboard-menu';
+
+const DESKTOP_BREAKPOINT = 1024;
+
+function getIsDesktop(): boolean {
+  if (typeof window === 'undefined') return true;
+  if (typeof window.matchMedia === 'function') {
+    return window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT}px)`).matches;
+  }
+  return window.innerWidth >= DESKTOP_BREAKPOINT;
+}
 
 export interface DashboardLayoutProps {
   children?: React.ReactNode;
@@ -28,8 +38,24 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const navigate = useNavigate();
   const { user, logout, isLoading: isAuthLoading } = useAuth();
 
-  // Mobile / desktop sidebar toggle state
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Deteksi viewport desktop vs mobile/tablet agar perilaku sidebar adaptif
+  const [isDesktop, setIsDesktop] = useState<boolean>(getIsDesktop);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(getIsDesktop);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT}px)`);
+    const handleViewportChange = (event: MediaQueryListEvent) => {
+      setIsDesktop(event.matches);
+      setIsSidebarOpen(event.matches);
+    };
+
+    mediaQuery.addEventListener('change', handleViewportChange);
+    return () => mediaQuery.removeEventListener('change', handleViewportChange);
+  }, []);
 
   // Derive active menu info from current URL pathname
   const menuInfo = getMenuInfoFromPath(location.pathname);
@@ -62,14 +88,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     >
       {/* Dynamic Collapsible Sidebar */}
       <Sidebar
+        id="dashboard-sidebar"
         userRole={userRole}
         isOpen={isSidebarOpen}
+        isDesktop={isDesktop}
         onClose={() => setIsSidebarOpen(false)}
         activeMenuId={activeMenuId}
         onSelectMenu={(item, parentGroup) => {
           handleSelectMenu(item, parentGroup);
-          // Di layar ponsel, tutup sidebar setelah memilih menu
-          if (window.innerWidth < 1024) {
+          // Di layar ponsel & tablet, tutup sidebar setelah memilih menu
+          if (!isDesktop) {
             setIsSidebarOpen(false);
           }
         }}
@@ -77,17 +105,19 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
       {/* Main Container Wrapper */}
       <div
+        data-testid="dashboard-main-wrapper"
         style={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          marginLeft: isSidebarOpen ? '260px' : 0,
-          transition: 'margin-left 250ms cubic-bezier(0.4, 0, 0.2, 1)',
+          marginLeft: isDesktop && isSidebarOpen ? `${SIDEBAR_WIDTH}px` : 0,
+          transition: 'margin-left 220ms cubic-bezier(0.4, 0, 0.2, 1)',
           minWidth: 0,
         }}
       >
         {/* Topbar Header */}
         <Header
+          isSidebarOpen={isSidebarOpen}
           onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
           userSlot={effectiveUserSlot}
         />
@@ -96,7 +126,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <main
           style={{
             flex: 1,
-            padding: 'var(--space-6) var(--space-8)',
+            padding: isDesktop ? 'var(--space-6) var(--space-8)' : 'var(--space-4)',
             maxWidth: '1440px',
             width: '100%',
             margin: '0 auto',
